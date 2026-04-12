@@ -47,22 +47,20 @@ export function LandingPage() {
       </div>
 
       <div className="relative z-10 min-h-screen w-full pb-10">
-        <div className="fixed inset-x-0 top-0 z-40 w-full border-b border-white/8 bg-black/78 shadow-[0_10px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+        <div className="fixed inset-x-0 top-0 z-40 w-full bg-black/78 shadow-[0_10px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl">
           <div className="mx-auto w-full max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
-            <div className="mx-auto w-full max-w-sm lg:max-w-none">
-              <div className="flex items-center justify-between gap-3 rounded-[999px] border border-white/10 bg-zinc-950/72 px-3 py-3 shadow-[0_18px_40px_rgba(0,0,0,0.28)] backdrop-blur-md">
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[999px] border border-white/10 bg-white/5 shadow-lg shadow-black/20">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-[999px] bg-[linear-gradient(180deg,#ff5b5b,#ff2d3d)] text-sm font-bold text-white">D</div>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-[10px] uppercase tracking-[0.32em] text-zinc-500">Dreamledge</p>
-                    <h1 className="truncate text-xl font-semibold tracking-tight text-white">Creators</h1>
-                  </div>
-                </div>
+            <div className="relative mx-auto grid w-full max-w-sm grid-cols-[48px_1fr_auto] items-center gap-3 lg:max-w-none lg:grid-cols-[64px_1fr_140px]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-[999px] border border-white/10 bg-white/5 shadow-lg shadow-black/20">
+                <div className="flex h-8 w-8 items-center justify-center rounded-[999px] bg-[linear-gradient(180deg,#ff5b5b,#ff2d3d)] text-sm font-bold text-white">D</div>
+              </div>
+              <div className="min-w-0 justify-self-center text-center">
+                <p className="truncate text-[10px] uppercase tracking-[0.32em] text-zinc-500">Dreamledge</p>
+                <h1 className="truncate text-xl font-semibold tracking-tight text-white">Creators</h1>
+              </div>
+              <div className="justify-self-end">
                 <Link
                   to="/login"
-                  className="rounded-[999px] border border-white/10 bg-white px-5 py-2.5 text-sm font-semibold !text-black shadow-lg shadow-white/10 transition hover:scale-[1.01] hover:bg-zinc-100 hover:!text-black"
+                  className="shrink-0 rounded-[999px] border border-white/10 bg-white px-5 py-2.5 text-sm font-semibold !text-black shadow-lg shadow-white/10 transition hover:scale-[1.01] hover:bg-zinc-100 hover:!text-black"
                 >
                   Sign In
                 </Link>
@@ -75,22 +73,17 @@ export function LandingPage() {
           <div className="mx-auto w-full max-w-sm lg:max-w-none">
 
           <div className="mt-10 grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-start lg:gap-8">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-[999px] border border-red-400/20 bg-red-500/10 px-3 py-1 text-[11px] font-medium text-red-300 backdrop-blur-sm">
-                <span className="h-2 w-2 rounded-[999px] bg-red-400" />
-                Social battles for creators
-              </div>
-
-              <h2 className="mt-5 text-[2rem] font-bold leading-[1.02] tracking-tight text-white sm:text-5xl lg:max-w-[12ch] lg:text-6xl">
+            <div className="text-center lg:text-left">
+              <h2 className="text-[2rem] font-bold leading-[1.02] tracking-tight text-white sm:text-5xl lg:max-w-[12ch] lg:text-6xl lg:text-left">
                 Where creators compete
                 <br />
                 and culture decides.
               </h2>
-              <p className="mt-4 max-w-[32rem] text-sm leading-6 text-zinc-300 sm:text-base">
+              <p className="mt-4 max-w-[32rem] text-sm leading-6 text-zinc-300 sm:mx-auto sm:text-base lg:mx-0">
                 Post your content, enter live battles, and grow your audience through real engagement, sharp profile presence, and creator-to-creator judging.
               </p>
 
-              <div className="mt-6 flex gap-3">
+              <div className="mt-6 flex gap-3 sm:justify-center lg:justify-start">
                 <Link
                   to="/signup"
                   className="flex-1 rounded-[28px] bg-red-500 py-3.5 text-center text-sm font-semibold text-white shadow-lg shadow-red-500/20 transition hover:translate-y-[-1px]"
@@ -258,14 +251,6 @@ export function LandingPage() {
             </div>
           </div>
 
-          <div className="mt-8 rounded-[999px] border border-white/8 bg-zinc-900/80 px-4 py-3 backdrop-blur-md lg:max-w-xl">
-            <div className="flex items-center justify-between text-[11px] font-medium text-zinc-400">
-              <span className="text-white">Home</span>
-              <span>Explore</span>
-              <span>Battles</span>
-              <span>Profile</span>
-            </div>
-          </div>
         </div>
         </div>
       </div>
