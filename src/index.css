@@ -827,8 +827,8 @@ button {
 
 .landing-feature-card {
   position: relative;
-  min-height: 172px;
-  border-radius: 32px;
+  min-height: 186px;
+  border-radius: 20px;
   cursor: pointer;
 }
 
@@ -836,22 +836,10 @@ button {
   content: "";
   position: absolute;
   inset: -4px;
-  border-radius: 34px;
-  background: linear-gradient(135deg, rgba(255, 45, 61, 0.82) 0%, rgba(255, 120, 120, 0.48) 48%, rgba(255, 255, 255, 0.12) 100%);
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(255, 45, 61, 0.92) 0%, rgba(120, 15, 25, 0.84) 55%, rgba(255, 91, 91, 0.72) 100%);
   z-index: -2;
   pointer-events: none;
-  transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s ease;
-}
-
-.landing-feature-card__glow {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: 34px;
-  background: linear-gradient(135deg, rgba(255, 45, 61, 0.32) 0%, rgba(255, 91, 91, 0.18) 52%, rgba(255, 255, 255, 0.06) 100%);
-  transform: translate3d(0, 0, 0) scale(0.96);
-  filter: blur(18px);
-  transition: filter 0.45s ease, transform 0.45s ease;
 }
 
 .landing-feature-card__body {
@@ -860,12 +848,12 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  min-height: 172px;
+  min-height: 186px;
   width: 100%;
-  border-radius: 32px;
-  background: linear-gradient(180deg, rgba(21, 16, 20, 0.96), rgba(16, 13, 17, 0.92));
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 18px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(26, 15, 20, 0.98), rgba(19, 13, 17, 0.96));
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 22px 18px;
   overflow: hidden;
 }
 
@@ -873,8 +861,41 @@ button {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 55%);
+  background:
+    radial-gradient(circle at top right, rgba(255, 91, 91, 0.14), transparent 22%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 55%);
   pointer-events: none;
+}
+
+.landing-feature-card__carousel {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.landing-feature-card__carousel[data-position="top"] {
+  top: 10px;
+}
+
+.landing-feature-card__carousel[data-position="bottom"] {
+  bottom: 10px;
+}
+
+.landing-feature-card__carousel-text {
+  display: inline-block;
+  width: max-content;
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.32);
+  padding-left: 100%;
+  animation: landing-feature-marquee 12s linear infinite;
+}
+
+.landing-feature-card__carousel[data-direction="right"] .landing-feature-card__carousel-text {
+  animation-direction: reverse;
 }
 
 .landing-feature-card__content {
@@ -883,6 +904,8 @@ button {
   gap: 14px;
   min-width: 0;
   flex: 1;
+  padding-top: 12px;
+  padding-bottom: 12px;
 }
 
 .landing-feature-card__icon {
@@ -903,7 +926,7 @@ button {
 }
 
 .landing-feature-card__title {
-  font-size: 1.05rem;
+  font-size: 1.08rem;
   line-height: 1.25;
   font-weight: 700;
   color: #ffffff;
@@ -912,8 +935,8 @@ button {
 .landing-feature-card__text {
   margin-top: 10px;
   max-width: 220px;
-  font-size: 0.98rem;
-  line-height: 1.75;
+  font-size: 0.94rem;
+  line-height: 1.7;
   color: rgba(255, 255, 255, 0.7);
 }
 
@@ -928,22 +951,13 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.landing-feature-card:hover::before {
-  transform: rotate(-90deg) scaleX(1.06) scaleY(0.93);
-}
-
-.landing-feature-card:hover .landing-feature-card__glow {
-  filter: blur(26px);
-  transform: translate3d(0, 0, 0) scale(0.98);
-}
-
 @media (max-width: 640px) {
   .landing-feature-card {
-    min-height: 168px;
+    min-height: 176px;
   }
 
   .landing-feature-card__body {
-    min-height: 168px;
+    min-height: 176px;
     padding: 16px;
   }
 
@@ -958,14 +972,24 @@ button {
 
   .landing-feature-card__text {
     max-width: 170px;
-    font-size: 0.95rem;
-    line-height: 1.7;
+    font-size: 0.9rem;
+    line-height: 1.65;
   }
 
   .landing-feature-card__image {
     width: 84px;
     height: 112px;
     border-radius: 26px;
+  }
+}
+
+@keyframes landing-feature-marquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-100%);
   }
 }
 

@@ -1,20 +1,20 @@
 import { Link } from "react-router-dom";
 const features = [
   {
-    title: "Creator Battles",
-    text: "Go head-to-head and win through direct creator judging after the required watch time is met.",
+    title: "Blow Up Your Content",
+    text: "Your content gets seen by real creators who actually engage. No algorithms holding you back - just pure exposure and growth.",
     icon: "⚔️",
     image: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=500&q=80",
   },
   {
-    title: "Viral Challenges",
-    text: "Enter premium contests and themed matchups built to push your content into discovery mode.",
+    title: "Judge & Get Judged",
+    text: "Watch other creators, rate their content, and receive real feedback on yours. Every interaction builds your reputation and visibility.",
     icon: "📈",
     image: "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=500&q=80",
   },
   {
-    title: "Monetize & Grow",
-    text: "Build your brand, gain followers, and turn attention into real creator momentum.",
+    title: "Grow Together, Win Together",
+    text: "Form a crew, compete in tournaments, and climb the ranks together. Win weekly challenges and build a name as a team.",
     icon: "💰",
     image: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=500&q=80",
   },
@@ -141,8 +141,12 @@ export function LandingPage() {
                     key={feature.title}
                     className="landing-feature-card"
                   >
-                    <div className="landing-feature-card__glow" />
                     <div className="landing-feature-card__body">
+                      <div data-position="top" className="landing-feature-card__carousel">
+                        <span className="landing-feature-card__carousel-text">
+                          dreamledge creators • dreamledge creators • dreamledge creators • dreamledge creators •
+                        </span>
+                      </div>
                       <div className="landing-feature-card__content">
                         <div className="landing-feature-card__icon">{feature.icon}</div>
                         <div className="landing-feature-card__copy">
@@ -151,6 +155,11 @@ export function LandingPage() {
                         </div>
                       </div>
                       <img src={feature.image} alt={feature.title} className="landing-feature-card__image" />
+                      <div data-position="bottom" data-direction="right" className="landing-feature-card__carousel">
+                        <span className="landing-feature-card__carousel-text">
+                          dreamledge creators • dreamledge creators • dreamledge creators • dreamledge creators •
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -164,8 +173,12 @@ export function LandingPage() {
                 key={feature.title}
                 className="landing-feature-card"
               >
-                <div className="landing-feature-card__glow" />
                 <div className="landing-feature-card__body">
+                  <div data-position="top" className="landing-feature-card__carousel">
+                    <span className="landing-feature-card__carousel-text">
+                      dreamledge creators • dreamledge creators • dreamledge creators • dreamledge creators •
+                    </span>
+                  </div>
                   <div className="landing-feature-card__content">
                     <div className="landing-feature-card__icon">{feature.icon}</div>
                     <div className="landing-feature-card__copy">
@@ -174,6 +187,11 @@ export function LandingPage() {
                     </div>
                   </div>
                   <img src={feature.image} alt={feature.title} className="landing-feature-card__image" />
+                  <div data-position="bottom" data-direction="right" className="landing-feature-card__carousel">
+                    <span className="landing-feature-card__carousel-text">
+                      dreamledge creators • dreamledge creators • dreamledge creators • dreamledge creators •
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
