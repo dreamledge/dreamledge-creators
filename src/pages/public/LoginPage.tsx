@@ -15,7 +15,7 @@ export function LoginPage() {
   return (
     <PageContainer className="flex min-h-screen items-center justify-center">
       <div className="w-full max-w-md bubble-card rounded-[40px] p-6">
-        <AuthForm title="Sign in to compete" buttonLabel="Sign In" onSubmit={({ email }) => { login(email); navigate("/app/home"); }} />
+        <AuthForm title="Sign in to compete" buttonLabel="Sign In" animatedSubmit onSubmit={({ email }) => { login(email); navigate("/app/home"); }} />
         <div className="my-4 h-px bg-white/10" />
         <SocialLoginButtons />
       </div>

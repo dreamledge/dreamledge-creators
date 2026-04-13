@@ -12,7 +12,7 @@ const paragraphs = [
   "You can also join a crew, build with your people, compete in weekly challenges, and rise through the ranks together. Whether it's funniest content, best storytelling, or pure creativity-there's always a lane for you to stand out.",
   "At the end of the day, Dreamledge isn't just about competition.",
   "It's about community, connection, and creators helping creators win.",
-  "This is your ledge. Step up. Fire.",
+  "This is your ledge. Step up.",
 ];
 
 export function AboutPage() {

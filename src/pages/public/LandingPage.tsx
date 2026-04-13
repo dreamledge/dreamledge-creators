@@ -125,16 +125,19 @@ export function LandingPage() {
                 {features.map((feature) => (
                   <div
                     key={feature.title}
-                    className="flex min-h-[152px] items-center gap-4 rounded-[30px] border border-white/8 bg-zinc-900/75 px-5 py-4 shadow-lg shadow-black/20 backdrop-blur-md"
+                    className="landing-feature-card"
                   >
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[999px] bg-white/5 text-xl ring-1 ring-white/8">
-                      {feature.icon}
+                    <div className="landing-feature-card__glow" />
+                    <div className="landing-feature-card__body">
+                      <div className="landing-feature-card__content">
+                        <div className="landing-feature-card__icon">{feature.icon}</div>
+                        <div className="landing-feature-card__copy">
+                          <h3 className="landing-feature-card__title">{feature.title}</h3>
+                          <p className="landing-feature-card__text">{feature.text}</p>
+                        </div>
+                      </div>
+                      <img src={feature.image} alt={feature.title} className="landing-feature-card__image" />
                     </div>
-                    <div className="min-w-0 flex-1 text-left">
-                      <h3 className="text-[15px] font-semibold text-white">{feature.title}</h3>
-                      <p className="mt-2 max-w-[190px] text-sm leading-6 text-zinc-400">{feature.text}</p>
-                    </div>
-                    <img src={feature.image} alt={feature.title} className="h-24 w-20 shrink-0 rounded-[26px] object-cover" />
                   </div>
                 ))}
               </div>
@@ -145,16 +148,19 @@ export function LandingPage() {
             {features.map((feature) => (
               <div
                 key={feature.title}
-                className="flex min-h-[160px] items-center gap-4 rounded-[30px] border border-white/8 bg-zinc-900/75 px-5 py-4 shadow-lg shadow-black/20 backdrop-blur-md"
+                className="landing-feature-card"
               >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[999px] bg-white/5 text-xl ring-1 ring-white/8">
-                  {feature.icon}
+                <div className="landing-feature-card__glow" />
+                <div className="landing-feature-card__body">
+                  <div className="landing-feature-card__content">
+                    <div className="landing-feature-card__icon">{feature.icon}</div>
+                    <div className="landing-feature-card__copy">
+                      <h3 className="landing-feature-card__title">{feature.title}</h3>
+                      <p className="landing-feature-card__text">{feature.text}</p>
+                    </div>
+                  </div>
+                  <img src={feature.image} alt={feature.title} className="landing-feature-card__image" />
                 </div>
-                <div className="min-w-0 flex-1 text-left">
-                  <h3 className="text-[15px] font-semibold text-white">{feature.title}</h3>
-                  <p className="mt-2 max-w-[220px] text-sm leading-6 text-zinc-400">{feature.text}</p>
-                </div>
-                <img src={feature.image} alt={feature.title} className="h-28 w-24 shrink-0 rounded-[28px] object-cover" />
               </div>
             ))}
           </div>
