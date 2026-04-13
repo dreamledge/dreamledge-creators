@@ -374,6 +374,101 @@ button {
   animation: dreamledge-wobble 2s cubic-bezier(0.5, 0.8, 0.5, 0.2) infinite;
 }
 
+.landing-cta-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.landing-cta-primary {
+  background-color: #ff2d3d;
+  border: 6px solid rgba(255, 120, 120, 0.24);
+  box-shadow: 0 16px 30px rgba(255, 45, 61, 0.16);
+}
+
+.landing-cta-primary:hover {
+  background-color: #ff3c4b;
+  border-color: rgba(255, 120, 120, 0.32);
+}
+
+.landing-cta-primary:active {
+  border-width: 4px;
+}
+
+.landing-cta-secondary {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 6px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(10px);
+}
+
+.landing-cta-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.landing-cta-secondary:active {
+  border-width: 4px;
+}
+
+.landing-cta-text {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: #ffffff;
+}
+
+.landing-cta-svg {
+  padding-top: 2px;
+  height: 100%;
+  width: fit-content;
+}
+
+.landing-cta-svg svg {
+  width: 34px;
+  height: 18px;
+}
+
+.landing-cta-button:hover .landing-cta-svg svg {
+  animation: landing-jello-vertical 0.9s both;
+  transform-origin: left;
+}
+
+@keyframes landing-jello-vertical {
+  0% {
+    transform: scale3d(1, 1, 1);
+  }
+
+  30% {
+    transform: scale3d(0.75, 1.25, 1);
+  }
+
+  40% {
+    transform: scale3d(1.25, 0.75, 1);
+  }
+
+  50% {
+    transform: scale3d(0.85, 1.15, 1);
+  }
+
+  65% {
+    transform: scale3d(1.05, 0.95, 1);
+  }
+
+  75% {
+    transform: scale3d(0.95, 1.05, 1);
+  }
+
+  100% {
+    transform: scale3d(1, 1, 1);
+  }
+}
+
 @keyframes dreamledge-wobble {
   0% {
     transform: translateX(-90%);
