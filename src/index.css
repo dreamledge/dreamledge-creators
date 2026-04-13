@@ -439,6 +439,29 @@ button {
   transform-origin: left;
 }
 
+.footer-link {
+  position: relative;
+}
+
+.footer-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 45, 61, 0.9) 50%, transparent 100%);
+  opacity: 0;
+  transform: scaleX(0.7);
+  transition: opacity 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.footer-link:hover::after {
+  opacity: 1;
+  transform: scaleX(1);
+  box-shadow: 0 0 12px rgba(255, 45, 61, 0.32);
+}
+
 @keyframes landing-jello-vertical {
   0% {
     transform: scale3d(1, 1, 1);

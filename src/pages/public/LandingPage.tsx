@@ -21,6 +21,7 @@ const features = [
 ];
 
 const categories = ["Funny", "Storytime", "Sports", "Commentary", "Education", "Motivation"];
+const footerLinks = ["About Us", "How It Works", "Contact", "FAQ", "Terms of Service", "Privacy Policy"];
 
 export function LandingPage() {
   return (
@@ -185,6 +186,26 @@ export function LandingPage() {
               </div>
             </div>
           </div>
+
+          <footer className="relative mt-14 pt-10">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-10 bg-[linear-gradient(180deg,rgba(0,0,0,0)_0%,rgba(0,0,0,0.34)_100%)]" />
+            <div className="border-t border-white/[0.05] pt-8">
+              <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-8 sm:gap-y-4">
+                {footerLinks.map((link) => (
+                  <a
+                    key={link}
+                    href="#"
+                    className="footer-link text-sm text-white/58 transition duration-300 hover:text-white"
+                  >
+                    {link}
+                  </a>
+                ))}
+              </div>
+              <p className="mt-8 pb-2 text-center text-xs tracking-[0.18em] text-white/38">
+                © 2026 Dreamledge. All rights reserved.
+              </p>
+            </div>
+          </footer>
 
         </div>
         </div>
