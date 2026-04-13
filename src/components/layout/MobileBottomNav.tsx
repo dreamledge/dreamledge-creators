@@ -1,10 +1,10 @@
-import { Home, Search, PlusSquare, Swords, User } from "lucide-react";
+import { Home, Search, Video, Swords, User } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 const navItems = [
   { to: "/app/home", label: "Home", icon: Home },
   { to: "/app/explore", label: "Explore", icon: Search },
-  { to: "/app/create", label: "Create", icon: PlusSquare },
+  { to: "/app/review-session", label: "Session", icon: Video },
   { to: "/app/battles", label: "Battles", icon: Swords },
   { to: "/app/me", label: "Profile", icon: User },
 ];

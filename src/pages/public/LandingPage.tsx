@@ -47,20 +47,20 @@ export function LandingPage() {
       </div>
 
       <div className="relative z-10 min-h-screen w-full pb-10">
-        <div className="fixed inset-x-0 top-0 z-40 w-full bg-black/78 shadow-[0_10px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl">
-          <div className="mx-auto w-full max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
-            <div className="relative mx-auto grid w-full max-w-sm grid-cols-[48px_1fr_auto] items-center gap-3 lg:max-w-none lg:grid-cols-[64px_1fr_140px]">
-              <div className="flex h-12 w-12 items-center justify-center rounded-[999px] border border-white/10 bg-white/5 shadow-lg shadow-black/20">
-                <div className="flex h-8 w-8 items-center justify-center rounded-[999px] bg-[linear-gradient(180deg,#ff5b5b,#ff2d3d)] text-sm font-bold text-white">D</div>
+        <div className="fixed inset-x-0 top-0 z-40 w-full border-b border-white/[0.05] bg-[rgba(10,10,12,0.7)] backdrop-blur-[16px] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-[-32px] after:h-8 after:bg-[linear-gradient(180deg,rgba(10,10,12,0.7)_0%,rgba(10,10,12,0)_100%)] after:content-['']">
+          <div className="mx-auto flex h-[70px] w-full max-w-7xl items-center px-5 sm:px-6 lg:px-8">
+            <div className="relative mx-auto grid w-full max-w-sm grid-cols-[48px_1fr_auto] items-center gap-4 lg:max-w-none lg:grid-cols-[48px_1fr_auto]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-[999px] border border-white/8 bg-white/[0.04]">
+                <div className="flex h-7 w-7 items-center justify-center rounded-[999px] bg-[linear-gradient(180deg,rgba(255,91,91,0.92),rgba(255,45,61,0.92))] text-sm font-bold text-[#F5F5F7]">D</div>
               </div>
               <div className="min-w-0 justify-self-center text-center">
-                <p className="truncate text-[10px] uppercase tracking-[0.32em] text-zinc-500">Dreamledge</p>
-                <h1 className="truncate text-xl font-semibold tracking-tight text-white">Creators</h1>
+                <p className="truncate text-[10px] uppercase tracking-[0.34em] text-[#F5F5F7]/55">Dreamledge</p>
+                <h1 className="truncate text-[1.05rem] font-semibold tracking-tight text-[#F5F5F7]">Creators</h1>
               </div>
               <div className="justify-self-end">
                 <Link
                   to="/login"
-                  className="shrink-0 rounded-[999px] border border-white/10 bg-white px-5 py-2.5 text-sm font-semibold !text-black shadow-lg shadow-white/10 transition hover:scale-[1.01] hover:bg-zinc-100 hover:!text-black"
+                  className="shrink-0 rounded-[999px] border border-white/8 bg-[#F1F1F3] px-5 py-2.5 text-sm font-semibold !text-black transition hover:bg-[#e7e7ea] active:scale-[0.99]"
                 >
                   Sign In
                 </Link>
@@ -75,13 +75,15 @@ export function LandingPage() {
           <div className="mt-10 grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-start lg:gap-8">
             <div className="text-center lg:text-left">
               <h2 className="text-[2rem] font-bold leading-[1.02] tracking-tight text-white sm:text-5xl lg:max-w-[12ch] lg:text-6xl lg:text-left">
-                Where creators compete
+                Built for Creators
                 <br />
-                and culture decides.
+                Who Want More.
               </h2>
-              <p className="mt-4 max-w-[32rem] text-sm leading-6 text-zinc-300 sm:mx-auto sm:text-base lg:mx-0">
-                Post your content, enter live battles, and grow your audience through real engagement, sharp profile presence, and creator-to-creator judging.
-              </p>
+              <div className="mt-4 max-w-[32rem] space-y-2 text-sm leading-6 text-zinc-300 sm:mx-auto sm:text-base lg:mx-0">
+                <p>Post your content and get real feedback.</p>
+                <p>Join a crew and compete in tournaments.</p>
+                <p>Win weekly challenges and grow faster.</p>
+              </div>
 
               <div className="mt-6 flex gap-3 sm:justify-center lg:justify-start">
                 <Link

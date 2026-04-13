@@ -10,6 +10,7 @@ import { ForgotPasswordPage } from "@/pages/public/ForgotPasswordPage";
 import { HomePage } from "@/pages/app/HomePage";
 import { ExplorePage } from "@/pages/app/ExplorePage";
 import { CreatePage } from "@/pages/app/CreatePage";
+import { ReviewSessionPage } from "@/pages/app/ReviewSessionPage";
 import { BattlesPage } from "@/pages/app/BattlesPage";
 import { BattleDetailPage } from "@/pages/app/BattleDetailPage";
 import { ContestsPage } from "@/pages/app/ContestsPage";
@@ -44,6 +45,7 @@ export function AppRouter() {
           <Route path="/app/home" element={<HomePage />} />
           <Route path="/app/explore" element={<ExplorePage />} />
           <Route path="/app/create" element={<CreatePage />} />
+          <Route path="/app/review-session" element={<ReviewSessionPage />} />
           <Route path="/app/battles" element={<BattlesPage />} />
           <Route path="/app/battles/:battleId" element={<BattleDetailPage />} />
           <Route path="/app/contests" element={<ContestsPage />} />

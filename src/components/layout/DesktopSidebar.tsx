@@ -1,10 +1,11 @@
-import { Bell, Flag, Home, LayoutDashboard, Medal, MessagesSquare, Settings, Shield, Trophy, Users, WandSparkles } from "lucide-react";
+import { Bell, Flag, Home, LayoutDashboard, Medal, MessagesSquare, Settings, Shield, Trophy, Users, WandSparkles, Video } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 const navItems = [
   ["/app/home", "Home", Home],
   ["/app/explore", "Explore", WandSparkles],
   ["/app/create", "Create", LayoutDashboard],
+  ["/app/review-session", "Session Room", Video],
   ["/app/battles", "Battles", Trophy],
   ["/app/leaderboards", "Leaderboards", Medal],
   ["/app/messages", "Messages", MessagesSquare],
@@ -16,7 +17,7 @@ const navItems = [
 
 export function DesktopSidebar() {
   return (
-    <aside className="sticky top-[89px] hidden h-[calc(100vh-110px)] w-72 shrink-0 flex-col rounded-[40px] border border-white/8 bg-zinc-900/78 p-5 shadow-2xl shadow-black/30 backdrop-blur-xl lg:flex">
+    <aside className="sticky top-6 hidden h-[calc(100vh-48px)] w-72 shrink-0 flex-col rounded-[40px] border border-white/8 bg-zinc-900/78 p-5 shadow-2xl shadow-black/30 backdrop-blur-xl lg:flex">
       <div className="mb-6 rounded-[32px] border border-white/8 bg-red-500/10 p-4">
         <p className="text-xs uppercase tracking-[0.28em] text-zinc-400">Competition mode</p>
         <p className="mt-2 text-xl font-semibold text-text-primary">Battle. Rank. Get discovered.</p>

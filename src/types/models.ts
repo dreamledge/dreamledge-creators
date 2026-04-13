@@ -39,6 +39,8 @@ export type NotificationType =
   | "message received"
   | "crew invite";
 
+export type SocialPlatform = "instagram" | "tiktok" | "youtube" | "twitter" | "facebook" | "twitch" | "website";
+
 export interface UserModel {
   id: string;
   username: string;
@@ -49,7 +51,7 @@ export interface UserModel {
   bio: string;
   categories: CreatorCategory[];
   goals: CreatorGoal[];
-  socialLinks: Partial<Record<"tiktok" | "youtube" | "twitter" | "facebook", string>>;
+  socialLinks: Partial<Record<SocialPlatform, string>>;
   totalPoints: number;
   battleWins: number;
   contestWins: number;
@@ -222,4 +224,56 @@ export interface AuthUser {
   username: string;
   photoUrl: string;
   onboardingComplete: boolean;
+}
+
+export type ReviewSessionState = "waiting" | "selection" | "watching" | "scoring" | "completed" | "cancelled";
+export type ReviewContentType = "uploaded_video" | "tiktok" | "youtube" | "instagram" | "facebook" | "clip_url";
+export type ReviewScoreLabel = "trash" | "ok" | "fire";
+export type ReviewCategory = "creativity" | "execution" | "entertainment";
+
+export interface ReviewSessionSubmission {
+  creatorId: string;
+  contentUrl: string;
+  contentType: ReviewContentType;
+  thumbnailUrl: string;
+  submittedAt: string;
+  playbackUrl: string;
+}
+
+export interface ReviewWatchProgress {
+  watchedMilliseconds: number;
+  hasMetMinimumWatchRequirement: boolean;
+  lastPlaybackPosition: number;
+  watchStartedAt: string | null;
+}
+
+export interface ReviewScores {
+  creativity: ReviewScoreLabel | null;
+  execution: ReviewScoreLabel | null;
+  entertainment: ReviewScoreLabel | null;
+}
+
+export interface ReviewSubmissionRecord {
+  reviewerId: string;
+  revieweeId: string;
+  scores: ReviewScores;
+  submittedAt: string;
+}
+
+export interface ReviewSessionModel {
+  id: string;
+  creatorA: string;
+  creatorB: string | null;
+  creatorASubmission: ReviewSessionSubmission | null;
+  creatorBSubmission: ReviewSessionSubmission | null;
+  creatorAWatchProgress: ReviewWatchProgress;
+  creatorBWatchProgress: ReviewWatchProgress;
+  creatorAReviewForB: ReviewSubmissionRecord | null;
+  creatorBReviewForA: ReviewSubmissionRecord | null;
+  status: ReviewSessionState;
+  selectionExpiresAt: string | null;
+  scoringExpiresAt: string | null;
+  watchingDeadlineAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
