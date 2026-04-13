@@ -5,6 +5,11 @@ import { AppLayout } from "@/app/layouts/AppLayout";
 import { AdminLayout } from "@/app/layouts/AdminLayout";
 import { LandingPage } from "@/pages/public/LandingPage";
 import { AboutPage } from "@/pages/public/AboutPage";
+import { ContactPage } from "@/pages/public/ContactPage";
+import { FaqPage } from "@/pages/public/FaqPage";
+import { HowItWorksPage } from "@/pages/public/HowItWorksPage";
+import { PrivacyPage } from "@/pages/public/PrivacyPage";
+import { TermsPage } from "@/pages/public/TermsPage";
 import { LoginPage } from "@/pages/public/LoginPage";
 import { SignupPage } from "@/pages/public/SignupPage";
 import { ForgotPasswordPage } from "@/pages/public/ForgotPasswordPage";
@@ -37,8 +42,13 @@ export function AppRouter() {
       <Route element={<PublicLayout />}>
         <Route path="/" element={<LandingPage />} />
         <Route path="/about-us" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/faq" element={<FaqPage />} />
+        <Route path="/how-it-works" element={<HowItWorksPage />} />
+        <Route path="/privacy-policy" element={<PrivacyPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/terms-of-service" element={<TermsPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       </Route>
 

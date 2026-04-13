@@ -23,11 +23,11 @@ const features = [
 const categories = ["Funny", "Storytime", "Sports", "Commentary", "Education", "Motivation"];
 const footerLinks = [
   { label: "About Us", href: "/about-us", external: false },
-  { label: "How It Works", href: "#", external: false },
-  { label: "Contact", href: "#", external: false },
-  { label: "FAQ", href: "#", external: false },
-  { label: "Terms of Service", href: "#", external: false },
-  { label: "Privacy Policy", href: "#", external: false },
+  { label: "How It Works", href: "/how-it-works", external: false },
+  { label: "Contact", href: "/contact", external: false },
+  { label: "FAQ", href: "/faq", external: false },
+  { label: "Terms of Service", href: "/terms-of-service", external: false },
+  { label: "Privacy Policy", href: "/privacy-policy", external: false },
 ];
 
 export function LandingPage() {
