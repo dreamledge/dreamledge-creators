@@ -1,3 +1,9 @@
+import { DreamledgeLoader } from "@/components/ui/DreamledgeLoader";
+
 export function LoadingState() {
-  return <div className="rounded-[36px] border border-white/10 bg-white/4 p-6 text-sm text-text-secondary">Loading prototype experience...</div>;
+  return (
+    <div className="bubble-card rounded-[36px] flex min-h-48 items-center justify-center p-6">
+      <DreamledgeLoader />
+    </div>
+  );
 }
