@@ -64,11 +64,25 @@ export function LandingPage() {
                 <h1 className="truncate text-[1.05rem] font-semibold tracking-tight text-[#F5F5F7]">Creators</h1>
               </div>
               <div className="justify-self-end">
-                <Link
-                  to="/login"
-                  className="shrink-0 rounded-[999px] border border-white/8 bg-[#F1F1F3] px-5 py-2.5 text-sm font-semibold !text-black transition hover:bg-[#e7e7ea] active:scale-[0.99]"
-                >
-                  Sign In
+                <Link to="/login" className="dreamledge-nav-signin-wrapper" aria-label="Sign In">
+                  <span className="dreamledge-nav-signin-btn">
+                    <span className="dreamledge-nav-signin-letter">S</span>
+                    <span className="dreamledge-nav-signin-letter">I</span>
+                    <span className="dreamledge-nav-signin-letter">G</span>
+                    <span className="dreamledge-nav-signin-letter">N</span>
+                    <span className="dreamledge-nav-signin-letter">-</span>
+                    <span className="dreamledge-nav-signin-letter">I</span>
+                    <span className="dreamledge-nav-signin-letter">N</span>
+                    <span className="dreamledge-nav-signin-shutter-wrapper">
+                      <span className="dreamledge-nav-signin-shutter s-1" />
+                      <span className="dreamledge-nav-signin-shutter s-2" />
+                      <span className="dreamledge-nav-signin-shutter s-3" />
+                      <span className="dreamledge-nav-signin-shutter s-4" />
+                      <span className="dreamledge-nav-signin-shutter s-5" />
+                      <span className="dreamledge-nav-signin-shutter s-6" />
+                    </span>
+                  </span>
+                  <span className="dreamledge-nav-signin-flash" />
                 </Link>
               </div>
             </div>
