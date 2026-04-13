@@ -21,7 +21,14 @@ const features = [
 ];
 
 const categories = ["Funny", "Storytime", "Sports", "Commentary", "Education", "Motivation"];
-const footerLinks = ["About Us", "How It Works", "Contact", "FAQ", "Terms of Service", "Privacy Policy"];
+const footerLinks = [
+  { label: "About Us", href: "/about-us", external: false },
+  { label: "How It Works", href: "#", external: false },
+  { label: "Contact", href: "#", external: false },
+  { label: "FAQ", href: "#", external: false },
+  { label: "Terms of Service", href: "#", external: false },
+  { label: "Privacy Policy", href: "#", external: false },
+];
 
 export function LandingPage() {
   return (
@@ -190,15 +197,17 @@ export function LandingPage() {
           <footer className="mt-14 pt-8">
             <div>
               <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-8 sm:gap-y-4">
-                {footerLinks.map((link) => (
-                  <a
-                    key={link}
-                    href="#"
-                    className="footer-link text-sm text-white/58 transition duration-300 hover:text-white"
-                  >
-                    {link}
-                  </a>
-                ))}
+                {footerLinks.map((link) =>
+                  link.external ? (
+                    <a key={link.label} href={link.href} className="footer-link text-sm text-white/58 transition duration-300 hover:text-white">
+                      {link.label}
+                    </a>
+                  ) : (
+                    <Link key={link.label} to={link.href} className="footer-link text-sm text-white/58 transition duration-300 hover:text-white">
+                      {link.label}
+                    </Link>
+                  ),
+                )}
               </div>
               <p className="mt-8 pb-2 text-center text-xs tracking-[0.18em] text-white/38">
                 © 2026 Dreamledge. All rights reserved.
