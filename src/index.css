@@ -123,6 +123,112 @@ button {
   backdrop-filter: blur(18px);
 }
 
+.dreamledge-signup-shell {
+  overflow: hidden;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(245, 247, 254, 0.96), rgba(234, 239, 251, 0.93));
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+}
+
+.dreamledge-signup-form {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  padding: 32px 24px 24px;
+  gap: 16px;
+  text-align: center;
+}
+
+.dreamledge-signup-head {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dreamledge-signup-head span {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: #111111;
+}
+
+.dreamledge-signup-head p {
+  font-size: 1rem;
+  color: #6e5d5d;
+}
+
+.dreamledge-signup-inputs {
+  overflow: hidden;
+  background-color: rgba(255, 255, 255, 0.98);
+  width: 100%;
+  margin: 0.75rem 0 0.5rem;
+  border-radius: 12px;
+  outline: 0;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.dreamledge-signup-field {
+  display: block;
+}
+
+.dreamledge-signup-input {
+  border: none;
+  outline: none;
+  padding: 10px 15px;
+  width: 100%;
+  height: 46px;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.22);
+  font-weight: 400;
+  color: #111111;
+  background: transparent;
+}
+
+.dreamledge-signup-input::placeholder {
+  color: #7c6666;
+}
+
+.dreamledge-signup-input--last {
+  border-bottom: none;
+}
+
+.dreamledge-signup-form > .button,
+.dreamledge-signup-form > button:not(.dreamledge-signin-btn-wrapper) {
+  width: 100%;
+}
+
+.dreamledge-signup-footer {
+  width: calc(100% + 48px);
+  margin: 8px -24px -24px;
+  background: rgba(224, 236, 251, 0.92);
+  padding: 16px;
+  font-size: 1rem;
+  text-align: center;
+  color: #2b2b2b;
+}
+
+.dreamledge-signup-footer a {
+  font-weight: 700;
+  color: #c91529;
+  transition: color 0.25s ease;
+}
+
+.dreamledge-signup-footer a:hover {
+  color: #ff2d3d;
+}
+
+.dreamledge-signup-google {
+  width: 100%;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #111111;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.dreamledge-signup-google:hover {
+  background: #f6f6f6;
+  color: #111111;
+}
+
 .score-category {
   margin-bottom: 20px;
 }
@@ -378,7 +484,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   padding: 14px 16px;
   border-radius: 999px;
   cursor: pointer;
@@ -416,17 +522,26 @@ button {
   border-width: 4px;
 }
 
+.landing-cta-secondary .landing-cta-text {
+  font-size: 0.92rem;
+}
+
 .landing-cta-text {
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.01em;
   color: #ffffff;
+  flex: 0 0 auto;
 }
 
 .landing-cta-svg {
-  padding-top: 2px;
-  height: 100%;
-  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 1px;
+  height: auto;
+  width: auto;
+  flex: 0 0 auto;
 }
 
 .landing-cta-svg svg {
@@ -437,6 +552,27 @@ button {
 .landing-cta-button:hover .landing-cta-svg svg {
   animation: landing-jello-vertical 0.9s both;
   transform-origin: left;
+}
+
+@media (max-width: 640px) {
+  .landing-cta-button {
+    gap: 4px;
+    padding: 12px 12px;
+  }
+
+  .landing-cta-text {
+    font-size: 0.88rem;
+  }
+
+  .landing-cta-secondary .landing-cta-text {
+    font-size: 0.78rem;
+    letter-spacing: 0;
+  }
+
+  .landing-cta-svg svg {
+    width: 24px;
+    height: 14px;
+  }
 }
 
 .footer-link {

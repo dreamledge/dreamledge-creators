@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 const features = [
   {
-    title: "Blow Up Your Content",
-    text: "Your content gets seen by real creators who actually engage. No algorithms holding you back - just pure exposure and growth.",
+    title: "Trusted by creators",
+    text: "Way Off Script, Audioswim, and Sosa Noir.",
     icon: "⚔️",
     image: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=500&q=80",
   },
@@ -94,10 +94,10 @@ export function LandingPage() {
 
           <div className="mt-10">
             <div className="text-center lg:text-left">
-              <h2 className="text-[2rem] font-bold leading-[1.02] tracking-tight text-white sm:text-5xl lg:max-w-[12ch] lg:text-6xl lg:text-left">
-                Built for Creators
-                <br />
-                Who Want More.
+              <h2 className="text-[2rem] font-bold leading-[0.96] tracking-tight text-white sm:text-5xl lg:max-w-[13ch] lg:text-6xl lg:text-left">
+                <span className="block text-white/88">The Platform for</span>
+                <span className="block text-white">Creators to</span>
+                <span className="block text-red-400">Compete, Connect, and Grow.</span>
               </h2>
               <div className="mt-4 max-w-[32rem] space-y-2 text-sm leading-6 text-zinc-300 sm:mx-auto sm:text-base lg:mx-0">
                 <p>Post your content and get real feedback.</p>
@@ -124,7 +124,7 @@ export function LandingPage() {
                   to="/app/explore"
                   className="landing-cta-button landing-cta-secondary flex-1"
                 >
-                  <span className="landing-cta-text">Explore</span>
+                  <span className="landing-cta-text">Explore Creators</span>
                   <span className="landing-cta-svg" aria-hidden="true">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 38 15" fill="none">
                       <path

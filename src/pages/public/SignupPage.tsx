@@ -10,8 +10,8 @@ export function SignupPage() {
 
   return (
     <PageContainer className="flex min-h-screen items-center justify-center py-10">
-      <div className="w-full max-w-xl space-y-6 bubble-card rounded-[40px] p-6">
-        {!user || user.onboardingComplete ? <AuthForm title="Create your creator account" buttonLabel="Create Account" includeName onSubmit={({ email, displayName }) => signup(email, displayName)} /> : null}
+      <div className="w-full max-w-xl space-y-6">
+        {!user || user.onboardingComplete ? <div className="dreamledge-signup-shell mx-auto max-w-sm"><AuthForm title="Create your creator account" buttonLabel="Sign up" includeName signupCard onSubmit={({ email, displayName, username }) => signup(email, displayName, username)} /></div> : null}
         {user && !user.onboardingComplete ? <ProfileSetupForm onComplete={() => { completeOnboarding(); navigate("/app/home"); }} /> : null}
       </div>
     </PageContainer>

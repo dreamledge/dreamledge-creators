@@ -7,7 +7,7 @@ interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
   login: (email: string) => void;
-  signup: (email: string, displayName: string) => void;
+  signup: (email: string, displayName: string, username?: string) => void;
   logout: () => void;
   completeOnboarding: () => void;
 }
@@ -34,12 +34,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(next);
       setStoredAuthUser(next);
     },
-    signup: (email: string, displayName: string) => {
+    signup: (email: string, displayName: string, username?: string) => {
       const next: AuthUser = {
         id: "prototype-user",
         email,
         displayName,
-        username: displayName.toLowerCase().replace(/\s+/g, ""),
+        username: username?.trim() || displayName.toLowerCase().replace(/\s+/g, ""),
         photoUrl: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=400&q=80",
         onboardingComplete: false,
       };
