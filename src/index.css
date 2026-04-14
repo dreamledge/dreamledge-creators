@@ -1201,3 +1201,374 @@ button {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+.orwellian-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(circle at top, rgba(239, 68, 68, 0.08), transparent 50%),
+    linear-gradient(180deg, #08080b 0%, #09090d 40%, #12090d 100%);
+  transition: opacity 0.5s ease;
+}
+
+.orwellian-overlay.orwellian-fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.orwellian-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  font-family: "Arial Black", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 900;
+}
+
+.orwellian-loader {
+  width: 320px;
+  height: 320px;
+  background-color: #0a0a0a;
+  border: 12px solid #1a1a1a;
+  border-radius: 24px;
+  position: relative;
+  overflow: hidden;
+  padding: 24px;
+  box-sizing: border-box;
+  box-shadow: 0 0 60px rgba(255, 45, 61, 0.15), inset 0 0 30px rgba(0, 0, 0, 0.8);
+}
+
+.orwellian-loader--scaled {
+  width: 90vw;
+  max-width: 500px;
+  height: auto;
+  aspect-ratio: 1;
+  border-width: 8px;
+}
+
+.orwellian-container .eye {
+  width: 160px;
+  height: 60px;
+  background-color: #f5f5f7;
+  border-radius: 50%;
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -60%);
+  animation: pulse 2s infinite;
+  overflow: hidden;
+  z-index: 10;
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+}
+
+.eye--scaled {
+  width: 28%;
+  height: auto;
+  aspect-ratio: 160/60;
+  top: 25%;
+}
+
+.orwellian-container .pupil {
+  width: 50px;
+  height: 50px;
+  background-color: #0a0a0a;
+  border-radius: 50%;
+  position: absolute;
+  top: 33%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: look-diagonal 4s infinite ease-in-out;
+}
+
+.pupil--scaled {
+  width: 35%;
+  height: auto;
+  aspect-ratio: 1;
+  top: 32%;
+}
+
+.orwellian-container .pupil::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30px;
+  height: 30px;
+  background: radial-gradient(circle, rgb(255, 45, 61) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.8;
+}
+
+.orwellian-container .eyelid {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: #0a0a0a;
+  animation: blink 4s infinite;
+}
+
+.orwellian-container .spotlight {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  width: 47px;
+  height: 200px;
+  background: linear-gradient(to bottom, rgba(255, 45, 61, 0.6), transparent);
+  filter: blur(8px);
+  transform-origin: top;
+  animation: spotlight-sweep-diagonal 4s infinite ease-in-out;
+}
+
+.spotlight--scaled {
+  width: 12%;
+  height: auto;
+  aspect-ratio: 47/200;
+  background: linear-gradient(to bottom, rgba(255, 45, 61, 0.5), transparent);
+}
+
+.orwellian-container .text {
+  position: absolute;
+  bottom: 20px;
+  left: 10px;
+  right: 10px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #f5f5f7;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  animation: glitch 1s infinite;
+  z-index: 20;
+}
+
+.text--scaled {
+  font-size: clamp(14px, 3vw, 22px);
+  bottom: 8%;
+}
+
+.orwellian-username {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(18px, 4vw, 32px);
+  font-weight: 700;
+  color: #f5f5f7;
+  text-transform: lowercase;
+  letter-spacing: 0.05em;
+  z-index: 15;
+  animation: username-glow 4s infinite ease-in-out;
+  text-shadow: 0 0 20px rgba(255, 45, 61, 0.6), 0 0 40px rgba(255, 45, 61, 0.3);
+}
+
+@keyframes username-glow {
+  0%, 100% { 
+    opacity: 0.6; 
+    text-shadow: 0 0 20px rgba(255, 45, 61, 0.4), 0 0 40px rgba(255, 45, 61, 0.2);
+  }
+  25% { 
+    opacity: 1; 
+    text-shadow: 0 0 30px rgba(255, 45, 61, 0.8), 0 0 60px rgba(255, 45, 61, 0.5);
+  }
+  50% { 
+    opacity: 0.6; 
+    text-shadow: 0 0 20px rgba(255, 45, 61, 0.4), 0 0 40px rgba(255, 45, 61, 0.2);
+  }
+  75% { 
+    opacity: 1; 
+    text-shadow: 0 0 30px rgba(255, 45, 61, 0.8), 0 0 60px rgba(255, 45, 61, 0.5);
+  }
+}
+
+.orwellian-container .scan-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 50%,
+    rgba(0, 0, 0, 0.2) 50%
+  );
+  background-size: 100% 4px;
+  animation: scan 10s linear infinite;
+  z-index: 30;
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.orwellian-container .tv-effect {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%),
+    linear-gradient(
+      90deg,
+      rgba(255, 45, 61, 0.04),
+      rgba(0, 255, 0, 0.01),
+      rgba(0, 0, 255, 0.04)
+    );
+  background-size: 100% 2px, 3px 100%;
+  animation: tv-flicker 0.15s infinite;
+  z-index: 35;
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.orwellian-container .orwellian-loader::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.02),
+    rgba(255, 255, 255, 0.02) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  z-index: 40;
+}
+
+.orwellian-container .orwellian-loader::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at center,
+    transparent 30%,
+    rgba(0, 0, 0, 0.6) 90%
+  );
+  z-index: 35;
+  pointer-events: none;
+}
+
+.orwellian-dreamledge-loader {
+  margin-top: 1rem;
+}
+
+.orwellian-dreamledge-loader .dreamledge-loader {
+  --main-size: 3em;
+  filter: drop-shadow(0 0 0.15em rgba(255, 45, 61, 0.3));
+}
+
+.orwellian-dreamledge-loader .dreamledge-loader .text span {
+  background: linear-gradient(to right, #f5f5f7 4%, #ff5b5b 7%);
+  background-size: 200% auto;
+  background-clip: text;
+  color: transparent;
+}
+
+.orwellian-dreamledge-loader .dreamledge-loader .line::after {
+  background: linear-gradient(90deg, #ff5b5b 0%, #ff2d3d 55%, #ff5b5b 100%);
+}
+
+@keyframes look-diagonal {
+  0%, 100% { transform: translateX(-50%) rotate(0deg); }
+  25% { transform: translateX(-40%) rotate(-15deg); }
+  75% { transform: translateX(-60%) rotate(15deg); }
+}
+
+@keyframes spotlight-sweep-diagonal {
+  0%, 100% { transform: translateX(-50%) rotate(0deg); }
+  25% { transform: translateX(-40%) rotate(-15deg); }
+  75% { transform: translateX(-60%) rotate(15deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: translate(-50%, -60%) scale(1); }
+  50% { transform: translate(-50%, -60%) scale(1.05); }
+}
+
+@keyframes glitch {
+  0%, 100% { transform: translate(0, 0); opacity: 1; }
+  25% { transform: translate(-2px, 2px); opacity: 0.8; }
+  50% { transform: translate(2px, -2px); opacity: 0.6; }
+  75% { transform: translate(-2px, -2px); opacity: 0.8; }
+}
+
+@keyframes blink {
+  0%, 90%, 100% { height: 0; }
+  95% { height: 100%; }
+}
+
+@keyframes scan {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 100%; }
+}
+
+@keyframes tv-flicker {
+  0% { opacity: 0.25; }
+  50% { opacity: 0.35; }
+  100% { opacity: 0.25; }
+}
+
+.orwellian-container .text {
+  user-select: none;
+  text-shadow: 0 0 10px rgba(255, 45, 61, 0.5), 0 0 20px rgba(255, 45, 61, 0.3);
+}
+
+.orwellian-container .tv-effect::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+      circle at center,
+      rgba(255, 255, 255, 0.05) 0%,
+      transparent 80%
+    ),
+    repeating-radial-gradient(
+      circle at center,
+      rgba(0, 0, 0, 0) 0,
+      rgba(255, 45, 61, 0.05) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+  background-size: 100% 100%, 3px 3px;
+  pointer-events: none;
+}
+
+@keyframes eye-glow {
+  0%, 100% { box-shadow: 0 0 15px rgba(255, 45, 61, 0.4); }
+  50% { box-shadow: 0 0 30px rgba(255, 45, 61, 0.7); }
+}
+
+.orwellian-container .eye {
+  animation: pulse 2s infinite, eye-glow 3s infinite;
+}
+
+@media (max-width: 640px) {
+  .orwellian-loader--scaled {
+    width: 85vw;
+    border-width: 6px;
+  }
+  
+  .orwellian-container {
+    gap: 1.5rem;
+  }
+  
+  .orwellian-dreamledge-loader .dreamledge-loader {
+    --main-size: 2.2em;
+  }
+}
