@@ -224,6 +224,9 @@ export interface AuthUser {
   username: string;
   photoUrl: string;
   onboardingComplete: boolean;
+  bio?: string;
+  socialLinks?: Partial<Record<SocialPlatform, string>>;
+  bannerUrl?: string;
 }
 
 export type ReviewSessionState = "waiting" | "selection" | "watching" | "scoring" | "completed" | "cancelled";

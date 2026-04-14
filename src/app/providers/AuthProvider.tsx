@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, useState } from "react";
 import { getStoredAuthUser, setStoredAuthUser } from "@/features/auth/useAuthStorage";
 import { mockUsers } from "@/lib/constants/mockData";
-import type { AuthUser } from "@/types/models";
+import type { AuthUser, SocialPlatform } from "@/types/models";
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -10,6 +10,7 @@ interface AuthContextValue {
   signup: (email: string, displayName: string, username?: string) => void;
   logout: () => void;
   completeOnboarding: () => void;
+  updateProfile: (data: { displayName?: string; username?: string; bio?: string; socialLinks?: Record<SocialPlatform, string> }) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -53,6 +54,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     completeOnboarding: () => {
       if (!user) return;
       const next = { ...user, onboardingComplete: true };
+      setUser(next);
+      setStoredAuthUser(next);
+    },
+    updateProfile: (data) => {
+      if (!user) return;
+      const next: AuthUser = {
+        ...user,
+        ...data,
+      };
       setUser(next);
       setStoredAuthUser(next);
     },
