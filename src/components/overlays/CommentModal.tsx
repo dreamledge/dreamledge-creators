@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { createContext, useContext } from "react";
-import { Heart, MessageCircle, Share2, Bookmark, X, MoreHorizontal, Image as ImageIcon, Smile } from "lucide-react";
+import { Heart, Image as ImageIcon, Smile } from "lucide-react";
 
 interface Comment {
   id: string;
@@ -117,7 +117,7 @@ const mockComments: Comment[] = [
 ];
 
 export function CommentModal() {
-  const { isOpen, closeCommentModal, activeCardId } = useCommentModal();
+  const { isOpen, closeCommentModal } = useCommentModal();
   const [newComment, setNewComment] = useState("");
 
   if (!isOpen) return null;
