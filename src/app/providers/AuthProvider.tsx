@@ -10,7 +10,7 @@ interface AuthContextValue {
   signup: (email: string, displayName: string, username?: string) => void;
   logout: () => void;
   completeOnboarding: () => void;
-  updateProfile: (data: { displayName?: string; username?: string; bio?: string; socialLinks?: Record<SocialPlatform, string> }) => void;
+  updateProfile: (data: { displayName?: string; username?: string; bio?: string; photoUrl?: string; socialLinks?: Record<SocialPlatform, string> }) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);

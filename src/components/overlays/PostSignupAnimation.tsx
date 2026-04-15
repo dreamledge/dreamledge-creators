@@ -12,7 +12,7 @@ export function PostSignupAnimation({ username }: PostSignupAnimationProps) {
   useEffect(() => {
     const timer = setTimeout(() => {
       setFading(true);
-      setTimeout(() => navigate("/app/me"), 500);
+      setTimeout(() => navigate("/app/home"), 500);
     }, 4000);
     return () => clearTimeout(timer);
   }, [navigate]);

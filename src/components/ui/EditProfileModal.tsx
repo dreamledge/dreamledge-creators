@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode, useRef } from "react";
 import { useAuth } from "@/app/providers/AuthProvider";
 import type { SocialPlatform } from "@/types/models";
 
@@ -44,10 +44,12 @@ const SOCIAL_PLATFORMS: { key: SocialPlatform; label: string; icon: ReactNode; b
 
 export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
   const { user, updateProfile } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     displayName: user?.displayName || "",
     username: user?.username || "",
     bio: "",
+    photoUrl: user?.photoUrl || "",
     socialLinks: user && "socialLinks" in user ? (user as any).socialLinks || {} : {},
   });
   const [editingLink, setEditingLink] = useState<SocialPlatform | null>(null);
@@ -59,10 +61,26 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
         displayName: user.displayName || "",
         username: user.username || "",
         bio: (user as any).bio || "",
+        photoUrl: user.photoUrl || "",
         socialLinks: (user as any).socialLinks || {},
       });
     }
   }, [user]);
+
+  const handlePhotoClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prev) => ({ ...prev, photoUrl: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -71,6 +89,7 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
       displayName: formData.displayName,
       username: formData.username,
       bio: formData.bio,
+      photoUrl: formData.photoUrl,
       socialLinks: formData.socialLinks,
     });
     onClose();
@@ -108,6 +127,22 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
         </div>
 
         <div className="edit-profile-modal-body">
+          <div className="profile-photo-section">
+            <div className="profile-photo-preview" onClick={handlePhotoClick}>
+              <img src={formData.photoUrl || "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=400&q=80"} alt="Profile" />
+              <div className="profile-photo-overlay">
+                <svg viewBox="0 0 24 24" className="w-6 h-6"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+              </div>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </div>
+
           <div className="form-group">
             <label>Display Name</label>
             <input
