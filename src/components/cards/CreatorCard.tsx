@@ -104,9 +104,14 @@ export function CreatorCard({ creator, showSocialLinks = false }: { creator: Use
           </div>
         ) : null}
 
-        <button type="button" className="cta-button edit-profile explore-card-button">
-          Follow
-        </button>
+        <div className="explore-card-actions">
+          <button type="button" className="cta-button edit-profile explore-card-button">
+            Follow
+          </button>
+          <button type="button" className="cta-button edit-profile explore-card-button">
+            Message
+          </button>
+        </div>
 
         <div className="stats explore-card-stats">
           <div className="stat-item">
