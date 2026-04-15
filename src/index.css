@@ -2565,8 +2565,9 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px 0;
+  padding: 40px 0 12px 0;
   width: 100%;
+  position: relative;
 }
 
 .card {
@@ -2692,12 +2693,18 @@ button {
   width: 100%;
   height: 100%;
   border: none;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 .video-thumbnail {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 /* Video Controls */
@@ -2712,6 +2719,7 @@ button {
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
+  z-index: 10;
 }
 
 .video-controls-visible {
@@ -2789,14 +2797,15 @@ button {
   margin-top: 4px;
 }
 
-/* Creator Overlay */
+/* Creator Overlay - Above the card */
 .creator-overlay {
   position: absolute;
-  top: 24px;
+  top: 8px;
   left: 8px;
   display: flex;
   align-items: center;
   gap: 8px;
+  z-index: 5;
 }
 
 .creator-link {
@@ -2921,16 +2930,19 @@ button {
 .volume-toggle-container {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  padding: 8px 16px;
-  gap: 12px;
+  justify-content: center;
+  padding: 10px 16px 14px;
+  gap: 18px;
+  flex-wrap: wrap;
 }
 
 .volume-label {
   display: flex;
   align-items: center;
   gap: 8px;
+  justify-content: center;
   font-size: 12px;
+  text-align: center;
   color: #888;
 }
 
@@ -2939,60 +2951,111 @@ button {
   font-weight: bold;
 }
 
-.volume-switch {
-  --color: #e63946;
-  --size: 30px;
+.volume-on-button {
+  border: 1px solid rgba(230, 57, 70, 0.35);
+  border-radius: 999px;
+  background: rgba(230, 57, 70, 0.14);
+  color: #f4f4f5;
+  padding: 9px 18px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+}
+
+.volume-on-button:hover:not(:disabled) {
+  background: rgba(230, 57, 70, 0.22);
+  border-color: rgba(230, 57, 70, 0.55);
+  transform: translateY(-1px);
+}
+
+.volume-on-button:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+/* Volume Toggle Switch */
+.volume-toggle-wrapper {
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px 16px 14px;
+}
+
+.volume-toggle-label {
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+}
+
+.volume-checkbox {
+  display: none;
+}
+
+.volume-toggle-switch {
+  width: 40px;
+  height: 40px;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e63946;
+  border-radius: 50%;
   cursor: pointer;
-  font-size: var(--size);
-  user-select: none;
-  fill: var(--color);
+  transition-duration: 0.3s;
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.13);
+  overflow: hidden;
 }
 
-.volume-switch .volume-icon {
+.volume-toggle-switch:hover {
+  background-color: rgb(61, 61, 61);
+}
+
+.volume-toggle-switch:active {
+  transform: scale(0.7);
+}
+
+.volume-speaker {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: absolute;
-  width: 28px;
-  height: 28px;
-  animation: volume-keyframes-fill .5s;
+  z-index: 2;
+  transition-duration: 0.3s;
 }
 
-.volume-switch .mute {
-  display: block;
+.volume-speaker svg {
+  width: 22px;
+  height: 22px;
 }
 
-.volume-switch .voice {
-  display: none;
-}
-
-.volume-switch input:checked ~ .mute {
-  display: none;
-}
-
-.volume-switch input:checked ~ .voice {
-  display: block;
-}
-
-.volume-switch input {
+.volume-mute-speaker {
   position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   opacity: 0;
-  cursor: pointer;
-  height: 0;
-  width: 0;
+  z-index: 3;
+  transition-duration: 0.3s;
 }
 
-@keyframes volume-keyframes-fill {
-  0% {
-    transform: rotate(0deg) scale(0);
-    opacity: 0;
-  }
-  50% {
-    transform: rotate(-10deg) scale(1.2);
-  }
-  100% {
-    transform: rotate(0deg) scale(1);
-    opacity: 1;
-  }
+.volume-mute-speaker svg {
+  width: 22px;
+  height: 22px;
+}
+
+.volume-checkbox:checked + .volume-toggle-switch .volume-speaker {
+  opacity: 0;
+  transition-duration: 0.3s;
+}
+
+.volume-checkbox:checked + .volume-toggle-switch .volume-mute-speaker {
+  opacity: 1;
+  transition-duration: 0.3s;
 }

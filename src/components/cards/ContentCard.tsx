@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Heart, MessageCircle, Share2, Bookmark } from "lucide-react";
 import { formatCompactNumber } from "@/lib/formatters";
@@ -67,12 +67,11 @@ const FullscreenIcon = () => (
 export function ContentCard({ content }: ContentCardProps) {
   const { isMuted, setIsMuted, currentPlayingId, setCurrentPlaying } = useFeedContext();
   const [showControls, setShowControls] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const isPlaying = currentPlayingId === content.id;
 
   const creator = mockUsers.find((user) => user.id === content.creatorId);
 
@@ -91,39 +90,40 @@ export function ContentCard({ content }: ContentCardProps) {
   const getEmbedSrc = (embedUrl: string, muted: boolean): string => {
     if (!embedUrl) return "";
     let src = embedUrl;
-    if (embedUrl.includes("youtube.com") || embedUrl.includes("youtu.be")) {
+    if (embedUrl.includes("youtube.com/shorts/")) {
+      const videoId = embedUrl.split("shorts/")[1]?.split("?")[0];
+      if (videoId) {
+        src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${muted ? 1 : 0}&loop=1&playlist=${videoId}&iv_load_policy=3&modestbranding=1&playsinline=1&controls=0&showinfo=0&rel=0`;
+      }
+    } else if (embedUrl.includes("youtube.com") || embedUrl.includes("youtu.be")) {
       const videoId = embedUrl.split("v=")[1]?.split("&")[0] || embedUrl.split("/").pop();
-      src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${muted ? 1 : 0}&loop=1&playlist=${videoId}&iv_load_policy=3&modestbranding=1&playsinline=1`;
+      src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${muted ? 1 : 0}&loop=1&playlist=${videoId}&iv_load_policy=3&modestbranding=1&playsinline=1&controls=0&showinfo=0&rel=0`;
+    } else if (embedUrl.includes("tiktok.com")) {
+      const videoId = embedUrl.match(/video\/(\d+)/)?.[1];
+      if (videoId) {
+        src = `https://www.tiktok.com/player/v1/${videoId}?autoplay=1&mute=${muted ? 1 : 0}&playsinline=1`;
+      }
+    } else if (embedUrl.includes("instagram.com")) {
+      const shortcode = embedUrl.match(/\/p\/([A-Za-z0-9_-]+)/)?.[1] || embedUrl.match(/\/reel\/([A-Za-z0-9_-]+)/)?.[1];
+      if (shortcode) {
+        src = `https://www.instagram.com/p/${shortcode}/embed/?__a=1&__d=1`;
+      }
+    } else if (embedUrl.includes("facebook.com") || embedUrl.includes("fb.watch")) {
+      const videoId = embedUrl.match(/v=(\d+)/)?.[1] || embedUrl.match(/\/watch\/\?v=(\d+)/)?.[1];
+      if (videoId) {
+        src = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(embedUrl)}&show_text=0&mute=${muted ? 1 : 0}&autoplay=1`;
+      } else {
+        src = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(embedUrl)}&show_text=0&mute=${muted ? 1 : 0}&autoplay=1`;
+      }
     }
     return src;
   };
 
-  const handleVisibilityChange = useCallback((entries: IntersectionObserverEntry[]) => {
-    const [entry] = entries;
-    if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
-      setCurrentPlaying(content.id);
-      setIsPlaying(true);
-    } else if (currentPlayingId === content.id && !entry.isIntersecting) {
-      setIsPlaying(false);
+  useEffect(() => {
+    if (!isPlaying) {
       setProgress(0);
     }
-  }, [content.id, currentPlayingId, setCurrentPlaying]);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(handleVisibilityChange, {
-      threshold: 0.5,
-    });
-    if (cardRef.current) {
-      observer.observe(cardRef.current);
-    }
-    return () => observer.disconnect();
-  }, [handleVisibilityChange]);
-
-  useEffect(() => {
-    if (currentPlayingId !== content.id) {
-      setIsPlaying(false);
-    }
-  }, [currentPlayingId, content.id]);
+  }, [isPlaying]);
 
   const showControlsTemporarily = () => {
     setShowControls(true);
@@ -135,12 +135,14 @@ export function ContentCard({ content }: ContentCardProps) {
     }, 3000);
   };
 
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
+  const handlePlayPause = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentPlaying(isPlaying ? null : content.id);
     showControlsTemporarily();
   };
 
-  const handleMuteToggle = () => {
+  const handleMuteToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setIsMuted(!isMuted);
     showControlsTemporarily();
   };
@@ -164,7 +166,27 @@ export function ContentCard({ content }: ContentCardProps) {
   const hasTwitter = !!socialLinks?.twitter;
 
   return (
-    <div ref={cardRef} className="phone-card-outer">
+    <div ref={cardRef} className="phone-card-outer" data-content-id={content.id}>
+      {/* Creator Overlay - Above the card */}
+      <div className="creator-overlay">
+        <Link to={`/app/profile/${creator?.id}`} className="creator-link">
+          <img 
+            src={creator?.photoUrl || "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=100&q=80"} 
+            alt={creator?.displayName}
+            className="creator-photo"
+          />
+        </Link>
+        <div className="creator-info">
+          <Link to={`/app/profile/${creator?.id}`} className="creator-name">
+            {creator?.displayName || "Creator"}
+          </Link>
+          <span className="platform-badge">
+            {getPlatformIcon()}
+            {content.platform}
+          </span>
+        </div>
+      </div>
+      
       <div className={`card ${isFullscreen ? "card-fullscreen" : ""}`}>
         {/* Left Side Buttons - btn1, btn2, btn3 */}
         <div className="btn1"></div>
@@ -172,7 +194,12 @@ export function ContentCard({ content }: ContentCardProps) {
         <div className="btn3"></div>
         
         {/* Card Inner - Screen */}
-        <div className="card-int" onClick={showControlsTemporarily}>
+        <div className="card-int" onClick={() => {
+          if (!isPlaying) {
+            setCurrentPlaying(content.id);
+          }
+          showControlsTemporarily();
+        }}>
           {/* Notch - top */}
           <div className="top">
             <div className="camera">
@@ -184,7 +211,6 @@ export function ContentCard({ content }: ContentCardProps) {
           {/* Video Embed or Thumbnail */}
           {isPlaying && content.embedUrl ? (
             <iframe
-              ref={iframeRef}
               src={getEmbedSrc(content.embedUrl, isMuted)}
               className="video-embed"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -198,7 +224,7 @@ export function ContentCard({ content }: ContentCardProps) {
             />
           )}
           
-          {/* Custom Controls */}
+          {/* Custom Controls - only show on tap */}
           <div className={`video-controls ${showControls ? "video-controls-visible" : ""}`}>
             <button className="control-btn play-btn" onClick={handlePlayPause}>
               {isPlaying ? <PauseIcon /> : <PlayIcon />}
@@ -221,26 +247,6 @@ export function ContentCard({ content }: ContentCardProps) {
                 <span>0:00</span>
                 <span>0:30</span>
               </div>
-            </div>
-          </div>
-          
-          {/* Creator Overlay - Top Left */}
-          <div className="creator-overlay">
-            <Link to={`/app/profile/${creator?.id}`} className="creator-link">
-              <img 
-                src={creator?.photoUrl || "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=100&q=80"} 
-                alt={creator?.displayName}
-                className="creator-photo"
-              />
-            </Link>
-            <div className="creator-info">
-              <Link to={`/app/profile/${creator?.id}`} className="creator-name">
-                {creator?.displayName || "Creator"}
-              </Link>
-              <span className="platform-badge">
-                {getPlatformIcon()}
-                {content.platform}
-              </span>
             </div>
           </div>
           
