@@ -1652,6 +1652,19 @@ button {
   margin-right: auto;
 }
 
+.profile-name-row {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.profile-verified {
+  color: #ff5b5b;
+  filter: drop-shadow(0 0 10px rgba(255, 91, 91, 0.35));
+}
+
 .social-links {
   display: flex;
   justify-content: center;
@@ -1753,6 +1766,116 @@ button {
   margin-top: 0.25rem;
 }
 
+.explore-creator-card {
+  height: 100%;
+}
+
+.explore-social-links {
+  flex-wrap: wrap;
+}
+
+.explore-social-btn {
+  color: #a1a1aa;
+  text-decoration: none;
+}
+
+.explore-social-btn svg {
+  stroke: currentColor;
+}
+
+.explore-social-btn:hover {
+  color: #ff2d3d;
+}
+
+.explore-card-button {
+  margin-top: 0.25rem;
+}
+
+.explore-card-stats {
+  justify-content: center;
+  gap: 1rem;
+}
+
+.explore-card-stats .stat-item {
+  flex: 0 1 120px;
+}
+
+.explore-page-title {
+  display: flex;
+  justify-content: center;
+  padding-top: 0;
+  width: 100%;
+}
+
+.explore-page-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.explore-header-text {
+  position: static;
+  transform: none;
+  justify-content: center;
+  width: 100%;
+}
+
+.searchBox {
+  display: flex;
+  width: min(100%, 340px);
+  margin-top: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: linear-gradient(180deg, rgba(23, 19, 26, 0.98), rgba(19, 17, 22, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 45, 61, 0.1);
+}
+
+.searchButton {
+  color: white;
+  position: absolute;
+  right: 8px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff2d3d, #ff5b5b);
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 300ms cubic-bezier(.23, 1, 0.32, 1);
+  box-shadow: 0 8px 20px rgba(255, 45, 61, 0.3);
+}
+
+.searchButton:hover {
+  color: #fff;
+  box-shadow: 0 12px 24px rgba(255, 45, 61, 0.38);
+  transform: translateY(-3px);
+}
+
+.searchButton:active {
+  box-shadow: none;
+  transform: translateY(0);
+}
+
+.searchInput {
+  width: 100%;
+  border: none;
+  background: none;
+  outline: none;
+  color: white;
+  font-size: 15px;
+  padding: 18px 68px 18px 22px;
+}
+
+.searchInput::placeholder {
+  color: rgba(248, 250, 252, 0.58);
+}
+
 @media (max-width: 480px) {
   .profile-card {
     padding: 1.5rem;
@@ -1766,6 +1889,10 @@ button {
   
   .profile-name {
     font-size: 1.25rem;
+  }
+
+  .searchBox {
+    width: 100%;
   }
 }
 
