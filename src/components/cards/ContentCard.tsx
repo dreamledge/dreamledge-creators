@@ -5,6 +5,7 @@ import { formatCompactNumber } from "@/lib/formatters";
 import { mockUsers } from "@/lib/constants/mockData";
 import type { ContentModel, SocialPlatform } from "@/types/models";
 import { useFeedContext } from "../feed/FeedList";
+import { useCommentModal } from "../overlays/CommentModal";
 
 interface ContentCardProps {
   content: ContentModel;
@@ -65,10 +66,12 @@ const FullscreenIcon = () => (
 );
 
 export function ContentCard({ content }: ContentCardProps) {
-  const { isMuted, setIsMuted, currentPlayingId, setCurrentPlaying } = useFeedContext();
+  const { isMuted, setIsMuted, currentPlayingId, setCurrentPlaying, userHasUnmuted } = useFeedContext();
+  const { openCommentModal } = useCommentModal();
   const [showControls, setShowControls] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const isPlaying = currentPlayingId === content.id;
@@ -90,18 +93,19 @@ export function ContentCard({ content }: ContentCardProps) {
   const getEmbedSrc = (embedUrl: string, muted: boolean): string => {
     if (!embedUrl) return "";
     let src = embedUrl;
+    const useMute = userHasUnmuted ? 0 : (muted ? 1 : 0);
     if (embedUrl.includes("youtube.com/shorts/")) {
       const videoId = embedUrl.split("shorts/")[1]?.split("?")[0];
       if (videoId) {
-        src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${muted ? 1 : 0}&loop=1&playlist=${videoId}&iv_load_policy=3&modestbranding=1&playsinline=1&controls=0&showinfo=0&rel=0`;
+        src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${useMute}&loop=1&playlist=${videoId}&iv_load_policy=3&modestbranding=1&playsinline=1&showinfo=0&rel=0`;
       }
     } else if (embedUrl.includes("youtube.com") || embedUrl.includes("youtu.be")) {
       const videoId = embedUrl.split("v=")[1]?.split("&")[0] || embedUrl.split("/").pop();
-      src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${muted ? 1 : 0}&loop=1&playlist=${videoId}&iv_load_policy=3&modestbranding=1&playsinline=1&controls=0&showinfo=0&rel=0`;
+      src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${useMute}&loop=1&playlist=${videoId}&iv_load_policy=3&modestbranding=1&playsinline=1&showinfo=0&rel=0`;
     } else if (embedUrl.includes("tiktok.com")) {
       const videoId = embedUrl.match(/video\/(\d+)/)?.[1];
       if (videoId) {
-        src = `https://www.tiktok.com/player/v1/${videoId}?autoplay=1&mute=${muted ? 1 : 0}&playsinline=1`;
+        src = `https://www.tiktok.com/player/v1/${videoId}?autoplay=1&mute=${useMute}&playsinline=1`;
       }
     } else if (embedUrl.includes("instagram.com")) {
       const shortcode = embedUrl.match(/\/p\/([A-Za-z0-9_-]+)/)?.[1] || embedUrl.match(/\/reel\/([A-Za-z0-9_-]+)/)?.[1];
@@ -111,9 +115,9 @@ export function ContentCard({ content }: ContentCardProps) {
     } else if (embedUrl.includes("facebook.com") || embedUrl.includes("fb.watch")) {
       const videoId = embedUrl.match(/v=(\d+)/)?.[1] || embedUrl.match(/\/watch\/\?v=(\d+)/)?.[1];
       if (videoId) {
-        src = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(embedUrl)}&show_text=0&mute=${muted ? 1 : 0}&autoplay=1`;
+        src = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(embedUrl)}&show_text=0&mute=${useMute}&autoplay=1`;
       } else {
-        src = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(embedUrl)}&show_text=0&mute=${muted ? 1 : 0}&autoplay=1`;
+        src = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(embedUrl)}&show_text=0&mute=${useMute}&autoplay=1`;
       }
     }
     return src;
@@ -122,6 +126,18 @@ export function ContentCard({ content }: ContentCardProps) {
   useEffect(() => {
     if (!isPlaying) {
       setProgress(0);
+    }
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if (isPlaying) {
+      setIsLoading(true);
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 250);
+      return () => clearTimeout(timer);
+    } else {
+      setIsLoading(false);
     }
   }, [isPlaying]);
 
@@ -169,21 +185,45 @@ export function ContentCard({ content }: ContentCardProps) {
     <div ref={cardRef} className="phone-card-outer" data-content-id={content.id}>
       {/* Creator Overlay - Above the card */}
       <div className="creator-overlay">
-        <Link to={`/app/profile/${creator?.id}`} className="creator-link">
-          <img 
-            src={creator?.photoUrl || "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=100&q=80"} 
-            alt={creator?.displayName}
-            className="creator-photo"
-          />
-        </Link>
-        <div className="creator-info">
-          <Link to={`/app/profile/${creator?.id}`} className="creator-name">
-            {creator?.displayName || "Creator"}
+        <div className="creator-left">
+          <Link to={`/app/profile/${creator?.id}`} className="creator-link">
+            <img 
+              src={creator?.photoUrl || "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=100&q=80"} 
+              alt={creator?.displayName}
+              className="creator-photo"
+            />
           </Link>
-          <span className="platform-badge">
-            {getPlatformIcon()}
-            {content.platform}
-          </span>
+          <div className="creator-info">
+            <Link to={`/app/profile/${creator?.id}`} className="creator-name">
+              {creator?.displayName || "Creator"}
+            </Link>
+            <span className="platform-badge">
+              {getPlatformIcon()}
+              {content.platform}
+            </span>
+          </div>
+        </div>
+        <div className="creator-socials">
+          {hasInstagram && (
+            <a href={socialLinks?.instagram} target="_blank" rel="noopener noreferrer" className="creator-social-link" title="Instagram">
+              <InstagramIcon />
+            </a>
+          )}
+          {hasTikTok && (
+            <a href={(socialLinks?.tiktok as string)?.startsWith("http") ? socialLinks?.tiktok : `https://tiktok.com/${(socialLinks?.tiktok as string)?.replace("@", "")}`} target="_blank" rel="noopener noreferrer" className="creator-social-link" title="TikTok">
+              <TikTokIcon />
+            </a>
+          )}
+          {hasYouTube && (
+            <a href={(socialLinks?.youtube as string)?.startsWith("http") ? socialLinks?.youtube : `https://youtube.com/${(socialLinks?.youtube as string)?.replace("@", "")}`} target="_blank" rel="noopener noreferrer" className="creator-social-link" title="YouTube">
+              <YouTubeIcon />
+            </a>
+          )}
+          {hasTwitter && (
+            <a href={socialLinks?.twitter} target="_blank" rel="noopener noreferrer" className="creator-social-link" title="Twitter/X">
+              <TwitterIcon />
+            </a>
+          )}
         </div>
       </div>
       
@@ -208,7 +248,24 @@ export function ContentCard({ content }: ContentCardProps) {
             <div className="speaker"></div>
           </div>
           
-          {/* Video Embed or Thumbnail */}
+          {/* Video Embed or Thumbnail or Loading */}
+          {isLoading && (
+            <div className="video-loader">
+              <div className="loader-wrapper">
+                <span className="loader-letter">d</span>
+                <span className="loader-letter">r</span>
+                <span className="loader-letter">e</span>
+                <span className="loader-letter">a</span>
+                <span className="loader-letter">m</span>
+                <span className="loader-letter">i</span>
+                <span className="loader-letter">n</span>
+                <span className="loader-letter">g</span>
+                <div className="loader-bg-1"></div>
+                <div className="loader-bg-2"></div>
+                <div className="loader"></div>
+              </div>
+            </div>
+          )}
           {isPlaying && content.embedUrl ? (
             <iframe
               src={getEmbedSrc(content.embedUrl, isMuted)}
@@ -247,59 +304,35 @@ export function ContentCard({ content }: ContentCardProps) {
                 <span>0:00</span>
                 <span>0:30</span>
               </div>
-            </div>
-          </div>
-          
-          {/* Caption - Bottom */}
-          <div className="caption-overlay">
-            <p className="caption-text">
-              <span className="caption-title">{content.title}</span>
-              {content.caption && ` ${content.caption}`}
-            </p>
-          </div>
-          
-          {/* Home Bar - Social Icons */}
-          <div className="home-bar">
-            {hasInstagram && (
-              <a href={socialLinks?.instagram} target="_blank" rel="noopener noreferrer" className="social-icon" title="Instagram">
-                <InstagramIcon />
-              </a>
-            )}
-            {hasTikTok && (
-              <a href={(socialLinks?.tiktok as string)?.startsWith("http") ? socialLinks?.tiktok : `https://tiktok.com/${(socialLinks?.tiktok as string)?.replace("@", "")}`} target="_blank" rel="noopener noreferrer" className="social-icon" title="TikTok">
-                <TikTokIcon />
-              </a>
-            )}
-            {hasYouTube && (
-              <a href={(socialLinks?.youtube as string)?.startsWith("http") ? socialLinks?.youtube : `https://youtube.com/${(socialLinks?.youtube as string)?.replace("@", "")}`} target="_blank" rel="noopener noreferrer" className="social-icon" title="YouTube">
-                <YouTubeIcon />
-              </a>
-            )}
-            {hasTwitter && (
-              <a href={socialLinks?.twitter} target="_blank" rel="noopener noreferrer" className="social-icon" title="Twitter/X">
-                <TwitterIcon />
-              </a>
-            )}
+</div>
           </div>
         </div>
-      </div>
-      
-      {/* Likes and Comments - Below the card */}
+</div>
+       
+      {/* Likes and Comments - Above the caption */}
       <div className="card-stats">
         <button className="stat-btn">
-          <Heart size={18} className="stat-icon" />
+          <Heart size={20} className="stat-icon" />
           <span className="stat-count">{formatCompactNumber(content.likeCount)}</span>
         </button>
-        <button className="stat-btn">
-          <MessageCircle size={18} className="stat-icon" />
+        <button className="stat-btn" onClick={() => openCommentModal(content.id)}>
+          <MessageCircle size={20} className="stat-icon" />
           <span className="stat-count">{formatCompactNumber(content.commentCount)}</span>
         </button>
         <button className="stat-btn">
-          <Share2 size={18} className="stat-icon" />
+          <Share2 size={20} className="stat-icon" />
         </button>
         <button className="stat-btn">
-          <Bookmark size={18} className="stat-icon" />
+          <Bookmark size={20} className="stat-icon" />
         </button>
+      </div>
+      
+      {/* Caption - Below the card */}
+      <div className="caption-section">
+        <p className="caption-text">
+          <span className="caption-title">{content.title}</span>
+          {content.caption && ` ${content.caption}`}
+        </p>
       </div>
     </div>
   );

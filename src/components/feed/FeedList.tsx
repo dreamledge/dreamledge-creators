@@ -8,6 +8,8 @@ interface FeedContextType {
   currentPlayingId: string | null;
   setCurrentPlaying: (id: string | null) => void;
   pauseVideo: () => void;
+  userHasUnmuted: boolean;
+  setUserHasUnmuted: (unmuted: boolean) => void;
 }
 
 export const FeedContext = createContext<FeedContextType>({
@@ -16,18 +18,28 @@ export const FeedContext = createContext<FeedContextType>({
   currentPlayingId: null,
   setCurrentPlaying: () => {},
   pauseVideo: () => {},
+  userHasUnmuted: false,
+  setUserHasUnmuted: () => {},
 });
 
 export function FeedProvider({ children }: { children: ReactNode }) {
   const [isMuted, setIsMuted] = useState(true);
+  const [userHasUnmuted, setUserHasUnmuted] = useState(false);
   const [currentPlayingId, setCurrentPlaying] = useState<string | null>(null);
+
+  const handleSetIsMuted = (muted: boolean) => {
+    setIsMuted(muted);
+    if (!muted) {
+      setUserHasUnmuted(true);
+    }
+  };
 
   const pauseVideo = () => {
     setCurrentPlaying(null);
   };
 
   return (
-    <FeedContext.Provider value={{ isMuted, setIsMuted, currentPlayingId, setCurrentPlaying, pauseVideo }}>
+    <FeedContext.Provider value={{ isMuted, setIsMuted: handleSetIsMuted, currentPlayingId, setCurrentPlaying, pauseVideo, userHasUnmuted, setUserHasUnmuted }}>
       {children}
     </FeedContext.Provider>
   );

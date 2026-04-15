@@ -1,6 +1,6 @@
 import type { PropsWithChildren } from "react";
 import { DesktopSidebar } from "@/components/layout/DesktopSidebar";
-import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { CyberBottomNav } from "@/components/layout/CyberBottomNav";
 
 export function AppShell({ children }: PropsWithChildren) {
   return (
@@ -9,7 +9,7 @@ export function AppShell({ children }: PropsWithChildren) {
         <DesktopSidebar />
         <div className="min-w-0 flex-1">{children}</div>
       </div>
-      <MobileBottomNav />
+      <CyberBottomNav />
     </div>
   );
 }

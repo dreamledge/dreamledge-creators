@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { FeedTabs } from "@/components/feed/FeedTabs";
 import { FeedList, FeedProvider, useFeedContext } from "@/components/feed/FeedList";
+import { CommentModalProvider, CommentModal } from "@/components/overlays/CommentModal";
 import { mockContent } from "@/lib/constants/mockData";
 import type { FeedTab } from "@/types/models";
 
@@ -18,6 +19,7 @@ export function HomePage() {
   };
 
   return (
+    <CommentModalProvider>
     <FeedProvider>
       <div className="home-page-container">
         <div className="sticky-header">
@@ -62,6 +64,8 @@ export function HomePage() {
         <FeedList items={mockContent} />
       </div>
     </FeedProvider>
+    <CommentModal />
+    </CommentModalProvider>
   );
 }
 
