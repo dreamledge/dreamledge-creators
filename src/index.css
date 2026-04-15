@@ -2916,3 +2916,83 @@ button {
   padding: 8px;
   width: 100%;
 }
+
+/* Volume Toggle */
+.volume-toggle-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 8px 16px;
+  gap: 12px;
+}
+
+.volume-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #888;
+}
+
+.volume-arrow {
+  color: #e63946;
+  font-weight: bold;
+}
+
+.volume-switch {
+  --color: #e63946;
+  --size: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  font-size: var(--size);
+  user-select: none;
+  fill: var(--color);
+}
+
+.volume-switch .volume-icon {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  animation: volume-keyframes-fill .5s;
+}
+
+.volume-switch .mute {
+  display: block;
+}
+
+.volume-switch .voice {
+  display: none;
+}
+
+.volume-switch input:checked ~ .mute {
+  display: none;
+}
+
+.volume-switch input:checked ~ .voice {
+  display: block;
+}
+
+.volume-switch input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+@keyframes volume-keyframes-fill {
+  0% {
+    transform: rotate(0deg) scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: rotate(-10deg) scale(1.2);
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
