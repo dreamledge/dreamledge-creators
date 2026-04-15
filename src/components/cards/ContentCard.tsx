@@ -71,7 +71,8 @@ export function ContentCard({ content }: ContentCardProps) {
   const [showControls, setShowControls] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [videoSrc, setVideoSrc] = useState("");
   const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const isPlaying = currentPlayingId === content.id;
@@ -131,15 +132,17 @@ export function ContentCard({ content }: ContentCardProps) {
 
   useEffect(() => {
     if (isPlaying) {
-      setIsLoading(true);
+      setIframeLoaded(false);
+      setVideoSrc("");
       const timer = setTimeout(() => {
-        setIsLoading(false);
-      }, 250);
+        setVideoSrc(getEmbedSrc(content.embedUrl, isMuted));
+      }, 400);
       return () => clearTimeout(timer);
     } else {
-      setIsLoading(false);
+      setIframeLoaded(false);
+      setVideoSrc("");
     }
-  }, [isPlaying]);
+  }, [isPlaying, content.embedUrl, isMuted]);
 
   const showControlsTemporarily = () => {
     setShowControls(true);
@@ -249,8 +252,8 @@ export function ContentCard({ content }: ContentCardProps) {
           </div>
           
           {/* Video Embed or Thumbnail or Loading */}
-          {isLoading && (
-            <div className="video-loader">
+          {isPlaying && content.embedUrl && (
+            <div className={`video-loader ${iframeLoaded ? "fade-out" : ""}`}>
               <div className="loader-wrapper">
                 <span className="loader-letter">d</span>
                 <span className="loader-letter">r</span>
@@ -266,12 +269,13 @@ export function ContentCard({ content }: ContentCardProps) {
               </div>
             </div>
           )}
-          {isPlaying && content.embedUrl ? (
+          {isPlaying && content.embedUrl && videoSrc ? (
             <iframe
-              src={getEmbedSrc(content.embedUrl, isMuted)}
+              src={videoSrc}
               className="video-embed"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
+              onLoad={() => setIframeLoaded(true)}
             />
           ) : (
             <img 

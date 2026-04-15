@@ -32,8 +32,8 @@ const footerLinks = [
 
 export function LandingPage() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-black text-white">
-      <div className="fixed inset-0">
+    <div className="relative -mt-[60px] min-h-screen overflow-hidden bg-black text-white">
+      <div className="fixed inset-0 z-0">
         <video
           className="h-full w-full object-cover"
           autoPlay
@@ -52,8 +52,8 @@ export function LandingPage() {
         </div>
       </div>
 
-      <div className="relative z-10 min-h-screen w-full pb-10">
-        <div className="fixed inset-x-0 top-0 z-40 w-full border-b border-white/[0.05] bg-[rgba(10,10,12,0.7)] backdrop-blur-[16px] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-[-32px] after:h-8 after:bg-[linear-gradient(180deg,rgba(10,10,12,0.7)_0%,rgba(10,10,12,0)_100%)] after:content-['']">
+      <div className="relative z-10 min-h-screen w-full overflow-visible pb-10">
+        <div className="landing-topbar fixed inset-x-0 top-0 z-50 w-full">
           <div className="mx-auto flex h-[70px] w-full max-w-7xl items-center px-5 sm:px-6 lg:px-8">
             <div className="relative mx-auto grid w-full max-w-sm grid-cols-[48px_1fr_auto] items-center gap-4 lg:max-w-none lg:grid-cols-[48px_1fr_auto]">
               <div className="flex h-11 w-11 items-center justify-center rounded-[999px] border border-white/8 bg-white/[0.04]">

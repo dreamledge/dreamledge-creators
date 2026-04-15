@@ -29,8 +29,14 @@ export function CyberBottomNav() {
   const [activeIndex, setActiveIndex] = useState(getActiveIndex());
 
   const handleClick = (index: number, route: string) => {
+    const isSameRoute = location.pathname === route;
     setActiveIndex(index);
-    navigate(route);
+    window.scrollTo(0, 0);
+    if (isSameRoute) {
+      navigate(route, { replace: true });
+    } else {
+      navigate(route);
+    }
   };
 
   return (
