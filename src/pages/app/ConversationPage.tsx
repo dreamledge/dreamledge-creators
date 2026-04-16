@@ -11,9 +11,15 @@ export function ConversationPage() {
   const conversationMessages = messages.filter((message) => message.conversationId === conversationId);
 
   return (
-    <div className="space-y-4">
-      <ChatThread messages={conversationMessages} currentUserId={user?.id ?? ""} />
-      {conversationId && user ? <ChatInput conversationId={conversationId} senderId={user.id} /> : null}
+    <div className="conversation-page">
+      <div className="conversation-page__thread">
+        <ChatThread messages={conversationMessages} currentUserId={user?.id ?? ""} />
+      </div>
+      {conversationId && user ? (
+        <div className="conversation-page__composer">
+          <ChatInput conversationId={conversationId} senderId={user.id} />
+        </div>
+      ) : null}
     </div>
   );
 }

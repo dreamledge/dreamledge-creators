@@ -124,66 +124,32 @@ button {
   backdrop-filter: blur(18px);
 }
 
-.message-preview-card {
-  position: relative;
-  overflow: hidden;
+.message-preview-row {
   display: flex;
   align-items: center;
-  gap: 16px;
-  min-height: 96px;
-  padding: 16px 18px;
-  border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background:
-    linear-gradient(135deg, rgba(130, 18, 33, 0.16), rgba(255, 255, 255, 0.03)),
-    rgba(20, 16, 19, 0.92);
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(18px);
+  gap: 14px;
+  padding: 8px 2px;
 }
 
-.message-preview-card__wave {
-  position: absolute;
-  left: -30px;
-  top: 30px;
-  width: 92px;
-  transform: rotate(90deg);
-  fill: rgba(239, 68, 68, 0.2);
-}
-
-.message-preview-card__avatar-wrap {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  margin-left: 6px;
-  border-radius: 999px;
-  background: rgba(239, 68, 68, 0.16);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
-}
-
-.message-preview-card__avatar {
-  width: 40px;
-  height: 40px;
+.message-preview-row__avatar {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
   border-radius: 999px;
   object-fit: cover;
 }
 
 .message-preview-card__content {
-  position: relative;
-  z-index: 1;
   min-width: 0;
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .message-preview-card__title {
   color: #f87171;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
 }
 
@@ -192,37 +158,23 @@ button {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.84rem;
+  color: rgba(255, 255, 255, 0.58);
 }
 
-.message-preview-card__chevron-wrap {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  color: rgba(255, 255, 255, 0.56);
-  transition: background-color 180ms ease, color 180ms ease;
-}
-
-.message-preview-card__chevron {
+.message-preview-row__time {
   flex-shrink: 0;
-}
-
-.message-preview-card:hover .message-preview-card__chevron-wrap {
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.88);
+  align-self: flex-start;
+  padding-top: 2px;
+  font-size: 0.74rem;
+  color: rgba(255, 255, 255, 0.42);
 }
 
 .message-thread {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 8px 4px;
+  padding: 12px 4px 16px;
 }
 
 .message-thread__row {
@@ -284,6 +236,185 @@ button {
 .message-thread__meta--outgoing {
   color: rgba(255, 245, 245, 0.72);
   text-align: right;
+}
+
+.conversation-page {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 7.5rem);
+}
+
+.conversation-page__thread {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 1rem;
+}
+
+.conversation-page__composer {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  padding: 0.75rem 0 0.25rem;
+  background: linear-gradient(180deg, rgba(11, 11, 15, 0), rgba(11, 11, 15, 0.92) 28%, rgba(11, 11, 15, 0.98));
+  backdrop-filter: blur(12px);
+}
+
+.message-composer-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.message-composer-file-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  background: rgba(127, 29, 29, 0.18);
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.75rem;
+}
+
+.message-composer-file-pill__label {
+  color: #f87171;
+  font-weight: 700;
+}
+
+.message-composer-file-pill__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.message-composer-file-pill__clear {
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.message-composer {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 56px;
+  padding: 0 1rem;
+  border-radius: 20px;
+  border: 1px solid rgba(248, 113, 113, 0.16);
+  background: rgba(22, 18, 21, 0.96);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.message-composer:focus-within {
+  border-color: rgba(248, 113, 113, 0.4);
+}
+
+.message-composer__upload {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.message-composer__file-input {
+  display: none;
+}
+
+.message-composer__upload-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.message-composer__upload-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.message-composer__upload-button circle,
+.message-composer__upload-button path {
+  stroke: rgba(255, 255, 255, 0.42);
+  transition: stroke 180ms ease, fill 180ms ease;
+}
+
+.message-composer__upload-button:hover circle,
+.message-composer__upload-button:hover path {
+  stroke: #f87171;
+}
+
+.message-composer__tooltip {
+  position: absolute;
+  top: -2.4rem;
+  display: none;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid rgba(248, 113, 113, 0.24);
+  border-radius: 8px;
+  background: rgba(16, 10, 12, 0.96);
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.65rem;
+  white-space: nowrap;
+}
+
+.message-composer__upload-button:hover .message-composer__tooltip {
+  display: block;
+}
+
+.message-composer__input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.message-composer__input::placeholder {
+  color: rgba(255, 255, 255, 0.44);
+}
+
+.message-composer__send {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 180ms ease;
+}
+
+.message-composer__send svg {
+  width: 18px;
+  height: 18px;
+}
+
+.message-composer__send path {
+  stroke: rgba(255, 255, 255, 0.48);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 33.67;
+  transition: stroke 180ms ease;
+}
+
+.message-composer__send:hover,
+.message-composer:focus-within .message-composer__send {
+  background: rgba(248, 113, 113, 0.12);
+}
+
+.message-composer__send:hover path,
+.message-composer:focus-within .message-composer__send path,
+.message-composer__input:not(:placeholder-shown) ~ .message-composer__send path {
+  stroke: #fda4af;
 }
 
 .dreamledge-signup-shell {
