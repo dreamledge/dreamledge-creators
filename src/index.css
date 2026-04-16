@@ -1733,10 +1733,15 @@ button {
   letter-spacing: -0.01em;
 }
 
+.profile-title-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
 .profile-title {
   font-size: 0.95rem;
   color: #ff5b5b;
-  margin-bottom: 0.5rem;
   font-weight: 500;
 }
 
@@ -1756,6 +1761,7 @@ button {
   justify-content: center;
   gap: 0.45rem;
   flex-wrap: wrap;
+  margin-bottom: 0.25rem;
 }
 
 .profile-verified {

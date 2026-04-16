@@ -25,8 +25,16 @@ export function ProfileCard({ creator, isOwnProfile = false }: ProfileCardProps)
             <img src={creator.photoUrl} alt={creator.displayName} />
           </div>
           <div className="profile-info">
-            <VerifiedLabel text={creator.displayName} verified={creator.verified} textClassName="profile-name" />
-            <VerifiedLabel text={`@${creator.username}`} verified={false} className="profile-title" textClassName="profile-title" />
+            <VerifiedLabel
+              text={creator.displayName}
+              verified={creator.verified}
+              className="profile-name-row"
+              textClassName="profile-name"
+              iconClassName="h-[18px] w-[18px]"
+            />
+            <div className="profile-title-row">
+              <VerifiedLabel text={`@${creator.username}`} verified={false} textClassName="profile-title" />
+            </div>
             {creator.bio && <div className="profile-bio">{creator.bio}</div>}
           </div>
           
