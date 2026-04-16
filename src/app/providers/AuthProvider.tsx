@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { getStoredAuthUser, setStoredAuthUser } from "@/features/auth/useAuthStorage";
 import { mockUsers } from "@/lib/constants/mockData";
 import type { AuthUser, SocialPlatform } from "@/types/models";
@@ -16,34 +16,62 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 const defaultAuthMockUser = mockUsers.find((entry) => entry.username === "sosanoir") ?? mockUsers[0];
 
+function resolveMockUser(authUser: AuthUser | null | undefined) {
+  if (!authUser) return null;
+
+  return (
+    mockUsers.find((entry) => entry.id === authUser.id) ??
+    mockUsers.find((entry) => entry.username === authUser.username) ??
+    mockUsers.find((entry) => entry.email === authUser.email) ??
+    null
+  );
+}
+
+function toAuthUser(user: typeof mockUsers[number]): AuthUser {
+  return {
+    id: user.id,
+    email: user.email,
+    displayName: user.displayName,
+    username: user.username,
+    photoUrl: user.photoUrl,
+    onboardingComplete: true,
+  };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(() => {
     const stored = getStoredAuthUser();
+    const matchedStoredUser = resolveMockUser(stored);
+    if (matchedStoredUser) return toAuthUser(matchedStoredUser);
     if (stored) return stored;
-    return {
-      id: defaultAuthMockUser.id,
-      email: defaultAuthMockUser.email,
-      displayName: defaultAuthMockUser.displayName,
-      username: defaultAuthMockUser.username,
-      photoUrl: defaultAuthMockUser.photoUrl,
-      onboardingComplete: true,
-    };
+    return toAuthUser(defaultAuthMockUser);
   });
   const loading = false;
+
+  useEffect(() => {
+    const matchedUser = resolveMockUser(user);
+    if (!matchedUser) return;
+
+    const normalizedUser = toAuthUser(matchedUser);
+    const needsSync =
+      user?.id !== normalizedUser.id ||
+      user?.email !== normalizedUser.email ||
+      user?.displayName !== normalizedUser.displayName ||
+      user?.username !== normalizedUser.username ||
+      user?.photoUrl !== normalizedUser.photoUrl;
+
+    if (needsSync) {
+      setUser(normalizedUser);
+      setStoredAuthUser(normalizedUser);
+    }
+  }, [user]);
 
   const value = useMemo<AuthContextValue>(() => ({
     user,
     loading,
     login: (email: string) => {
       const matched = mockUsers.find((entry) => entry.email === email) ?? defaultAuthMockUser;
-      const next: AuthUser = {
-        id: matched.id,
-        email: matched.email,
-        displayName: matched.displayName,
-        username: matched.username,
-        photoUrl: matched.photoUrl,
-        onboardingComplete: true,
-      };
+      const next = toAuthUser(matched);
       setUser(next);
       setStoredAuthUser(next);
     },

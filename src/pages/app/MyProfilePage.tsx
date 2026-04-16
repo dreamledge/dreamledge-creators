@@ -3,15 +3,37 @@ import { ContentGrid } from "@/components/profile/ContentGrid";
 import { ProfileCard } from "@/components/profile/ProfileCard";
 import { ProfileTabs } from "@/components/profile/ProfileTabs";
 import { useAuth } from "@/app/providers/AuthProvider";
-import { mockContent } from "@/lib/constants/mockData";
+import { mockContent, mockUsers } from "@/lib/constants/mockData";
 
 export function MyProfilePage() {
   const { user } = useAuth();
-  const items = mockContent.filter((item) => item.creatorId === user?.id);
+  const creator = user ? mockUsers.find((entry) => entry.id === user.id)
+    ?? mockUsers.find((entry) => entry.username === user.username)
+    ?? mockUsers.find((entry) => entry.email === user.email)
+    ?? ({
+    ...user,
+    bannerUrl: "",
+    bio: "",
+    categories: [],
+    goals: [],
+    socialLinks: {},
+    totalPoints: 0,
+    battleWins: 0,
+    contestWins: 0,
+    followerCount: 0,
+    followingCount: 0,
+    badges: [],
+    verified: false,
+    rookie: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }) : null;
+  const items = mockContent.filter((item) => item.creatorId === creator?.id);
+
   return (
     <div className="space-y-6">
-      {user && <ProfileCard creator={user as any} isOwnProfile />}
-      <BadgeList badges={[]} />
+      {creator ? <ProfileCard creator={creator} isOwnProfile /> : null}
+      <BadgeList badges={creator?.badges ?? []} />
       <ProfileTabs />
       <ContentGrid items={items} />
     </div>
