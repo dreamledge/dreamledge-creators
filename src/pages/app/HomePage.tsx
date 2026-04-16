@@ -1,13 +1,34 @@
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/app/providers/AuthProvider";
 import { FeedTabs } from "@/components/feed/FeedTabs";
 import { FeedList, FeedProvider, useFeedContext } from "@/components/feed/FeedList";
 import { CommentModalProvider, CommentModal } from "@/components/overlays/CommentModal";
-import { mockContent } from "@/lib/constants/mockData";
-import type { FeedTab } from "@/types/models";
+import { mockContent, mockUsers } from "@/lib/constants/mockData";
+import type { FeedTab, UserModel } from "@/types/models";
+
+function resolveFeedUser(user: { id: string; username: string; email: string; followingIds?: string[] } | null): UserModel | null {
+  if (!user) return null;
+
+  const matchedUser = (
+    mockUsers.find((entry) => entry.id === user.id) ??
+    mockUsers.find((entry) => entry.username === user.username) ??
+    mockUsers.find((entry) => entry.email === user.email) ??
+    null
+  );
+
+  if (!matchedUser) return null;
+
+  return {
+    ...matchedUser,
+    followingIds: user.followingIds ?? matchedUser.followingIds,
+    followingCount: (user.followingIds ?? matchedUser.followingIds).length,
+  };
+}
 
 export function HomePage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
 
   const getCurrentTabFromParams = (): FeedTab => {
     const params = new URLSearchParams(location.search);
@@ -17,6 +38,24 @@ export function HomePage() {
     }
     return "for-you";
   };
+
+  const currentTab = getCurrentTabFromParams();
+  const currentUser = resolveFeedUser(user);
+  const followingIds = currentUser?.followingIds ?? [];
+
+  const feedItems = (() => {
+    switch (currentTab) {
+      case "following":
+        return mockContent.filter((item) => followingIds.includes(item.creatorId));
+      case "new":
+        return [...mockContent].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      case "trending":
+        return [...mockContent].sort((a, b) => (b.likeCount + b.commentCount + b.shareCount + b.saveCount) - (a.likeCount + a.commentCount + a.shareCount + a.saveCount));
+      case "for-you":
+      default:
+        return mockContent;
+    }
+  })();
 
   return (
     <CommentModalProvider>
@@ -58,10 +97,10 @@ export function HomePage() {
               </svg>
             </button>
           </div>
-          <FeedTabs active={getCurrentTabFromParams()} onChange={() => {}} />
+          <FeedTabs active={currentTab} onChange={() => {}} />
           <HomeVolumeToggle />
         </div>
-        <FeedList items={mockContent} />
+        <FeedList items={feedItems} />
       </div>
     </FeedProvider>
     <CommentModal />

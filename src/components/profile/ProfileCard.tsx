@@ -10,11 +10,16 @@ interface ProfileCardProps {
 }
 
 export function ProfileCard({ creator, isOwnProfile = false }: ProfileCardProps) {
-  const { user } = useAuth();
+  const { user, toggleFollow } = useAuth();
   const isOwn = isOwnProfile || user?.id === creator.id;
   const [showEditModal, setShowEditModal] = useState(false);
-  
-  const followerCount = creator.followerCount?.toLocaleString() || "0";
+
+  const currentFollowingIds = user?.followingIds ?? [];
+  const isFollowing = !isOwn && currentFollowingIds.includes(creator.id);
+  const baselineFollowing = !isOwn && !!user && creator.followerIds.includes(user.id);
+  const followerCountValue = creator.followerCount + (!isOwn && user ? (isFollowing ? 1 : 0) - (baselineFollowing ? 1 : 0) : 0);
+  const followingCountValue = isOwn && user ? currentFollowingIds.length : creator.followingCount;
+  const followerCount = followerCountValue.toLocaleString();
   const totalPoints = creator.totalPoints || 0;
 
   return (
@@ -96,9 +101,15 @@ export function ProfileCard({ creator, isOwnProfile = false }: ProfileCardProps)
           
           <button 
             className={`cta-button ${isOwn ? 'edit-profile' : 'follow-profile'}`}
-            onClick={() => isOwn ? setShowEditModal(true) : null}
+            onClick={() => {
+              if (isOwn) {
+                setShowEditModal(true);
+                return;
+              }
+              toggleFollow(creator.id);
+            }}
           >
-            {isOwn ? 'Edit Profile' : 'Follow'}
+            {isOwn ? 'Edit Profile' : isFollowing ? 'Following' : 'Follow'}
           </button>
           
           <div className="stats">
@@ -107,7 +118,7 @@ export function ProfileCard({ creator, isOwnProfile = false }: ProfileCardProps)
               <div className="stat-label">Followers</div>
             </div>
             <div className="stat-item">
-              <div className="stat-value">{creator.followingCount || 0}</div>
+              <div className="stat-value">{followingCountValue}</div>
               <div className="stat-label">Following</div>
             </div>
             <div className="stat-item">

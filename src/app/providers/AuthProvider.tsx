@@ -8,6 +8,7 @@ interface AuthContextValue {
   loading: boolean;
   login: (email: string) => void;
   signup: (email: string, displayName: string, username?: string) => void;
+  toggleFollow: (targetUserId: string) => void;
   logout: () => void;
   completeOnboarding: () => void;
   updateProfile: (data: { displayName?: string; username?: string; bio?: string; photoUrl?: string; socialLinks?: Record<SocialPlatform, string> }) => void;
@@ -34,6 +35,7 @@ function toAuthUser(user: typeof mockUsers[number]): AuthUser {
     displayName: user.displayName,
     username: user.username,
     photoUrl: user.photoUrl,
+    followingIds: user.followingIds,
     onboardingComplete: true,
   };
 }
@@ -52,13 +54,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const matchedUser = resolveMockUser(user);
     if (!matchedUser) return;
 
-    const normalizedUser = toAuthUser(matchedUser);
+    const normalizedUser: AuthUser = {
+      ...toAuthUser(matchedUser),
+      followingIds: user?.followingIds ?? matchedUser.followingIds,
+    };
     const needsSync =
       user?.id !== normalizedUser.id ||
       user?.email !== normalizedUser.email ||
       user?.displayName !== normalizedUser.displayName ||
       user?.username !== normalizedUser.username ||
-      user?.photoUrl !== normalizedUser.photoUrl;
+      user?.photoUrl !== normalizedUser.photoUrl ||
+      (user?.followingIds ?? []).join("|") !== (normalizedUser.followingIds ?? []).join("|");
 
     if (needsSync) {
       setUser(normalizedUser);
@@ -82,8 +88,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         displayName,
         username: username?.trim() || displayName.toLowerCase().replace(/\s+/g, ""),
         photoUrl: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=400&q=80",
+        followingIds: [],
         onboardingComplete: false,
       };
+      setUser(next);
+      setStoredAuthUser(next);
+    },
+    toggleFollow: (targetUserId: string) => {
+      if (!user || user.id === targetUserId) return;
+
+      const baseFollowingIds = user.followingIds ?? resolveMockUser(user)?.followingIds ?? [];
+      const nextFollowingIds = baseFollowingIds.includes(targetUserId)
+        ? baseFollowingIds.filter((id) => id !== targetUserId)
+        : [...baseFollowingIds, targetUserId];
+
+      const next: AuthUser = {
+        ...user,
+        followingIds: nextFollowingIds,
+      };
+
       setUser(next);
       setStoredAuthUser(next);
     },

@@ -57,6 +57,8 @@ export interface UserModel {
   contestWins: number;
   followerCount: number;
   followingCount: number;
+  followerIds: string[];
+  followingIds: string[];
   badges: string[];
   verified: boolean;
   rookie: boolean;
@@ -224,6 +226,7 @@ export interface AuthUser {
   username: string;
   photoUrl: string;
   onboardingComplete: boolean;
+  followingIds?: string[];
   bio?: string;
   socialLinks?: Partial<Record<SocialPlatform, string>>;
   bannerUrl?: string;

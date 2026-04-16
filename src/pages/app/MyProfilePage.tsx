@@ -24,6 +24,8 @@ export function MyProfilePage() {
     contestWins: 0,
     followerCount: 0,
     followingCount: 0,
+    followerIds: [],
+    followingIds: [],
     badges: [],
     verified: false,
     rookie: false,

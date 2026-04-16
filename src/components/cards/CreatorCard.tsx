@@ -1,6 +1,7 @@
 import { ExternalLink } from "lucide-react";
 import { formatCompactNumber } from "@/lib/formatters";
 import type { UserModel } from "@/types/models";
+import { useAuth } from "@/app/providers/AuthProvider";
 import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
 
 function normalizeSocialUrl(platform: string, value: string) {
@@ -68,7 +69,10 @@ function SocialIcon({ platform }: { platform: string }) {
 }
 
 export function CreatorCard({ creator, showSocialLinks = false }: { creator: UserModel; showSocialLinks?: boolean }) {
+  const { user, toggleFollow } = useAuth();
   const socialEntries = Object.entries(creator.socialLinks ?? {}).filter(([, value]) => Boolean(value));
+  const isOwn = user?.id === creator.id;
+  const isFollowing = !!user && user.id !== creator.id && (user.followingIds ?? []).includes(creator.id);
 
   return (
     <div className="profile-card-container">
@@ -112,8 +116,14 @@ export function CreatorCard({ creator, showSocialLinks = false }: { creator: Use
         ) : null}
 
         <div className="explore-card-actions">
-          <button type="button" className="cta-button edit-profile explore-card-button">
-            Follow
+          <button
+            type="button"
+            className="cta-button edit-profile explore-card-button"
+            onClick={() => {
+              if (!isOwn) toggleFollow(creator.id);
+            }}
+          >
+            {isOwn ? "You" : isFollowing ? "Following" : "Follow"}
           </button>
           <button type="button" className="cta-button edit-profile explore-card-button">
             Message

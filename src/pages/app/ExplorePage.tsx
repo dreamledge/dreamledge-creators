@@ -1,9 +1,24 @@
+import { useMemo, useState } from "react";
 import { CreatorCard } from "@/components/cards/CreatorCard";
 import { BattleCard } from "@/components/cards/BattleCard";
 import { ContestCard } from "@/components/cards/ContestCard";
 import { mockBattles, mockContests, mockUsers } from "@/lib/constants/mockData";
 
 export function ExplorePage() {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredUsers = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    if (!query) return mockUsers;
+
+    return mockUsers.filter((user) => {
+      const username = user.username.toLowerCase();
+      const displayName = user.displayName.toLowerCase();
+      return username.includes(query) || displayName.includes(query);
+    });
+  }, [searchQuery]);
+
   return (
     <div className="space-y-8">
       <div className="explore-page-hero">
@@ -14,7 +29,13 @@ export function ExplorePage() {
           </div>
         </div>
         <div className="searchBox explore-search-box">
-          <input className="searchInput explore-search-input" type="text" placeholder="Search creators" />
+          <input
+            className="searchInput explore-search-input"
+            type="text"
+            placeholder="Search creators"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+          />
           <button type="button" className="searchButton explore-search-button" aria-label="Search creators">
             <svg xmlns="http://www.w3.org/2000/svg" width="29" height="29" viewBox="0 0 29 29" fill="none">
               <g clipPath="url(#explore-search-clip)">
@@ -41,7 +62,13 @@ export function ExplorePage() {
           </button>
         </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{mockUsers.map((user) => <CreatorCard key={user.id} creator={user} showSocialLinks />)}</div>
+      {filteredUsers.length ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{filteredUsers.map((user) => <CreatorCard key={user.id} creator={user} showSocialLinks />)}</div>
+      ) : (
+        <div className="rounded-[28px] border border-white/10 bg-white/5 px-5 py-6 text-center text-sm text-zinc-400">
+          No creators found for "{searchQuery.trim()}".
+        </div>
+      )}
       <div className="grid gap-4 xl:grid-cols-2">{mockBattles.map((battle) => <BattleCard key={battle.id} battle={battle} />)}</div>
       <div className="grid gap-4 xl:grid-cols-2">{mockContests.map((contest) => <ContestCard key={contest.id} contest={contest} />)}</div>
     </div>
