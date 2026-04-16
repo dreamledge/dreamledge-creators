@@ -1,6 +1,7 @@
-import { CheckCircle2, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { formatCompactNumber } from "@/lib/formatters";
 import type { UserModel } from "@/types/models";
+import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
 
 function normalizeSocialUrl(platform: string, value: string) {
   if (value.startsWith("http://") || value.startsWith("https://")) return value;
@@ -78,10 +79,9 @@ export function CreatorCard({ creator, showSocialLinks = false }: { creator: Use
 
         <div className="profile-info">
           <div className="profile-name-row">
-            <p className="profile-name">{creator.displayName}</p>
-            {creator.verified ? <CheckCircle2 size={18} className="profile-verified" /> : null}
+            <VerifiedLabel text={creator.displayName} verified={creator.verified} textClassName="profile-name" />
           </div>
-          <div className="profile-title">@{creator.username}</div>
+          <VerifiedLabel text={`@${creator.username}`} verified={false} className="profile-title" textClassName="profile-title" />
           {creator.bio ? <div className="profile-bio">{creator.bio}</div> : null}
         </div>
 

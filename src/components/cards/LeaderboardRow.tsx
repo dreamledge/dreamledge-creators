@@ -1,4 +1,5 @@
 import { mockUsers } from "@/lib/constants/mockData";
+import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
 import type { LeaderboardSnapshotModel } from "@/types/models";
 
 export function LeaderboardRow({ row }: { row: LeaderboardSnapshotModel }) {
@@ -9,8 +10,8 @@ export function LeaderboardRow({ row }: { row: LeaderboardSnapshotModel }) {
       <div className="flex items-center gap-3">
         <img src={creator?.photoUrl} alt={creator?.displayName} className="h-11 w-11 rounded-[28px] object-cover" />
         <div>
-          <p className="font-semibold text-text-primary">{creator?.displayName}</p>
-          <p className="text-sm text-text-secondary">@{creator?.username}</p>
+          <VerifiedLabel text={creator?.displayName ?? "Creator"} verified={creator?.verified} className="font-semibold text-text-primary" textClassName="font-semibold text-text-primary" iconClassName="verified-label__icon--tiny" />
+          <VerifiedLabel text={`@${creator?.username ?? "creator"}`} verified={false} className="text-sm text-text-secondary" textClassName="text-sm text-text-secondary" />
         </div>
       </div>
       <div className="text-right text-sm text-text-secondary">

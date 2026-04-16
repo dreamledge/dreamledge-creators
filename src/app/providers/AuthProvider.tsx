@@ -14,19 +14,31 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+const defaultAuthMockUser = mockUsers.find((entry) => entry.username === "sosanoir") ?? mockUsers[0];
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(() => getStoredAuthUser());
+  const [user, setUser] = useState<AuthUser | null>(() => {
+    const stored = getStoredAuthUser();
+    if (stored) return stored;
+    return {
+      id: defaultAuthMockUser.id,
+      email: defaultAuthMockUser.email,
+      displayName: defaultAuthMockUser.displayName,
+      username: defaultAuthMockUser.username,
+      photoUrl: defaultAuthMockUser.photoUrl,
+      onboardingComplete: true,
+    };
+  });
   const loading = false;
 
   const value = useMemo<AuthContextValue>(() => ({
     user,
     loading,
     login: (email: string) => {
-      const matched = mockUsers.find((entry) => entry.email === email) ?? mockUsers[0];
+      const matched = mockUsers.find((entry) => entry.email === email) ?? defaultAuthMockUser;
       const next: AuthUser = {
         id: matched.id,
-        email,
+        email: matched.email,
         displayName: matched.displayName,
         username: matched.username,
         photoUrl: matched.photoUrl,

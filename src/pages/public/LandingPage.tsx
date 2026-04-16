@@ -1,11 +1,15 @@
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { mockUsers } from "@/lib/constants/mockData";
+
+const sosaNoir = mockUsers.find((user) => user.username === "sosanoir");
+
 const features = [
   {
     title: "Trusted by creators",
-    text: "Way Off Script, Audioswim, and Sosa Noir.",
+    text: "Featuring creators like Sosa Noir, Way Off Script, and Audioswim.",
     icon: "⚔️",
-    image: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=500&q=80",
+    image: sosaNoir?.photoUrl ?? "/sosadata.jpg",
   },
   {
     title: "Judge & Get Judged",

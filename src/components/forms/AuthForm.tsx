@@ -18,10 +18,10 @@ export function AuthForm({
   animatedSubmit?: boolean;
   signupCard?: boolean;
 }) {
-  const [email, setEmail] = useState("milan@dreamledge.app");
+  const [email, setEmail] = useState("sosa@dreamledge.app");
   const [password, setPassword] = useState("password123");
-  const [displayName, setDisplayName] = useState("Milan Moves");
-  const [username, setUsername] = useState("milanmoves");
+  const [displayName, setDisplayName] = useState("Sosa Noir");
+  const [username, setUsername] = useState("sosanoir");
 
   return (
     <form

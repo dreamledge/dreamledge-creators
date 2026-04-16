@@ -8,6 +8,7 @@ import { SessionVideoPlayer } from "@/components/reviewSessions/SessionVideoPlay
 import { SocialLinksPanel } from "@/components/reviewSessions/SocialLinksPanel";
 import { Button } from "@/components/ui/Button";
 import { GradientCard } from "@/components/ui/GradientCard";
+import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
 import { MIN_WATCH_TIME } from "@/lib/constants/reviewSessions";
 import { mockUsers } from "@/lib/constants/mockData";
 import { upsertReviewSession } from "@/lib/firebase/reviewSessions";
@@ -209,11 +210,11 @@ export function ReviewSessionPage() {
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-[30px] border border-white/10 bg-white/4 p-4">
                   <p className="text-xs uppercase tracking-[0.24em] text-zinc-500">creatorA</p>
-                  <p className="mt-2 font-semibold text-white">{currentCreator.displayName}</p>
+                  <VerifiedLabel text={currentCreator.displayName} verified={currentCreator.verified} className="mt-2 font-semibold text-white" textClassName="font-semibold text-white" iconClassName="verified-label__icon--tiny" />
                 </div>
                 <div className="rounded-[30px] border border-white/10 bg-white/4 p-4">
                   <p className="text-xs uppercase tracking-[0.24em] text-zinc-500">creatorB</p>
-                  <p className="mt-2 font-semibold text-white">{opponent?.displayName ?? "Searching..."}</p>
+                  <VerifiedLabel text={opponent?.displayName ?? "Searching..."} verified={opponent?.verified} className="mt-2 font-semibold text-white" textClassName="font-semibold text-white" iconClassName="verified-label__icon--tiny" />
                 </div>
               </div>
             </div>
@@ -260,8 +261,8 @@ export function ReviewSessionPage() {
                   <img src={opponent.photoUrl} alt={opponent.displayName} className="h-16 w-16 rounded-[28px] object-cover" />
                   <div>
                     <p className="text-xs uppercase tracking-[0.24em] text-zinc-500">Reviewing now</p>
-                    <p className="text-xl font-semibold text-white">{opponent.displayName}</p>
-                    <p className="text-sm text-zinc-400">@{opponent.username}</p>
+                    <VerifiedLabel text={opponent.displayName} verified={opponent.verified} className="text-xl font-semibold text-white" textClassName="text-xl font-semibold text-white" iconClassName="h-[16px] w-[16px]" />
+                    <VerifiedLabel text={`@${opponent.username}`} verified={false} className="text-sm text-zinc-400" textClassName="text-sm text-zinc-400" />
                   </div>
                 </div>
               </div>

@@ -1,4 +1,5 @@
 import { mockContent, mockUsers } from "@/lib/constants/mockData";
+import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
 import type { BattleModel } from "@/types/models";
 
 export function BattleVSLayout({ battle }: { battle: BattleModel }) {
@@ -15,7 +16,7 @@ export function BattleVSLayout({ battle }: { battle: BattleModel }) {
           <div className="mt-4 flex items-center gap-3">
             <img src={item.creator?.photoUrl} alt={item.creator?.displayName} className="h-12 w-12 rounded-[28px] object-cover" />
             <div>
-              <p className="font-semibold text-text-primary">{item.creator?.displayName}</p>
+              <VerifiedLabel text={item.creator?.displayName ?? "Creator"} verified={item.creator?.verified} className="font-semibold text-text-primary" textClassName="font-semibold text-text-primary" iconClassName="verified-label__icon--tiny" />
               <p className="text-sm text-text-secondary">{item.content?.title}</p>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { mockUsers } from "@/lib/constants/mockData";
+import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
 import type { NotificationModel } from "@/types/models";
 
 const getNotificationMessage = (notification: NotificationModel): string => {
@@ -63,7 +64,7 @@ export function NotificationCard({ notification }: { notification: NotificationM
       <div className="notification-textBox">
         <div className="notification-textContent">
           <Link to={`/app/profile/${notification.actorId}`} className="notification-h1">
-            {actor?.displayName || "Someone"}
+            <VerifiedLabel text={actor?.displayName || "Someone"} verified={actor?.verified} textClassName="notification-h1" iconClassName="verified-label__icon--tiny" />
           </Link>
           <span className="notification-span">{timeAgo}</span>
         </div>

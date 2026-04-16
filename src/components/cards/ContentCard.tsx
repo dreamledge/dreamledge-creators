@@ -6,6 +6,7 @@ import { mockUsers } from "@/lib/constants/mockData";
 import type { ContentModel, SocialPlatform } from "@/types/models";
 import { useFeedContext } from "../feed/FeedList";
 import { useCommentModal } from "../overlays/CommentModal";
+import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
 
 interface ContentCardProps {
   content: ContentModel;
@@ -198,7 +199,7 @@ export function ContentCard({ content }: ContentCardProps) {
           </Link>
           <div className="creator-info">
             <Link to={`/app/profile/${creator?.id}`} className="creator-name">
-              {creator?.displayName || "Creator"}
+              <VerifiedLabel text={creator?.displayName || "Creator"} verified={creator?.verified} textClassName="creator-name" iconClassName="verified-label__icon--tiny" />
             </Link>
             <span className="platform-badge">
               {getPlatformIcon()}

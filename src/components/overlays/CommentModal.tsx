@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from "react";
 import { createContext, useContext } from "react";
 import { Heart, Image as ImageIcon, Smile } from "lucide-react";
+import { mockUsers } from "@/lib/constants/mockData";
+import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
 
 interface Comment {
   id: string;
@@ -107,9 +109,9 @@ const mockComments: Comment[] = [
   },
   {
     id: "c5",
-    userId: "u5",
-    userName: "Lisa Martinez",
-    userPhoto: "https://images.unsplash.com/photo-1534528740975-64290a9bc350?auto=format&fit=crop&w=100&q=80",
+    userId: "u1",
+    userName: "Sosa Noir",
+    userPhoto: "/sosadata.jpg",
     content: "This is so inspiring! You've motivated me to create more content.",
     likeCount: 31,
     createdAt: "2d ago",
@@ -143,14 +145,20 @@ export function CommentModal() {
                 </button>
                 <span className="comment-like-count">{comment.likeCount}</span>
               </div>
-              <div className="comment-body">
-                <div className="comment-user">
-                  <img src={comment.userPhoto} alt={comment.userName} className="comment-user-photo" />
-                  <div className="comment-user-info">
-                    <span className="comment-user-name">{comment.userName}</span>
-                    <span className="comment-time">{comment.createdAt}</span>
+                <div className="comment-body">
+                  <div className="comment-user">
+                    <img src={mockUsers.find((user) => user.id === comment.userId)?.photoUrl ?? comment.userPhoto} alt={mockUsers.find((user) => user.id === comment.userId)?.displayName ?? comment.userName} className="comment-user-photo" />
+                    <div className="comment-user-info">
+                      <VerifiedLabel
+                        text={mockUsers.find((user) => user.id === comment.userId)?.displayName ?? comment.userName}
+                        verified={mockUsers.find((user) => user.id === comment.userId)?.verified}
+                        className="comment-user-name"
+                        textClassName="comment-user-name"
+                        iconClassName="verified-label__icon--tiny"
+                      />
+                      <span className="comment-time">{comment.createdAt}</span>
+                    </div>
                   </div>
-                </div>
                 <p className="comment-text">{comment.content}</p>
                 <div className="comment-actions">
                   <button className="comment-reply-btn">Reply · {Math.floor(Math.random() * 8) + 1}</button>

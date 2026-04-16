@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { EditProfileModal } from "@/components/ui/EditProfileModal";
+import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
 import type { UserModel } from "@/types/models";
 
 interface ProfileCardProps {
@@ -24,8 +25,8 @@ export function ProfileCard({ creator, isOwnProfile = false }: ProfileCardProps)
             <img src={creator.photoUrl} alt={creator.displayName} />
           </div>
           <div className="profile-info">
-            <p className="profile-name">{creator.displayName}</p>
-            <div className="profile-title">@{creator.username}</div>
+            <VerifiedLabel text={creator.displayName} verified={creator.verified} textClassName="profile-name" />
+            <VerifiedLabel text={`@${creator.username}`} verified={false} className="profile-title" textClassName="profile-title" />
             {creator.bio && <div className="profile-bio">{creator.bio}</div>}
           </div>
           

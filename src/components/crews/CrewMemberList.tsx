@@ -1,4 +1,5 @@
 import { mockUsers } from "@/lib/constants/mockData";
+import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
 import type { CrewMemberModel } from "@/types/models";
 
 export function CrewMemberList({ members }: { members: CrewMemberModel[] }) {
@@ -10,7 +11,7 @@ export function CrewMemberList({ members }: { members: CrewMemberModel[] }) {
           <div key={member.id} className="flex items-center gap-3 bubble-card rounded-[32px] p-4">
             <img src={creator?.photoUrl} alt={creator?.displayName} className="h-12 w-12 rounded-[28px] object-cover" />
             <div>
-              <p className="font-semibold text-text-primary">{creator?.displayName}</p>
+              <VerifiedLabel text={creator?.displayName ?? "Creator"} verified={creator?.verified} className="font-semibold text-text-primary" textClassName="font-semibold text-text-primary" iconClassName="verified-label__icon--tiny" />
               <p className="text-sm text-text-secondary">{member.role}</p>
             </div>
           </div>
