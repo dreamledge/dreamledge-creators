@@ -28,6 +28,7 @@ export function ProfileCard({ creator, isOwnProfile = false }: ProfileCardProps)
             <VerifiedLabel
               text={creator.displayName}
               verified={creator.verified}
+              balanceIcon
               className="profile-name-row"
               textClassName="profile-name"
               iconClassName="h-[18px] w-[18px]"

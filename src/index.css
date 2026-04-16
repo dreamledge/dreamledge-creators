@@ -1786,6 +1786,10 @@ button {
   filter: drop-shadow(0 0 10px rgba(255, 77, 79, 0.38));
 }
 
+.verified-label__icon--ghost {
+  visibility: hidden;
+}
+
 .verified-label__icon--tiny {
   width: 14px;
   height: 14px;
@@ -3231,6 +3235,10 @@ button {
   align-items: center;
   padding: 8px;
   width: 100%;
+}
+
+.profile-content-feed .feed-list-container {
+  padding-inline: 0;
 }
 
 /* Volume Toggle */

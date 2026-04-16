@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { BadgeList } from "@/components/profile/BadgeList";
 import { ContentGrid } from "@/components/profile/ContentGrid";
 import { ProfileCard } from "@/components/profile/ProfileCard";
@@ -7,6 +8,7 @@ import { mockContent, mockUsers } from "@/lib/constants/mockData";
 
 export function MyProfilePage() {
   const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState("posts");
   const creator = user ? mockUsers.find((entry) => entry.id === user.id)
     ?? mockUsers.find((entry) => entry.username === user.username)
     ?? mockUsers.find((entry) => entry.email === user.email)
@@ -34,8 +36,8 @@ export function MyProfilePage() {
     <div className="space-y-6">
       {creator ? <ProfileCard creator={creator} isOwnProfile /> : null}
       <BadgeList badges={creator?.badges ?? []} />
-      <ProfileTabs />
-      <ContentGrid items={items} />
+      <ProfileTabs activeTab={activeTab} onChange={setActiveTab} />
+      {activeTab === "posts" ? <ContentGrid items={items} /> : null}
     </div>
   );
 }

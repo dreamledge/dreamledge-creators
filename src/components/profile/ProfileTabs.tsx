@@ -48,15 +48,23 @@ const tabs: { key: string; label: string; icon: ReactNode }[] = [
   },
 ];
 
-export function ProfileTabs() {
-  const [activeTab, setActiveTab] = useState("posts");
+export function ProfileTabs({ activeTab: controlledActiveTab, onChange }: { activeTab?: string; onChange?: (tab: string) => void } = {}) {
+  const [internalActiveTab, setInternalActiveTab] = useState("posts");
+  const activeTab = controlledActiveTab ?? internalActiveTab;
+
+  const handleTabChange = (tab: string) => {
+    if (controlledActiveTab === undefined) {
+      setInternalActiveTab(tab);
+    }
+    onChange?.(tab);
+  };
 
   return (
     <div className="feed-tabs-container">
       {tabs.map((tab) => (
         <button
           key={tab.key}
-          onClick={() => setActiveTab(tab.key)}
+          onClick={() => handleTabChange(tab.key)}
           className={`feed-tab ${activeTab === tab.key ? "feed-tab-active" : "feed-tab-inactive"}`}
         >
           <span className="feed-tab-icon">{tab.icon}</span>

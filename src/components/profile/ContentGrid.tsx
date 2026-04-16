@@ -1,6 +1,16 @@
-import { ContentCard } from "@/components/cards/ContentCard";
+import { FeedList, FeedProvider } from "@/components/feed/FeedList";
+import { CommentModal, CommentModalProvider } from "@/components/overlays/CommentModal";
 import type { ContentModel } from "@/types/models";
 
 export function ContentGrid({ items }: { items: ContentModel[] }) {
-  return <div className="grid gap-4 xl:grid-cols-2">{items.map((item) => <ContentCard key={item.id} content={item} />)}</div>;
+  return (
+    <CommentModalProvider>
+      <FeedProvider>
+        <div className="profile-content-feed">
+          <FeedList items={items} />
+        </div>
+        <CommentModal />
+      </FeedProvider>
+    </CommentModalProvider>
+  );
 }

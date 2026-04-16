@@ -15,18 +15,21 @@ function VerifiedBadge({ className }: { className?: string }) {
 export function VerifiedLabel({
   text,
   verified,
+  balanceIcon = false,
   className,
   textClassName,
   iconClassName,
 }: {
   text: string;
   verified?: boolean;
+  balanceIcon?: boolean;
   className?: string;
   textClassName?: string;
   iconClassName?: string;
 }) {
   return (
     <span className={cn("verified-label", className)}>
+      {verified && balanceIcon ? <VerifiedBadge className={cn("verified-label__icon", "verified-label__icon--ghost", iconClassName)} /> : null}
       <span className={cn("verified-label__text", textClassName)}>{text}</span>
       {verified ? <VerifiedBadge className={iconClassName} /> : null}
     </span>
