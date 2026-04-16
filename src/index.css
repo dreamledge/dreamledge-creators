@@ -612,14 +612,17 @@ button {
 }
 
 .landing-topbar {
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   background: linear-gradient(180deg, rgba(5, 5, 7, 0.98), rgba(10, 10, 12, 0.94));
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
   transform: translateZ(0);
   will-change: transform;
+  z-index: 60;
+  isolation: isolate;
 }
 
 .landing-scroll-section {
@@ -678,11 +681,43 @@ button {
 .landing-hero-reveal .landing-reveal-item:nth-child(2) { transition-delay: 120ms; }
 .landing-hero-reveal .landing-reveal-item:nth-child(3) { transition-delay: 240ms; }
 
+.landing-hero-reveal,
+.landing-hero-reveal::before {
+  background: transparent;
+}
+
+.landing-hero-reveal::before {
+  display: none;
+}
+
+.landing-features-reveal {
+  margin-top: 4.5rem;
+  transform: translateY(96px) scale(0.94) rotateX(10deg);
+}
+
+.landing-scroll-section.is-visible.landing-features-reveal {
+  transform: translateY(0) scale(1) rotateX(0deg);
+}
+
+.landing-features-reveal .landing-reveal-item {
+  transform: translateY(34px) scale(0.97);
+}
+
+.landing-scroll-section.is-visible.landing-features-reveal .landing-reveal-item {
+  transform: translateY(0) scale(1);
+}
+
 .landing-lower-reveal > .landing-reveal-item:nth-child(1) { transition-delay: 0ms; }
 .landing-lower-reveal > .landing-reveal-item:nth-child(2) { transition-delay: 180ms; }
 
 .landing-category-chip {
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+@media (max-width: 640px) {
+  .landing-features-reveal {
+    margin-top: 3.5rem;
+  }
 }
 
 .dreamledge-nav-signin-wrapper {
