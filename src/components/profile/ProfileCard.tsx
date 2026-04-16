@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { EditProfileModal } from "@/components/ui/EditProfileModal";
 import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
@@ -11,6 +12,7 @@ interface ProfileCardProps {
 
 export function ProfileCard({ creator, isOwnProfile = false }: ProfileCardProps) {
   const { user, toggleFollow } = useAuth();
+  const navigate = useNavigate();
   const isOwn = isOwnProfile || user?.id === creator.id;
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -99,18 +101,23 @@ export function ProfileCard({ creator, isOwnProfile = false }: ProfileCardProps)
             </button>
           </div>
           
-          <button 
-            className={`cta-button ${isOwn ? 'edit-profile' : 'follow-profile'}`}
-            onClick={() => {
-              if (isOwn) {
-                setShowEditModal(true);
-                return;
-              }
-              toggleFollow(creator.id);
-            }}
-          >
-            {isOwn ? 'Edit Profile' : isFollowing ? 'Following' : 'Follow'}
-          </button>
+          <div className="flex w-full flex-col gap-3">
+            <button
+              className={`cta-button ${isOwn ? 'edit-profile' : 'follow-profile'}`}
+              onClick={() => {
+                if (isOwn) {
+                  setShowEditModal(true);
+                  return;
+                }
+                toggleFollow(creator.id);
+              }}
+            >
+              {isOwn ? 'Edit Profile' : isFollowing ? 'Following' : 'Follow'}
+            </button>
+            {isOwn ? (
+              <button className="cta-button edit-profile" onClick={() => navigate("/app/messages")}>Messages</button>
+            ) : null}
+          </div>
           
           <div className="stats">
             <div className="stat-item">

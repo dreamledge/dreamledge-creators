@@ -307,8 +307,8 @@ export const mockContestEntries: ContestEntryModel[] = [
 ];
 
 export const mockConversations: ConversationModel[] = [
-  { id: "cv1", participantIds: ["u1", "u2"], lastMessage: "Your commentary piece is battle-ready.", lastMessageAt: iso(1), createdAt: iso(100) },
-  { id: "cv2", participantIds: ["u1", "u3"], lastMessage: "Want to run a direct challenge this weekend?", lastMessageAt: iso(6), createdAt: iso(60) },
+  { id: "cv1", participantIds: ["u1", "u2"], lastMessage: "Your commentary piece is battle-ready.", lastSenderId: "u1", lastMessageAt: iso(1), createdAt: iso(100) },
+  { id: "cv2", participantIds: ["u1", "u3"], lastMessage: "Want to run a direct challenge this weekend?", lastSenderId: "u3", lastMessageAt: iso(6), createdAt: iso(60) },
 ];
 
 export const mockMessages: MessageModel[] = [

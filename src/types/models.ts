@@ -152,6 +152,7 @@ export interface ConversationModel {
   id: string;
   participantIds: string[];
   lastMessage: string;
+  lastSenderId?: string;
   lastMessageAt: string;
   createdAt: string;
 }
