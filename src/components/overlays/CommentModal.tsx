@@ -116,6 +116,33 @@ const mockComments: Comment[] = [
     likeCount: 31,
     createdAt: "2d ago",
   },
+  {
+    id: "c6",
+    userId: "u5",
+    userName: "Berto Brown",
+    userPhoto: "/bertdata.jpg",
+    content: "This post hits. Clean delivery, strong energy, and the message lands right away.",
+    likeCount: 19,
+    createdAt: "3h ago",
+  },
+  {
+    id: "c7",
+    userId: "u5",
+    userName: "Berto Brown",
+    userPhoto: "/bertdata.jpg",
+    content: "Real creator presence here. I would watch a whole series built around this format.",
+    likeCount: 27,
+    createdAt: "7h ago",
+  },
+  {
+    id: "c8",
+    userId: "u5",
+    userName: "Berto Brown",
+    userPhoto: "/bertdata.jpg",
+    content: "Strong pacing and strong voice. This kind of content is exactly what keeps people locked in.",
+    likeCount: 22,
+    createdAt: "1d ago",
+  },
 ];
 
 export function CommentModal() {

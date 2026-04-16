@@ -105,6 +105,28 @@ export const mockUsers: UserModel[] = [
     createdAt: iso(120),
     updatedAt: iso(7),
   },
+  {
+    id: "u5",
+    username: "berto_brown",
+    displayName: "Berto Brown",
+    email: "berto@dreamledge.app",
+    photoUrl: "/bertdata.jpg",
+    bannerUrl: "https://images.unsplash.com/photo-1515169067868-5387ec356754?auto=format&fit=crop&w=1200&q=80",
+    bio: "Sharp on camera, grounded in story, and focused on building a real audience through standout creator energy.",
+    categories: ["commentary", "motivation", "storytelling"],
+    goals: ["grow audience", "build community"],
+    socialLinks: { instagram: "https://instagram.com/berto_brown", tiktok: "@berto_brown", youtube: "youtube.com/@bertobrown", website: "https://bertobrown.media" },
+    totalPoints: 1495,
+    battleWins: 17,
+    contestWins: 4,
+    followerCount: 24800,
+    followingCount: 301,
+    badges: ["Featured Creator", "Verified Creator", "Momentum Builder"],
+    verified: true,
+    rookie: false,
+    createdAt: iso(260),
+    updatedAt: iso(2),
+  },
 ];
 
 export const mockContent: ContentModel[] = [

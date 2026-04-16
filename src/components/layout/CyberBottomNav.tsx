@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Home, Search, Video, Swords, User } from "lucide-react";
 
@@ -26,11 +25,10 @@ export function CyberBottomNav() {
     return found ? navItems.indexOf(found) : 0;
   };
 
-  const [activeIndex, setActiveIndex] = useState(getActiveIndex());
+  const activeIndex = getActiveIndex();
 
-  const handleClick = (index: number, route: string) => {
+  const handleClick = (route: string) => {
     const isSameRoute = location.pathname === route;
-    setActiveIndex(index);
     window.scrollTo(0, 0);
     if (isSameRoute) {
       navigate(route, { replace: true });
@@ -53,7 +51,7 @@ export function CyberBottomNav() {
           <button
             key={item.to}
             className={`cyber-label ${activeIndex === index ? "active" : ""}`}
-            onClick={() => handleClick(index, item.to)}
+            onClick={() => handleClick(item.to)}
           >
             <CyberIcon icon={item.icon} />
             <span className="glare"></span>
