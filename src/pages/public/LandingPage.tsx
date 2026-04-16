@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 const features = [
   {
     title: "Trusted by creators",
@@ -30,6 +31,35 @@ const footerLinks = [
   { label: "Privacy Policy", href: "/privacy-policy", external: false },
 ];
 
+function LandingRevealSection({ children, className = "" }: { children: ReactNode; className?: string }) {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const node = sectionRef.current;
+    if (!node) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.3 },
+    );
+
+    observer.observe(node);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  return (
+    <div ref={sectionRef} className={`landing-scroll-section ${isVisible ? "is-visible" : ""} ${className}`.trim()}>
+      {children}
+    </div>
+  );
+}
+
 export function LandingPage() {
   return (
     <div className="relative -mt-[60px] min-h-screen overflow-hidden bg-black text-white">
@@ -40,6 +70,7 @@ export function LandingPage() {
           loop
           muted
           playsInline
+          preload="metadata"
         >
           <source src="/landingpagebackround.mp4" type="video/mp4" />
         </video>
@@ -92,20 +123,20 @@ export function LandingPage() {
         <div className="mx-auto w-full max-w-7xl px-4 pt-28 sm:px-6 sm:pt-30 lg:px-8">
           <div className="mx-auto w-full max-w-sm lg:max-w-none">
 
-          <div className="mt-10">
+          <LandingRevealSection className="landing-hero-reveal mt-10">
             <div className="text-center lg:text-left">
-              <h2 className="text-[2rem] font-bold leading-[0.96] tracking-tight text-white sm:text-5xl lg:max-w-[13ch] lg:text-6xl lg:text-left">
+              <h2 className="landing-reveal-item text-[2rem] font-bold leading-[0.96] tracking-tight text-white sm:text-5xl lg:max-w-[13ch] lg:text-6xl lg:text-left">
                 <span className="block text-white/88">The Platform for</span>
                 <span className="block text-white">Creators to</span>
                 <span className="block text-red-400">Compete, Connect, and Grow.</span>
               </h2>
-              <div className="mt-4 max-w-[32rem] space-y-2 text-sm leading-6 text-zinc-300 sm:mx-auto sm:text-base lg:mx-0">
+              <div className="landing-reveal-item mt-4 max-w-[32rem] space-y-2 text-sm leading-6 text-zinc-300 sm:mx-auto sm:text-base lg:mx-0">
                 <p>Post your content and get real feedback.</p>
                 <p>Join a crew and compete in tournaments.</p>
                 <p>Win weekly challenges and grow faster.</p>
               </div>
 
-              <div className="mt-6 flex gap-3 sm:justify-center lg:justify-start">
+              <div className="landing-reveal-item mt-6 flex gap-3 sm:justify-center lg:justify-start">
                 <Link
                   to="/signup"
                   className="landing-cta-button landing-cta-primary flex-1"
@@ -135,123 +166,131 @@ export function LandingPage() {
                   </span>
                 </Link>
               </div>
-              <div className="mt-8 grid gap-3 lg:hidden">
-                {features.map((feature) => (
-                  <div
-                    key={feature.title}
-                    className="landing-feature-card"
-                  >
-                    <div className="landing-feature-card__body">
-                      <div data-position="top" className="landing-feature-card__carousel">
-                        <span className="landing-feature-card__carousel-text">
-                          dreamledge creators • dreamledge creators • dreamledge creators • dreamledge creators •
-                        </span>
-                      </div>
-                      <div className="landing-feature-card__content">
-                        <div className="landing-feature-card__icon">{feature.icon}</div>
-                        <div className="landing-feature-card__copy">
-                          <h3 className="landing-feature-card__title">{feature.title}</h3>
-                          <p className="landing-feature-card__text">{feature.text}</p>
-                        </div>
-                      </div>
-                      <img src={feature.image} alt={feature.title} className="landing-feature-card__image" />
-                      <div data-position="bottom" data-direction="right" className="landing-feature-card__carousel">
-                        <span className="landing-feature-card__carousel-text">
-                          dreamledge creators • dreamledge creators • dreamledge creators • dreamledge creators •
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
-          </div>
+          </LandingRevealSection>
 
-          <div className="mt-8 hidden gap-3 lg:grid lg:grid-cols-3">
-            {features.map((feature) => (
-              <div
-                key={feature.title}
-                className="landing-feature-card"
-              >
-                <div className="landing-feature-card__body">
-                  <div data-position="top" className="landing-feature-card__carousel">
-                    <span className="landing-feature-card__carousel-text">
-                      dreamledge creators • dreamledge creators • dreamledge creators • dreamledge creators •
-                    </span>
-                  </div>
-                  <div className="landing-feature-card__content">
-                    <div className="landing-feature-card__icon">{feature.icon}</div>
-                    <div className="landing-feature-card__copy">
-                      <h3 className="landing-feature-card__title">{feature.title}</h3>
-                      <p className="landing-feature-card__text">{feature.text}</p>
+          <LandingRevealSection className="landing-features-reveal mt-8">
+            <div className="grid gap-3 lg:hidden">
+              {features.map((feature, index) => (
+                <div
+                  key={feature.title}
+                  className="landing-feature-card landing-reveal-item"
+                  style={{ transitionDelay: `${index * 120}ms` }}
+                >
+                  <div className="landing-feature-card__body">
+                    <div data-position="top" className="landing-feature-card__carousel">
+                      <span className="landing-feature-card__carousel-text">
+                        dreamledge creators • dreamledge creators • dreamledge creators • dreamledge creators •
+                      </span>
                     </div>
-                  </div>
-                  <img src={feature.image} alt={feature.title} className="landing-feature-card__image" />
-                  <div data-position="bottom" data-direction="right" className="landing-feature-card__carousel">
-                    <span className="landing-feature-card__carousel-text">
-                      dreamledge creators • dreamledge creators • dreamledge creators • dreamledge creators •
-                    </span>
+                    <div className="landing-feature-card__content">
+                      <div className="landing-feature-card__icon">{feature.icon}</div>
+                      <div className="landing-feature-card__copy">
+                        <h3 className="landing-feature-card__title">{feature.title}</h3>
+                        <p className="landing-feature-card__text">{feature.text}</p>
+                      </div>
+                    </div>
+                    <img src={feature.image} alt={feature.title} className="landing-feature-card__image" />
+                    <div data-position="bottom" data-direction="right" className="landing-feature-card__carousel">
+                      <span className="landing-feature-card__carousel-text">
+                        dreamledge creators • dreamledge creators • dreamledge creators • dreamledge creators •
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-8 lg:grid lg:grid-cols-[1.05fr_0.95fr] lg:gap-8">
-            <div>
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-white">Categories</p>
-                <button className="text-xs font-medium text-red-300">View all</button>
-              </div>
-              <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:flex-wrap lg:overflow-visible">
-                {categories.map((category) => (
-                  <span
-                    key={category}
-                    className="whitespace-nowrap rounded-[999px] border border-white/8 bg-zinc-900/80 px-3.5 py-2 text-xs text-zinc-300 backdrop-blur-sm"
-                  >
-                    {category}
-                  </span>
-                ))}
-              </div>
+              ))}
             </div>
 
-            <div className="mt-8 lg:mt-0">
-              <div className="rounded-[34px] bg-white p-5 text-black shadow-2xl shadow-black/30">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">Join Dreamledge</p>
-                <h3 className="mt-2 text-2xl font-bold tracking-tight">Build your audience and compete for attention.</h3>
-                <p className="mt-2 text-sm leading-6 text-zinc-600">
-                  Start creating, enter battles, and turn your content into momentum with a platform built around rank, discovery, and creator presence.
-                </p>
-                <Link
-                  to="/signup"
-                  className="mt-5 flex w-full items-center justify-center rounded-[28px] bg-black px-4 py-3.5 text-center text-sm font-semibold !text-white shadow-lg transition hover:opacity-95"
+            <div className="hidden gap-3 lg:grid lg:grid-cols-3">
+              {features.map((feature, index) => (
+                <div
+                  key={feature.title}
+                  className="landing-feature-card landing-reveal-item"
+                  style={{ transitionDelay: `${index * 120}ms` }}
                 >
-                  Create account
-                </Link>
-              </div>
+                  <div className="landing-feature-card__body">
+                    <div data-position="top" className="landing-feature-card__carousel">
+                      <span className="landing-feature-card__carousel-text">
+                        dreamledge creators • dreamledge creators • dreamledge creators • dreamledge creators •
+                      </span>
+                    </div>
+                    <div className="landing-feature-card__content">
+                      <div className="landing-feature-card__icon">{feature.icon}</div>
+                      <div className="landing-feature-card__copy">
+                        <h3 className="landing-feature-card__title">{feature.title}</h3>
+                        <p className="landing-feature-card__text">{feature.text}</p>
+                      </div>
+                    </div>
+                    <img src={feature.image} alt={feature.title} className="landing-feature-card__image" />
+                    <div data-position="bottom" data-direction="right" className="landing-feature-card__carousel">
+                      <span className="landing-feature-card__carousel-text">
+                        dreamledge creators • dreamledge creators • dreamledge creators • dreamledge creators •
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
+          </LandingRevealSection>
 
-          <footer className="mt-14 pt-8">
-            <div>
-              <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-8 sm:gap-y-4">
-                {footerLinks.map((link) =>
-                  link.external ? (
-                    <a key={link.label} href={link.href} className="footer-link text-sm text-white/58 transition duration-300 hover:text-white">
-                      {link.label}
-                    </a>
-                  ) : (
-                    <Link key={link.label} to={link.href} className="footer-link text-sm text-white/58 transition duration-300 hover:text-white">
-                      {link.label}
-                    </Link>
-                  ),
-                )}
+          <LandingRevealSection className="landing-lower-reveal mt-8">
+            <div className="landing-reveal-item lg:grid lg:grid-cols-[1.05fr_0.95fr] lg:gap-8">
+              <div>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-white">Categories</p>
+                  <button className="text-xs font-medium text-red-300">View all</button>
+                </div>
+                <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:flex-wrap lg:overflow-visible">
+                  {categories.map((category, index) => (
+                    <span
+                      key={category}
+                      className="landing-category-chip landing-reveal-item whitespace-nowrap rounded-[999px] border border-white/8 bg-zinc-900/80 px-3.5 py-2 text-xs text-zinc-300 backdrop-blur-sm"
+                      style={{ transitionDelay: `${index * 70}ms` }}
+                    >
+                      {category}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <p className="mt-8 pb-2 text-center text-xs tracking-[0.18em] text-white/38">
-                © 2026 Dreamledge. All rights reserved.
-              </p>
+
+              <div className="landing-reveal-item mt-8 lg:mt-0">
+                <div className="rounded-[34px] bg-white p-5 text-black shadow-2xl shadow-black/30">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">Join Dreamledge</p>
+                  <h3 className="mt-2 text-2xl font-bold tracking-tight">Build your audience and compete for attention.</h3>
+                  <p className="mt-2 text-sm leading-6 text-zinc-600">
+                    Start creating, enter battles, and turn your content into momentum with a platform built around rank, discovery, and creator presence.
+                  </p>
+                  <Link
+                    to="/signup"
+                    className="mt-5 flex w-full items-center justify-center rounded-[28px] bg-black px-4 py-3.5 text-center text-sm font-semibold !text-white shadow-lg transition hover:opacity-95"
+                  >
+                    Create account
+                  </Link>
+                </div>
+              </div>
             </div>
-          </footer>
+
+            <footer className="landing-reveal-item mt-14 pt-8">
+              <div>
+                <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-8 sm:gap-y-4">
+                  {footerLinks.map((link) =>
+                    link.external ? (
+                      <a key={link.label} href={link.href} className="footer-link text-sm text-white/58 transition duration-300 hover:text-white">
+                        {link.label}
+                      </a>
+                    ) : (
+                      <Link key={link.label} to={link.href} className="footer-link text-sm text-white/58 transition duration-300 hover:text-white">
+                        {link.label}
+                      </Link>
+                    ),
+                  )}
+                </div>
+                <p className="mt-8 pb-2 text-center text-xs tracking-[0.18em] text-white/38">
+                  © 2026 Dreamledge. All rights reserved.
+                </p>
+              </div>
+            </footer>
+          </LandingRevealSection>
 
         </div>
         </div>

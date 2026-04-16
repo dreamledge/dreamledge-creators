@@ -74,7 +74,7 @@ function HomeVolumeToggle() {
 
   return (
     <div className="volume-toggle-wrapper">
-      <span className="volume-toggle-label">toggle volume on (recommended)</span>
+      <span className="volume-toggle-label">videos start muted for autoplay</span>
       <input
         type="checkbox"
         id="volumeCheckbox"
