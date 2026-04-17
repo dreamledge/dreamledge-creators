@@ -3,6 +3,7 @@ import type { FeedTab } from "@/types/models";
 
 const tabs: { key: FeedTab; label: string; url?: string }[] = [
   { key: "for-you", label: "For You", url: "/app/home" },
+  { key: "live-now", label: "Live Now", url: "/app/home?tab=live-now" },
   { key: "following", label: "Following", url: "/app/home?tab=following" },
   { key: "trending", label: "Trending", url: "/app/home?tab=trending" },
   { key: "new", label: "New", url: "/app/home?tab=new" },
@@ -15,7 +16,7 @@ export function FeedTabs({ active, onChange }: { active: FeedTab; onChange: (tab
   const getCurrentTabFromParams = (): FeedTab => {
     const params = new URLSearchParams(location.search);
     const tab = params.get("tab");
-    if (tab && ["following", "trending", "new"].includes(tab)) {
+    if (tab && ["live-now", "following", "trending", "new"].includes(tab)) {
       return tab as FeedTab;
     }
     return "for-you";
@@ -49,6 +50,12 @@ export function FeedTabs({ active, onChange }: { active: FeedTab; onChange: (tab
         return (
           <svg viewBox="0 0 24 24" fill="currentColor" height="1em">
             <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+          </svg>
+        );
+      case "live-now":
+        return (
+          <svg viewBox="0 0 24 24" fill="currentColor" height="1em">
+            <path d="M6 4h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-4.5L9 20v-4H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm2.5 4.5a1.5 1.5 0 0 0 0 3h.5v.5a1.5 1.5 0 0 0 3 0v-.5h.5a1.5 1.5 0 0 0 0-3H12V8a1.5 1.5 0 0 0-3 0v.5h-.5zm8-1.5a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" />
           </svg>
         );
       case "trending":

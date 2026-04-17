@@ -36,6 +36,12 @@ const TwitterIcon = () => (
   </svg>
 );
 
+const TwitchIcon = () => (
+  <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+    <path d="M4 3 2 8v11h4v3h3l3-3h4l6-6V3H4zm16 9-3 3h-4l-3 3v-3H6V5h14v7zm-8-5h-2v5h2V7zm5 0h-2v5h2V7z" />
+  </svg>
+);
+
 const PlayIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" width="32" height="32">
     <path d="M8 5v14l11-7z"/>
@@ -86,6 +92,7 @@ export function ContentCard({ content }: ContentCardProps) {
       case "instagram": return <InstagramIcon />;
       case "tiktok": return <TikTokIcon />;
       case "youtube": return <YouTubeIcon />;
+      case "twitch": return <TwitchIcon />;
       case "twitter":
       case "x": return <TwitterIcon />;
       default: return null;
@@ -113,6 +120,12 @@ export function ContentCard({ content }: ContentCardProps) {
       const shortcode = embedUrl.match(/\/p\/([A-Za-z0-9_-]+)/)?.[1] || embedUrl.match(/\/reel\/([A-Za-z0-9_-]+)/)?.[1];
       if (shortcode) {
         src = `https://www.instagram.com/p/${shortcode}/embed/?__a=1&__d=1`;
+      }
+    } else if (embedUrl.includes("twitch.tv")) {
+      const channel = embedUrl.split("twitch.tv/")[1]?.split(/[/?#]/)[0];
+      const parent = typeof window !== "undefined" ? window.location.hostname : "localhost";
+      if (channel) {
+        src = `https://player.twitch.tv/?channel=${channel}&parent=${parent}&muted=${useMute === 1 ? "true" : "false"}&autoplay=true`;
       }
     } else if (embedUrl.includes("facebook.com") || embedUrl.includes("fb.watch")) {
       const videoId = embedUrl.match(/v=(\d+)/)?.[1] || embedUrl.match(/\/watch\/\?v=(\d+)/)?.[1];
@@ -183,6 +196,7 @@ export function ContentCard({ content }: ContentCardProps) {
   const hasInstagram = !!socialLinks?.instagram;
   const hasTikTok = !!socialLinks?.tiktok;
   const hasYouTube = !!socialLinks?.youtube;
+  const hasTwitch = !!socialLinks?.twitch;
   const hasTwitter = !!socialLinks?.twitter;
 
   return (
@@ -205,6 +219,7 @@ export function ContentCard({ content }: ContentCardProps) {
               {getPlatformIcon()}
               {content.platform}
             </span>
+            {content.status === "live" ? <span className="platform-badge platform-badge-live">LIVE</span> : null}
           </div>
         </div>
         <div className="creator-socials">
@@ -221,6 +236,11 @@ export function ContentCard({ content }: ContentCardProps) {
           {hasYouTube && (
             <a href={(socialLinks?.youtube as string)?.startsWith("http") ? socialLinks?.youtube : `https://youtube.com/${(socialLinks?.youtube as string)?.replace("@", "")}`} target="_blank" rel="noopener noreferrer" className="creator-social-link" title="YouTube">
               <YouTubeIcon />
+            </a>
+          )}
+          {hasTwitch && (
+            <a href={socialLinks?.twitch} target="_blank" rel="noopener noreferrer" className="creator-social-link" title="Twitch">
+              <TwitchIcon />
             </a>
           )}
           {hasTwitter && (
@@ -274,7 +294,7 @@ export function ContentCard({ content }: ContentCardProps) {
             <iframe
               src={videoSrc}
               className="video-embed"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
               allowFullScreen
               onLoad={() => setIframeLoaded(true)}
             />

@@ -23,8 +23,8 @@ export type CreatorGoal =
   | "build community"
   | "attract brands";
 
-export type ContentPlatform = "tiktok" | "youtube" | "twitter" | "facebook" | "unknown";
-export type FeedTab = "for-you" | "following" | "trending" | "new" | "contests" | "battles";
+export type ContentPlatform = "tiktok" | "youtube" | "twitter" | "facebook" | "twitch" | "unknown";
+export type FeedTab = "for-you" | "live-now" | "following" | "trending" | "new" | "contests" | "battles";
 export type BattleStatus = "matchmaking" | "live" | "judging" | "completed" | "draw";
 export type BattleType = "open battle" | "direct challenge" | "themed battle" | "category battle";
 export type NotificationType =

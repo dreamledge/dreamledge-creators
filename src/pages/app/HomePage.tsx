@@ -33,7 +33,7 @@ export function HomePage() {
   const getCurrentTabFromParams = (): FeedTab => {
     const params = new URLSearchParams(location.search);
     const tab = params.get("tab");
-    if (tab && ["following", "trending", "new"].includes(tab)) {
+    if (tab && ["live-now", "following", "trending", "new"].includes(tab)) {
       return tab as FeedTab;
     }
     return "for-you";
@@ -45,6 +45,8 @@ export function HomePage() {
 
   const feedItems = (() => {
     switch (currentTab) {
+      case "live-now":
+        return mockContent.filter((item) => item.platform === "twitch" && item.status === "live");
       case "following":
         return mockContent.filter((item) => followingIds.includes(item.creatorId));
       case "new":

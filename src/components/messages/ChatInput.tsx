@@ -1,10 +1,11 @@
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 import { useMessages } from "@/app/providers/MessagesProvider";
 
 export function ChatInput({ conversationId, senderId }: { conversationId: string; senderId: string }) {
   const { sendMessage } = useMessages();
   const [draft, setDraft] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const fileInputId = useId();
 
   const fileLabel = useMemo(() => {
@@ -12,10 +13,24 @@ export function ChatInput({ conversationId, senderId }: { conversationId: string
     return selectedFile.name.length > 28 ? `${selectedFile.name.slice(0, 25)}...` : selectedFile.name;
   }, [selectedFile]);
 
+  const restoreComposerPosition = () => {
+    const resetViewport = () => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    resetViewport();
+    window.setTimeout(resetViewport, 120);
+    window.setTimeout(resetViewport, 280);
+  };
+
   const handleSend = () => {
     if (!draft.trim()) return;
     sendMessage({ conversationId, senderId, body: draft });
     setDraft("");
+    inputRef.current?.blur();
+    restoreComposerPosition();
   };
 
   return (
@@ -48,6 +63,7 @@ export function ChatInput({ conversationId, senderId }: { conversationId: string
           />
         </div>
         <input
+          ref={inputRef}
           className="message-composer__input"
           placeholder="Message..."
           value={draft}
