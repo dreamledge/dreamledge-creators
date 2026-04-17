@@ -213,7 +213,20 @@ export function ContentCard({ content }: ContentCardProps) {
             />
           </Link>
           <div className={`creator-info ${isLiveContent ? "creator-info-live" : ""}`}>
-            {content.status === "live" ? <span className="platform-badge platform-badge-live">LIVE</span> : null}
+            {content.status === "live" ? (
+              <span className="live-pill" aria-label="Live now">
+                <span className="live-pill__bg">
+                  <span className="live-pill__bg-layers">
+                    <span className="live-pill__bg-layer live-pill__bg-layer-1"></span>
+                    <span className="live-pill__bg-layer live-pill__bg-layer-2"></span>
+                    <span className="live-pill__bg-layer live-pill__bg-layer-3"></span>
+                  </span>
+                </span>
+                <span className="live-pill__inner">
+                  <span className="live-pill__label">LIVE</span>
+                </span>
+              </span>
+            ) : null}
             <Link to={`/app/profile/${creator?.id}`} className="creator-name">
               <VerifiedLabel text={creator?.displayName || "Creator"} verified={creator?.verified} textClassName="creator-name" iconClassName="verified-label__icon--tiny" />
             </Link>
