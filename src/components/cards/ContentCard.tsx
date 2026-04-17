@@ -198,20 +198,22 @@ export function ContentCard({ content }: ContentCardProps) {
   const hasYouTube = !!socialLinks?.youtube;
   const hasTwitch = !!socialLinks?.twitch;
   const hasTwitter = !!socialLinks?.twitter;
+  const isLiveContent = content.status === "live";
 
   return (
-    <div ref={cardRef} className="phone-card-outer" data-content-id={content.id}>
+    <div ref={cardRef} className={`phone-card-outer ${isLiveContent ? "phone-card-outer-live" : ""}`} data-content-id={content.id}>
       {/* Creator Overlay - Above the card */}
-      <div className="creator-overlay">
+      <div className={`creator-overlay ${isLiveContent ? "creator-overlay-live" : ""}`}>
         <div className="creator-left">
           <Link to={`/app/profile/${creator?.id}`} className="creator-link">
             <img 
               src={creator?.photoUrl || "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=100&q=80"} 
               alt={creator?.displayName}
-              className="creator-photo"
+              className={`creator-photo ${isLiveContent ? "creator-photo-live" : ""}`}
             />
           </Link>
-          <div className="creator-info">
+          <div className={`creator-info ${isLiveContent ? "creator-info-live" : ""}`}>
+            {content.status === "live" ? <span className="platform-badge platform-badge-live">LIVE</span> : null}
             <Link to={`/app/profile/${creator?.id}`} className="creator-name">
               <VerifiedLabel text={creator?.displayName || "Creator"} verified={creator?.verified} textClassName="creator-name" iconClassName="verified-label__icon--tiny" />
             </Link>
@@ -219,10 +221,9 @@ export function ContentCard({ content }: ContentCardProps) {
               {getPlatformIcon()}
               {content.platform}
             </span>
-            {content.status === "live" ? <span className="platform-badge platform-badge-live">LIVE</span> : null}
           </div>
         </div>
-        <div className="creator-socials">
+        <div className={`creator-socials ${isLiveContent ? "creator-socials-live" : ""}`}>
           {hasInstagram && (
             <a href={socialLinks?.instagram} target="_blank" rel="noopener noreferrer" className="creator-social-link" title="Instagram">
               <InstagramIcon />

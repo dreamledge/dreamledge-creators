@@ -3137,6 +3137,10 @@ button {
   position: relative;
 }
 
+.phone-card-outer-live {
+  padding-top: 52px;
+}
+
 .card {
   width: 100%;
   max-width: 380px;
@@ -3378,6 +3382,13 @@ button {
   flex-wrap: wrap;
 }
 
+.creator-overlay-live {
+  top: 0;
+  left: 18px;
+  right: 18px;
+  transform: translateY(-4px);
+}
+
 .creator-left {
   display: flex;
   align-items: center;
@@ -3388,6 +3399,10 @@ button {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.creator-socials-live {
+  margin-top: 28px;
 }
 
 .creator-social-link {
@@ -3422,9 +3437,17 @@ button {
   border: 2px solid #e63946;
 }
 
+.creator-photo-live {
+  margin-top: 18px;
+}
+
 .creator-info {
   display: flex;
   flex-direction: column;
+  gap: 2px;
+}
+
+.creator-info-live {
   gap: 2px;
 }
 
