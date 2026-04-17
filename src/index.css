@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #07080b;
-  --surface: #101217;
-  --card: #151922;
+  --background: #0a0a0a;
+  --surface: #121212;
+  --card: #1a1a1a;
   --primary: #ff384f;
   --secondary: #ff6673;
   --accent: #ffb1b9;
-  --text-primary: #f7f8fb;
-  --text-secondary: #aab1bf;
+  --text-primary: #fafafa;
+  --text-secondary: #a8a8a8;
   --line: rgba(255, 255, 255, 0.08);
   --line-strong: rgba(255, 255, 255, 0.14);
   --glow-red: rgba(255, 56, 79, 0.24);
@@ -43,11 +43,7 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top left, rgba(255, 56, 79, 0.2), transparent 22%),
-    radial-gradient(circle at top right, rgba(255, 122, 89, 0.08), transparent 18%),
-    radial-gradient(circle at bottom right, rgba(70, 96, 255, 0.08), transparent 20%),
-    linear-gradient(180deg, #090b10 0%, #090c12 52%, #0a0d14 100%);
+  background: #0a0a0a;
   color: var(--text-primary);
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -80,13 +76,13 @@ button {
 }
 
 .glass {
-  background: linear-gradient(180deg, rgba(20, 24, 32, 0.88), rgba(12, 16, 23, 0.82));
-  border: 1px solid var(--line);
-  backdrop-filter: blur(22px);
+  background: rgba(18, 18, 18, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
 }
 
 .surface-glow {
-  box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .text-gradient {
@@ -114,26 +110,17 @@ button {
 }
 
 .page-grid {
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
-  background-size: 90px 90px;
   padding-top: 60px;
 }
 
 .app-backdrop {
-  background:
-    radial-gradient(circle at top, rgba(255, 56, 79, 0.15), transparent 23%),
-    radial-gradient(circle at 85% 0%, rgba(94, 114, 228, 0.07), transparent 16%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.58)),
-    linear-gradient(180deg, #090b10 0%, #0a0d14 55%, #0c1018 100%);
+  background: #0a0a0a;
 }
 
 .bubble-card {
-  border: 1px solid var(--line);
-  background: linear-gradient(180deg, rgba(21, 25, 34, 0.82), rgba(16, 19, 27, 0.76));
-  box-shadow: 0 20px 54px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(22px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #1a1a1a;
+  box-shadow: none;
 }
 
 .message-preview-row {
@@ -2708,9 +2695,9 @@ button {
   cursor: pointer;
   outline: none;
   transition: transform 0.24s ease, border-color 0.24s ease, background-color 0.24s ease, box-shadow 0.24s ease;
-  background: linear-gradient(180deg, rgba(20, 24, 32, 0.94), rgba(14, 17, 24, 0.9));
-  border: 1px solid rgba(255, 111, 126, 0.26);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: none;
   padding: 6px;
   display: flex;
   align-items: center;
@@ -2721,8 +2708,8 @@ button {
 
 .create-post-btn:hover {
   transform: translateY(-1px) rotate(90deg);
-  border-color: rgba(255, 111, 126, 0.48);
-  box-shadow: 0 18px 34px rgba(255, 56, 79, 0.16);
+  border-color: rgba(255, 255, 255, 0.15);
+  background: #262626;
 }
 
 .create-post-btn svg {
@@ -2899,15 +2886,14 @@ button {
   font-family: inherit;
   font-weight: 600;
   font-size: 14px;
-  padding: 0.8em 1.5em 0.8em 1.2em;
-  color: #f6f7fb;
-  background: linear-gradient(180deg, rgba(30, 34, 44, 0.94), rgba(22, 25, 33, 0.96));
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  padding: 0.6em 1.2em;
+  color: #a8a8a8;
+  background: transparent;
+  border: none;
   letter-spacing: 0.02em;
   border-radius: 20em;
   cursor: pointer;
-  transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease, background 0.24s ease;
+  transition: all 0.2s ease;
   white-space: nowrap;
 }
 
@@ -2927,30 +2913,16 @@ button {
 }
 
 .feed-tab:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.14);
-  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .feed-tab-active {
-  background: linear-gradient(180deg, #ff5367 0%, #f4334c 58%, #cf1735 100%);
-  border-color: rgba(255, 173, 181, 0.26);
-  box-shadow: 0 18px 36px rgba(255, 56, 79, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  background: transparent;
+  color: #ff384f;
 }
 
 .feed-tab-inactive {
-  background: linear-gradient(180deg, rgba(30, 34, 44, 0.94), rgba(22, 25, 33, 0.96));
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-}
-
-.feed-tab:hover {
-  transform: translateY(-2px);
-}
-
-.feed-tab:active {
-  background: linear-gradient(180deg, #ff5367 0%, #f4334c 58%, #cf1735 100%);
-  box-shadow: 0 10px 24px rgba(255, 56, 79, 0.22);
-  transform: translateY(0);
+  background: transparent;
 }
 
 .feed-tab-circle.circle-3, .feed-tab-circle.circle-4 {
@@ -3167,12 +3139,11 @@ button {
   width: 100%;
   max-width: 380px;
   height: 500px;
-  background: linear-gradient(180deg, #06080d 0%, #090d14 100%);
-  border-radius: 35px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #1a1a1a;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 7px;
   position: relative;
-  box-shadow: 0 28px 68px rgba(0, 0, 0, 0.36), 0 0 0 1px rgba(255, 255, 255, 0.03);
 }
 
 .card-fullscreen {
@@ -4301,8 +4272,8 @@ button {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 60px;
-  background: linear-gradient(to top, rgba(12, 16, 24, 0.96), rgba(12, 16, 24, 0.7) 40%, transparent);
+  height: 40px;
+  background: linear-gradient(to top, #0a0a0a 60%, transparent);
   pointer-events: none;
 }
 
@@ -4311,17 +4282,15 @@ button {
   width: 100%;
   max-width: 100%;
   height: 44px;
-  background: linear-gradient(180deg, rgba(24, 26, 35, 0.92), rgba(18, 20, 28, 0.95));
-  border-radius: 12px;
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  background: #121212;
+  border-radius: 8px;
+  box-shadow: none;
   display: flex;
   align-items: center;
   padding: 4px 8px;
   box-sizing: border-box;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .cyber-label {
