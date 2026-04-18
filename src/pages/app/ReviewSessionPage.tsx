@@ -45,6 +45,7 @@ export function ReviewSessionPage() {
   const [matchingMessage, setMatchingMessage] = useState("Tap start matching to begin pairing.");
   const [isMatching, setIsMatching] = useState(false);
   const [isBlinking, setIsBlinking] = useState(false);
+  const scaryEyeAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const currentCreator = useMemo(() => {
     if (!user) return mockUsers[0];
@@ -86,6 +87,8 @@ export function ReviewSessionPage() {
     return () => {
       if (matchIntervalRef.current) window.clearInterval(matchIntervalRef.current);
       if (matchTimeoutRef.current) window.clearTimeout(matchTimeoutRef.current);
+      scaryEyeAudioRef.current?.pause();
+      scaryEyeAudioRef.current = null;
     };
   }, []);
 
@@ -105,6 +108,13 @@ export function ReviewSessionPage() {
 
     if (matchIntervalRef.current) window.clearInterval(matchIntervalRef.current);
     if (matchTimeoutRef.current) window.clearTimeout(matchTimeoutRef.current);
+
+    if (!scaryEyeAudioRef.current) {
+      scaryEyeAudioRef.current = new Audio("/scaryeyesound.mp3");
+    }
+
+    scaryEyeAudioRef.current.currentTime = 0;
+    void scaryEyeAudioRef.current.play().catch(() => undefined);
 
     setIsBlinking(true);
     setDisplayedOpponent(null);
