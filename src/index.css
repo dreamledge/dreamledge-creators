@@ -2314,7 +2314,7 @@ button {
   justify-content: center;
   padding: 0 12px 12px;
   overflow: hidden;
-  background: linear-gradient(180deg, #050505 0%, #0d0d0d 100%);
+  background: #0d0d0d;
 }
 
 .review-session-match-card {
@@ -2663,7 +2663,7 @@ button {
 
 .review-session-match-card-post {
   height: min(690px, calc(100dvh - 72px));
-  overflow: hidden;
+  overflow: visible;
 }
 
 .review-session-intro-shell {
@@ -2731,7 +2731,7 @@ button {
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(180deg, rgba(1, 1, 1, 0.72), rgba(6, 6, 6, 0.88));
+  background: #0d0d0d;
 }
 
 .review-session-screening-overlay::before {
@@ -2747,10 +2747,11 @@ button {
   position: absolute;
   inset: 0;
   z-index: 3;
-  padding: 86px 8px 14px;
+  padding: 22px 0 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
+  overflow: visible;
 }
 
 .review-session-centered-stage {
@@ -2828,9 +2829,12 @@ button {
 .review-session-watch-stage {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 2px;
   height: 100%;
   min-height: 0;
+  width: 100%;
+  justify-content: flex-start;
+  overflow: visible;
 }
 
 .review-session-video-stage {
@@ -2838,6 +2842,7 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 0;
   transition: transform 0.55s ease, filter 0.55s ease, opacity 0.55s ease;
 }
 
@@ -2894,11 +2899,12 @@ button {
 
 .review-session-video-meta {
   width: 100%;
-  max-width: 380px;
-  margin-top: 4px;
+  max-width: none;
+  margin-top: 0;
+  padding: 0 10px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 }
 
 .review-session-video-meta-homecard {
@@ -2930,12 +2936,30 @@ button {
 
 .review-session-watch-progress {
   width: 100%;
-  max-width: 380px;
+  max-width: none;
   height: 6px;
-  margin-top: 8px;
+  margin-top: 2px;
+  padding: 0 10px;
   overflow: hidden;
+  background: transparent;
+}
+
+.review-session-watch-progress-bar {
+  border-radius: 999px;
+}
+
+.review-session-watch-progress::before {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 100%;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
+}
+
+.review-session-watch-progress > .review-session-watch-progress-bar {
+  position: relative;
+  top: -6px;
 }
 
 .review-session-watch-progress-bar {
@@ -3038,7 +3062,7 @@ button {
   width: min(100%, 420px);
   padding: 24px;
   border-radius: 28px;
-  background: linear-gradient(180deg, rgba(12, 12, 12, 0.98), rgba(7, 7, 7, 0.98));
+  background: #0d0d0d;
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45), 0 0 30px rgba(255, 43, 43, 0.12);
   text-align: center;
@@ -3276,6 +3300,7 @@ button {
 
   .review-session-match-card-post {
     height: calc(100dvh - 66px);
+    overflow: visible;
   }
 
   .review-session-arena {
@@ -3341,7 +3366,7 @@ button {
   }
 
   .review-session-post-stage {
-    padding: 70px 4px 10px;
+    padding: 12px 0 0;
   }
 
   .review-session-eye-stage-avatar {
@@ -3370,14 +3395,15 @@ button {
   }
 
   .review-session-video-meta {
-    max-width: 380px;
-    margin-top: 2px;
-    gap: 6px;
+    max-width: none;
+    margin-top: -2px;
+    padding: 0 8px;
+    gap: 4px;
   }
 
   .review-session-watch-progress {
-    max-width: 380px;
-    margin-top: 6px;
+    margin-top: 0;
+    padding: 0 8px;
   }
 
   .review-session-watch-helper span {
