@@ -158,6 +158,7 @@ export function ReviewSessionPage() {
   );
   const reviewUnlocked = postMatchPhase === "reviewUnlocked" || postMatchPhase === "submitted" || postMatchPhase === "decision" || postMatchPhase === "talk" || postMatchPhase === "restarting";
   const postMatchActive = postMatchPhase !== null;
+  const isVideoPhase = postMatchPhase === "videoReveal" || postMatchPhase === "videoWatching" || postMatchPhase === "reviewUnlocked" || postMatchPhase === "submitted" || postMatchPhase === "decision" || postMatchPhase === "talk";
 
   const clearContinuationTimers = () => {
     continuationTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
@@ -380,7 +381,7 @@ export function ReviewSessionPage() {
 
   return (
     <div className={`review-session-matchup-page ${postMatchActive ? "review-session-matchup-page-screening" : ""}`}>
-      <div className={`review-session-match-card ${postMatchActive ? "review-session-match-card-post" : ""} ${reviewUnlockFlash ? "review-session-match-card-unlocked" : ""}`}>
+      <div className={`review-session-match-card ${postMatchActive ? "review-session-match-card-post" : ""} ${isVideoPhase ? "review-session-match-card-watch" : ""} ${reviewUnlockFlash ? "review-session-match-card-unlocked" : ""}`}>
         <div className={`review-session-intro-shell ${postMatchActive ? "review-session-intro-shell-faded" : ""}`}>
           <h1 className="review-session-match-title">Judge for Judge</h1>
           <p className="review-session-match-subtitle">Creator matchup loading</p>

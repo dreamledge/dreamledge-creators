@@ -2727,6 +2727,11 @@ button {
   display: none;
 }
 
+.review-session-match-card-watch .review-session-user {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .review-session-screening-overlay {
   position: absolute;
   inset: 0;
