@@ -5,8 +5,9 @@ import { mockUsers } from "@/lib/constants/mockData";
 
 const MATCHMAKING_DURATION_MS = 3000;
 const MATCHMAKING_FRAME_MS = 120;
+const BLINK_DURATION_MS = 850;
 const ORWELLIAN_PLACEHOLDER = {
-  photoUrl: "/orwellian profile.png",
+  photoUrl: "",
   username: "waiting_match",
   displayName: "Waiting Match",
   role: "Waiting for match",
@@ -24,10 +25,26 @@ function ReviewSessionVerifiedBadge() {
   );
 }
 
+function OrwellianEyeAvatar({ blinking }: { blinking: boolean }) {
+  return (
+    <div className={`review-session-orwellian-eye ${blinking ? "review-session-orwellian-eye-blinking" : ""}`} aria-label="Waiting match eye avatar">
+      <div className="review-session-orwellian-sclera">
+        <div className="review-session-orwellian-iris">
+          <div className="review-session-orwellian-pupil" />
+          <div className="review-session-orwellian-glint" />
+        </div>
+      </div>
+      <div className="review-session-orwellian-lid review-session-orwellian-lid-top" />
+      <div className="review-session-orwellian-lid review-session-orwellian-lid-bottom" />
+    </div>
+  );
+}
+
 export function ReviewSessionPage() {
   const { user } = useAuth();
   const [matchingMessage, setMatchingMessage] = useState("Tap start matching to begin pairing.");
   const [isMatching, setIsMatching] = useState(false);
+  const [isBlinking, setIsBlinking] = useState(false);
 
   const currentCreator = useMemo(() => {
     if (!user) return mockUsers[0];
@@ -61,6 +78,7 @@ export function ReviewSessionPage() {
   useEffect(() => {
     setDisplayedOpponent(null);
     setIsMatching(false);
+    setIsBlinking(false);
     setMatchingMessage("Tap start matching to begin pairing.");
   }, [currentCreator.id]);
 
@@ -80,31 +98,36 @@ export function ReviewSessionPage() {
         verified: displayedOpponent.verified,
       }
     : ORWELLIAN_PLACEHOLDER;
+  const showOrwellianEye = !displayedOpponent;
 
   const handleStartMatching = () => {
-    if (isMatching || !matchableOpponents.length) return;
+    if (isMatching || isBlinking || !matchableOpponents.length) return;
 
     if (matchIntervalRef.current) window.clearInterval(matchIntervalRef.current);
     if (matchTimeoutRef.current) window.clearTimeout(matchTimeoutRef.current);
 
-    setIsMatching(true);
+    setIsBlinking(true);
     setDisplayedOpponent(null);
-    setMatchingMessage("Matchmaking in progress. Scanning creators now.");
-
-    matchIntervalRef.current = window.setInterval(() => {
-      const randomOpponent = matchableOpponents[Math.floor(Math.random() * matchableOpponents.length)] ?? finalOpponent;
-      setDisplayedOpponent(randomOpponent);
-    }, MATCHMAKING_FRAME_MS);
-
     matchTimeoutRef.current = window.setTimeout(() => {
-      if (matchIntervalRef.current) {
-        window.clearInterval(matchIntervalRef.current);
-        matchIntervalRef.current = null;
-      }
-      setDisplayedOpponent(finalOpponent);
-      setIsMatching(false);
-      setMatchingMessage(`Matched with @${finalOpponent.username}. Ready when you are.`);
-    }, MATCHMAKING_DURATION_MS);
+      setIsBlinking(false);
+      setIsMatching(true);
+      setMatchingMessage("Matchmaking in progress. Scanning creators now.");
+
+      matchIntervalRef.current = window.setInterval(() => {
+        const randomOpponent = matchableOpponents[Math.floor(Math.random() * matchableOpponents.length)] ?? finalOpponent;
+        setDisplayedOpponent(randomOpponent);
+      }, MATCHMAKING_FRAME_MS);
+
+      matchTimeoutRef.current = window.setTimeout(() => {
+        if (matchIntervalRef.current) {
+          window.clearInterval(matchIntervalRef.current);
+          matchIntervalRef.current = null;
+        }
+        setDisplayedOpponent(finalOpponent);
+        setIsMatching(false);
+        setMatchingMessage(`Matched with @${finalOpponent.username}. Ready when you are.`);
+      }, MATCHMAKING_DURATION_MS);
+    }, BLINK_DURATION_MS);
   };
 
   return (
@@ -133,7 +156,11 @@ export function ReviewSessionPage() {
           <div className="review-session-user review-session-user-right">
             {rightProfile.verified ? <ReviewSessionVerifiedBadge /> : null}
             <div className={`review-session-avatar-wrap ${isMatching ? "review-session-avatar-wrap-matching" : ""}`}>
-              <img className={`review-session-avatar ${isMatching ? "review-session-avatar-matching" : ""}`} src={rightProfile.photoUrl} alt={rightProfile.displayName} />
+              {showOrwellianEye ? (
+                <OrwellianEyeAvatar blinking={isBlinking} />
+              ) : (
+                <img className={`review-session-avatar ${isMatching ? "review-session-avatar-matching" : ""} ${isBlinking ? "review-session-avatar-blinking" : ""}`} src={rightProfile.photoUrl} alt={rightProfile.displayName} />
+              )}
             </div>
             <div className="review-session-username">@{rightProfile.username}</div>
             <div className="review-session-role">{rightProfile.role}</div>
@@ -145,9 +172,9 @@ export function ReviewSessionPage() {
             type="button"
             className="cta-button edit-profile review-session-action-button"
             onClick={handleStartMatching}
-            disabled={isMatching}
+            disabled={isMatching || isBlinking}
           >
-            {isMatching ? "Matching..." : "Start Matching"}
+            {isBlinking ? "Initializing..." : isMatching ? "Matching..." : "Start Matching"}
           </button>
           <Link to="/app/create" className="cta-button edit-profile review-session-action-button review-session-action-link">
             Add Your Content
