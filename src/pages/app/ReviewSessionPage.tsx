@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/app/providers/AuthProvider";
+import { ContentCard } from "@/components/cards/ContentCard";
+import { FeedProvider, useFeedContext } from "@/components/feed/FeedList";
+import { CommentModal, CommentModalProvider } from "@/components/overlays/CommentModal";
 import { mockContent, mockUsers } from "@/lib/constants/mockData";
 import { MIN_WATCH_TIME } from "@/lib/constants/reviewSessions";
 import type { ContentModel, ReviewCategory, ReviewScoreLabel, ReviewScores } from "@/types/models";
@@ -74,9 +77,28 @@ function OrwellianEyeAvatar({ blinking }: { blinking: boolean }) {
   );
 }
 
-function withAutoplay(url: string) {
-  const separator = url.includes("?") ? "&" : "?";
-  return `${url}${separator}autoplay=1&mute=1&playsinline=1&rel=0`;
+function ReviewSessionFeedAutoplay({ content }: { content: ContentModel }) {
+  const { setCurrentPlaying } = useFeedContext();
+
+  useEffect(() => {
+    setCurrentPlaying(content.id);
+    return () => setCurrentPlaying(null);
+  }, [content.id, setCurrentPlaying]);
+
+  return <ContentCard content={content} />;
+}
+
+function ReviewSessionHomeStyleCard({ content }: { content: ContentModel }) {
+  return (
+    <CommentModalProvider>
+      <FeedProvider>
+        <div className="review-session-home-card-wrap">
+          <ReviewSessionFeedAutoplay content={content} />
+        </div>
+        <CommentModal />
+      </FeedProvider>
+    </CommentModalProvider>
+  );
 }
 
 function formatTalkTime(ms: number) {
@@ -354,7 +376,6 @@ export function ReviewSessionPage() {
     : ORWELLIAN_PLACEHOLDER;
 
   const showOrwellianEye = !displayedOpponent;
-  const postMatchVideoSrc = activeMatchContent ? withAutoplay(activeMatchContent.embedUrl) : "";
   const watchUnlockedProgress = Math.min(100, (watchElapsedMs / MIN_WATCH_TIME) * 100);
 
   return (
@@ -442,22 +463,9 @@ export function ReviewSessionPage() {
 
             {(postMatchPhase === "videoReveal" || postMatchPhase === "videoWatching" || postMatchPhase === "reviewUnlocked" || postMatchPhase === "submitted" || postMatchPhase === "decision" || postMatchPhase === "talk") && activeMatchContent ? (
               <div className="review-session-watch-stage">
-                <div className={`review-session-video-card ${postMatchPhase === "videoReveal" ? "review-session-video-card-revealing" : "review-session-video-card-live"} ${postMatchPhase === "submitted" || postMatchPhase === "decision" || postMatchPhase === "talk" ? "review-session-video-card-dimmed" : ""}`}>
-                  <div className="review-session-video-shell">
-                    <iframe
-                      className="review-session-video-frame"
-                      src={postMatchVideoSrc}
-                      title={activeMatchContent.title}
-                      allow="autoplay; encrypted-media; picture-in-picture"
-                      allowFullScreen
-                    />
-                  </div>
-                  <div className="review-session-video-meta">
-                    <div>
-                      <p className="review-session-stage-kicker">Private Screening</p>
-                      <h3>{activeMatchContent.title}</h3>
-                      <p>by @{finalOpponent.username}</p>
-                    </div>
+                <div className={`review-session-video-stage ${postMatchPhase === "videoReveal" ? "review-session-video-card-revealing" : "review-session-video-card-live"} ${postMatchPhase === "submitted" || postMatchPhase === "decision" || postMatchPhase === "talk" ? "review-session-video-card-dimmed" : ""}`}>
+                  <ReviewSessionHomeStyleCard content={activeMatchContent} />
+                  <div className="review-session-video-meta review-session-video-meta-homecard">
                     <div className="review-session-watch-helper">
                       <span>{reviewUnlocked ? "Review Unlocked" : "Watch before reviewing"}</span>
                       {!reviewUnlocked ? <small>{watchElapsedMs >= 5000 ? "Voting unlocks soon" : "Private room active"}</small> : <small>Vote anytime now - no need to finish the full video</small>}

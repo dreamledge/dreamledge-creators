@@ -117,6 +117,10 @@ button {
   background: #0a0a0a;
 }
 
+.app-auth-shell {
+  background: var(--background);
+}
+
 .bubble-card {
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: #1a1a1a;
@@ -2304,26 +2308,27 @@ button {
 }
 
 .review-session-matchup-page {
-  min-height: calc(100vh - 8rem);
+  min-height: calc(100dvh - 60px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0 12px 12px;
-  background:
-    radial-gradient(circle at top, rgba(255, 43, 43, 0.16), transparent 30%),
-    linear-gradient(180deg, #050505 0%, #0d0d0d 100%);
+  overflow: hidden;
+  background: linear-gradient(180deg, #050505 0%, #0d0d0d 100%);
 }
 
 .review-session-match-card {
   width: 100%;
   max-width: 760px;
-  padding: 34px 22px;
+  height: min(690px, calc(100dvh - 72px));
+  min-height: 0;
+  padding: 12px 0 0;
   position: relative;
   overflow: hidden;
-  border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(20, 20, 20, 0.95);
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.45);
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .review-session-match-title {
@@ -2657,7 +2662,7 @@ button {
 }
 
 .review-session-match-card-post {
-  min-height: 880px;
+  height: min(690px, calc(100dvh - 72px));
   overflow: hidden;
 }
 
@@ -2668,7 +2673,9 @@ button {
 }
 
 .review-session-intro-shell-faded {
-  opacity: 1;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 
 .review-session-match-card-post .review-session-match-title,
@@ -2676,7 +2683,9 @@ button {
 .review-session-match-card-post .review-session-actions,
 .review-session-match-card-post .review-session-status,
 .review-session-match-card-post .review-session-beam,
-.review-session-match-card-post .review-session-center-badge {
+.review-session-match-card-post .review-session-center-badge,
+.review-session-match-card-post .review-session-username,
+.review-session-match-card-post .review-session-role {
   opacity: 0;
   pointer-events: none;
   transform: translateY(-10px);
@@ -2684,22 +2693,22 @@ button {
 }
 
 .review-session-match-card-post .review-session-arena {
-  min-height: 150px;
+  min-height: 0;
 }
 
 .review-session-match-card-post .review-session-user {
   position: absolute;
-  top: 8px;
+  top: 12px;
   animation: none;
   transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1), top 0.75s cubic-bezier(0.22, 1, 0.36, 1), left 0.75s cubic-bezier(0.22, 1, 0.36, 1), right 0.75s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .review-session-match-card-post .review-session-user-left {
-  left: 10px;
+  left: 26px;
 }
 
 .review-session-match-card-post .review-session-user-right {
-  right: 10px;
+  right: 26px;
 }
 
 .review-session-match-card-post .review-session-avatar-wrap {
@@ -2722,9 +2731,7 @@ button {
   position: absolute;
   inset: 0;
   z-index: 1;
-  background:
-    linear-gradient(180deg, rgba(1, 1, 1, 0.9), rgba(6, 6, 6, 0.97)),
-    radial-gradient(circle at center, rgba(255, 43, 43, 0.12), transparent 58%);
+  background: linear-gradient(180deg, rgba(1, 1, 1, 0.72), rgba(6, 6, 6, 0.88));
 }
 
 .review-session-screening-overlay::before {
@@ -2740,7 +2747,7 @@ button {
   position: absolute;
   inset: 0;
   z-index: 3;
-  padding: 118px 20px 22px;
+  padding: 86px 8px 14px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -2821,18 +2828,38 @@ button {
 .review-session-watch-stage {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 8px;
   height: 100%;
+  min-height: 0;
 }
 
-.review-session-video-card {
-  margin-top: 6px;
-  border-radius: 28px;
-  padding: 14px;
-  background: linear-gradient(180deg, rgba(15, 15, 15, 0.98), rgba(8, 8, 8, 0.98));
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.42), 0 0 24px rgba(255, 43, 43, 0.1);
+.review-session-video-stage {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   transition: transform 0.55s ease, filter 0.55s ease, opacity 0.55s ease;
+}
+
+.review-session-home-card-wrap {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.review-session-home-card-wrap .phone-card-outer {
+  width: 100%;
+  padding: 0;
+}
+
+.review-session-home-card-wrap .card {
+  width: 100%;
+  max-width: 380px;
+  height: 500px;
+}
+
+.review-session-home-card-wrap .card-int {
+  border-radius: 28px;
 }
 
 .review-session-video-card-revealing {
@@ -2866,10 +2893,16 @@ button {
 }
 
 .review-session-video-meta {
-  margin-top: 12px;
+  width: 100%;
+  max-width: 380px;
+  margin-top: 4px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.review-session-video-meta-homecard {
+  margin-top: 6px;
 }
 
 .review-session-video-meta h3,
@@ -2897,8 +2930,9 @@ button {
 
 .review-session-watch-progress {
   width: 100%;
+  max-width: 380px;
   height: 6px;
-  margin-top: 14px;
+  margin-top: 8px;
   overflow: hidden;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
@@ -2913,7 +2947,7 @@ button {
 
 .review-session-judging-panel {
   margin-top: auto;
-  padding: 18px;
+  padding: 16px;
   border-radius: 26px;
   background: linear-gradient(180deg, rgba(13, 13, 13, 0.98), rgba(8, 8, 8, 0.98));
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -3236,21 +3270,22 @@ button {
 
   .review-session-match-card {
     max-width: none;
-    padding: 30px 18px;
+    height: calc(100dvh - 66px);
+    padding: 8px 0 0;
   }
 
   .review-session-match-card-post {
-    min-height: 760px;
+    height: calc(100dvh - 66px);
   }
 
   .review-session-arena {
     grid-template-columns: 1fr 76px 1fr;
-    min-height: 220px;
+    min-height: 176px;
   }
 
   .review-session-avatar-wrap {
-    width: 102px;
-    height: 102px;
+    width: 86px;
+    height: 86px;
   }
 
   .review-session-verified-badge {
@@ -3266,17 +3301,17 @@ button {
   }
 
   .review-session-center-badge {
-    width: 76px;
-    height: 76px;
+    width: 64px;
+    height: 64px;
   }
 
   .review-session-center-text {
-    font-size: 0.68rem;
+    font-size: 0.6rem;
   }
 
   .review-session-username {
     max-width: 98px;
-    font-size: 0.9rem;
+    font-size: 0.82rem;
   }
 
   .review-session-beam-left {
@@ -3298,20 +3333,20 @@ button {
   }
 
   .review-session-match-card-post .review-session-user-left {
-    left: 8px;
+    left: 14px;
   }
 
   .review-session-match-card-post .review-session-user-right {
-    right: 8px;
+    right: 14px;
   }
 
   .review-session-post-stage {
-    padding: 102px 14px 18px;
+    padding: 70px 4px 10px;
   }
 
   .review-session-eye-stage-avatar {
-    width: 150px;
-    height: 150px;
+    width: 120px;
+    height: 120px;
   }
 
   .review-session-video-shell,
@@ -3321,6 +3356,62 @@ button {
 
   .review-session-score-options {
     grid-template-columns: 1fr;
+  }
+
+  .review-session-home-card-wrap .card {
+    width: 100%;
+    max-width: 380px;
+    height: 500px;
+  }
+
+  .review-session-home-card-wrap .phone-card-outer {
+    width: 100%;
+    padding: 0;
+  }
+
+  .review-session-video-meta {
+    max-width: 380px;
+    margin-top: 2px;
+    gap: 6px;
+  }
+
+  .review-session-watch-progress {
+    max-width: 380px;
+    margin-top: 6px;
+  }
+
+  .review-session-watch-helper span {
+    font-size: 0.88rem;
+  }
+
+  .review-session-watch-helper small {
+    font-size: 0.74rem;
+  }
+
+  .review-session-judging-panel {
+    padding: 12px;
+    border-radius: 20px;
+  }
+
+  .review-session-judging-header {
+    margin-bottom: 0.7rem;
+  }
+
+  .review-session-judging-header h3 {
+    font-size: 1rem;
+  }
+
+  .review-session-score-row + .review-session-score-row {
+    margin-top: 10px;
+  }
+
+  .review-session-score-pill {
+    min-height: 40px;
+  }
+
+  .review-session-submit-button,
+  .review-session-decision-button {
+    margin-top: 12px;
   }
 }
 
