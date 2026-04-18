@@ -3,7 +3,7 @@ import { useAuth } from "@/app/providers/AuthProvider";
 import { FeedTabs } from "@/components/feed/FeedTabs";
 import { FeedList, FeedProvider, useFeedContext } from "@/components/feed/FeedList";
 import { CommentModalProvider, CommentModal } from "@/components/overlays/CommentModal";
-import { mockContent, mockUsers } from "@/lib/constants/mockData";
+import { getVisibleMockContent, mockUsers } from "@/lib/constants/mockData";
 import type { FeedTab, UserModel } from "@/types/models";
 
 function resolveFeedUser(user: { id: string; username: string; email: string; followingIds?: string[] } | null): UserModel | null {
@@ -42,20 +42,21 @@ export function HomePage() {
   const currentTab = getCurrentTabFromParams();
   const currentUser = resolveFeedUser(user);
   const followingIds = currentUser?.followingIds ?? [];
+  const visibleContent = getVisibleMockContent();
 
   const feedItems = (() => {
     switch (currentTab) {
       case "live-now":
-        return mockContent.filter((item) => item.platform === "twitch" && item.status === "live");
+        return visibleContent.filter((item) => item.platform === "twitch" && item.status === "live");
       case "following":
-        return mockContent.filter((item) => followingIds.includes(item.creatorId));
+        return visibleContent.filter((item) => followingIds.includes(item.creatorId));
       case "new":
-        return [...mockContent].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        return [...visibleContent].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       case "trending":
-        return [...mockContent].sort((a, b) => (b.likeCount + b.commentCount + b.shareCount + b.saveCount) - (a.likeCount + a.commentCount + a.shareCount + a.saveCount));
+        return [...visibleContent].sort((a, b) => (b.likeCount + b.commentCount + b.shareCount + b.saveCount) - (a.likeCount + a.commentCount + a.shareCount + a.saveCount));
       case "for-you":
       default:
-        return mockContent;
+        return visibleContent;
     }
   })();
 

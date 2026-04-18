@@ -1,12 +1,13 @@
-import { mockContent, mockUsers } from "@/lib/constants/mockData";
+import { getVisibleMockContent, mockUsers } from "@/lib/constants/mockData";
 import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
 import type { BattleModel } from "@/types/models";
 
 export function BattleVSLayout({ battle }: { battle: BattleModel }) {
   const creatorA = mockUsers.find((user) => user.id === battle.creatorAId);
   const creatorB = mockUsers.find((user) => user.id === battle.creatorBId);
-  const contentA = mockContent.find((content) => content.id === battle.contentAId);
-  const contentB = mockContent.find((content) => content.id === battle.contentBId);
+  const visibleContent = getVisibleMockContent();
+  const contentA = visibleContent.find((content) => content.id === battle.contentAId);
+  const contentB = visibleContent.find((content) => content.id === battle.contentBId);
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_auto_1fr] lg:items-center">

@@ -15,6 +15,7 @@ import type {
 
 const now = Date.now();
 const iso = (hoursAgo: number) => new Date(now - hoursAgo * 60 * 60 * 1000).toISOString();
+const LIVE_CONTENT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 export const mockUsers: UserModel[] = [
   {
@@ -246,6 +247,23 @@ export const mockContent: ContentModel[] = [
     updatedAt: iso(0),
   },
 ];
+
+export function isContentVisible(item: ContentModel, currentTime = Date.now()): boolean {
+  if (!(item.platform === "twitch" && item.status === "live")) {
+    return true;
+  }
+
+  const createdAt = new Date(item.createdAt).getTime();
+  if (!Number.isFinite(createdAt)) {
+    return false;
+  }
+
+  return currentTime - createdAt < LIVE_CONTENT_MAX_AGE_MS;
+}
+
+export function getVisibleMockContent(currentTime = Date.now()): ContentModel[] {
+  return mockContent.filter((item) => isContentVisible(item, currentTime));
+}
 
 export const mockBattles: BattleModel[] = [
   {

@@ -4,7 +4,7 @@ import { ContentGrid } from "@/components/profile/ContentGrid";
 import { ProfileCard } from "@/components/profile/ProfileCard";
 import { ProfileTabs } from "@/components/profile/ProfileTabs";
 import { useAuth } from "@/app/providers/AuthProvider";
-import { mockContent, mockUsers } from "@/lib/constants/mockData";
+import { getVisibleMockContent, mockUsers } from "@/lib/constants/mockData";
 
 export function MyProfilePage() {
   const { user } = useAuth();
@@ -32,7 +32,7 @@ export function MyProfilePage() {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }) : null;
-  const items = mockContent.filter((item) => item.creatorId === creator?.id);
+  const items = getVisibleMockContent().filter((item) => item.creatorId === creator?.id);
 
   return (
     <div className="space-y-6">
