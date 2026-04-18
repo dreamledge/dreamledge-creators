@@ -2650,6 +2650,380 @@ button {
   animation: review-session-fade-blink 1.8s ease-in-out infinite;
 }
 
+.review-session-matchup-page-screening {
+  background:
+    radial-gradient(circle at top, rgba(255, 43, 43, 0.2), transparent 28%),
+    linear-gradient(180deg, #020202 0%, #070707 100%);
+}
+
+.review-session-match-card-post {
+  min-height: 880px;
+  overflow: hidden;
+}
+
+.review-session-intro-shell {
+  position: relative;
+  z-index: 2;
+  transition: opacity 0.55s ease, filter 0.55s ease;
+}
+
+.review-session-intro-shell-faded {
+  opacity: 1;
+}
+
+.review-session-match-card-post .review-session-match-title,
+.review-session-match-card-post .review-session-match-subtitle,
+.review-session-match-card-post .review-session-actions,
+.review-session-match-card-post .review-session-status,
+.review-session-match-card-post .review-session-beam,
+.review-session-match-card-post .review-session-center-badge {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-10px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.review-session-match-card-post .review-session-arena {
+  min-height: 150px;
+}
+
+.review-session-match-card-post .review-session-user {
+  position: absolute;
+  top: 24px;
+  animation: none;
+  transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1), top 0.75s cubic-bezier(0.22, 1, 0.36, 1), left 0.75s cubic-bezier(0.22, 1, 0.36, 1), right 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.review-session-match-card-post .review-session-user-left {
+  left: 18px;
+}
+
+.review-session-match-card-post .review-session-user-right {
+  right: 18px;
+}
+
+.review-session-match-card-post .review-session-avatar-wrap {
+  width: 82px;
+  height: 82px;
+  box-shadow: 0 0 0 4px rgba(255, 43, 43, 0.08), 0 0 20px rgba(255, 43, 43, 0.16);
+}
+
+.review-session-match-card-post .review-session-username {
+  max-width: 92px;
+  margin-top: 8px;
+  font-size: 0.82rem;
+}
+
+.review-session-match-card-post .review-session-role {
+  display: none;
+}
+
+.review-session-screening-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(180deg, rgba(1, 1, 1, 0.9), rgba(6, 6, 6, 0.97)),
+    radial-gradient(circle at center, rgba(255, 43, 43, 0.12), transparent 58%);
+}
+
+.review-session-screening-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.08;
+  background: repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.11) 0 1px, transparent 1px 4px);
+  pointer-events: none;
+}
+
+.review-session-post-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  padding: 118px 20px 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.review-session-centered-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 100%;
+  color: white;
+}
+
+.review-session-screening-entry,
+.review-session-title-stage {
+  animation: review-session-stage-fade 0.7s ease forwards;
+}
+
+.review-session-screening-entry h2,
+.review-session-title-stage h2,
+.review-session-talk-card h2,
+.review-session-decision-card h2 {
+  margin: 0;
+  font-size: clamp(1.7rem, 4vw, 2.6rem);
+  font-weight: 800;
+}
+
+.review-session-stage-kicker {
+  font-size: 0.74rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.56);
+}
+
+.review-session-screening-entry h2 {
+  transform: scale(0.98);
+  animation: review-session-screening-enter 0.8s ease forwards;
+}
+
+.review-session-eye-stage-avatar {
+  width: 180px;
+  height: 180px;
+  position: relative;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.review-session-eye-stage-avatar .review-session-orwellian-eye {
+  box-shadow: 0 0 40px rgba(255, 43, 43, 0.2);
+}
+
+.review-session-eye-scan-beam {
+  position: absolute;
+  left: 50%;
+  top: 12%;
+  transform: translateX(-50%);
+  width: 78%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 59, 59, 0.95), transparent);
+  filter: blur(0.4px) drop-shadow(0 0 10px rgba(255, 59, 59, 0.75));
+  animation: review-session-eye-scan 1.3s ease-in-out forwards;
+}
+
+.review-session-title-stage p,
+.review-session-video-meta p,
+.review-session-talk-card p,
+.review-session-decision-card p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.review-session-watch-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  height: 100%;
+}
+
+.review-session-video-card {
+  margin-top: 6px;
+  border-radius: 28px;
+  padding: 14px;
+  background: linear-gradient(180deg, rgba(15, 15, 15, 0.98), rgba(8, 8, 8, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.42), 0 0 24px rgba(255, 43, 43, 0.1);
+  transition: transform 0.55s ease, filter 0.55s ease, opacity 0.55s ease;
+}
+
+.review-session-video-card-revealing {
+  transform: scale(0.95);
+  filter: blur(12px) brightness(0.65);
+  opacity: 0.55;
+}
+
+.review-session-video-card-live {
+  transform: scale(1);
+  filter: blur(0) brightness(1);
+  opacity: 1;
+}
+
+.review-session-video-card-dimmed {
+  opacity: 0.58;
+  filter: saturate(0.85) brightness(0.7);
+}
+
+.review-session-video-shell {
+  overflow: hidden;
+  border-radius: 22px;
+  background: #030303;
+  min-height: 240px;
+}
+
+.review-session-video-frame {
+  width: 100%;
+  min-height: 240px;
+  border: 0;
+}
+
+.review-session-video-meta {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.review-session-video-meta h3,
+.review-session-judging-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: white;
+}
+
+.review-session-watch-helper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: white;
+}
+
+.review-session-watch-helper span {
+  font-size: 0.96rem;
+  font-weight: 600;
+}
+
+.review-session-watch-helper small {
+  color: rgba(255, 255, 255, 0.56);
+}
+
+.review-session-watch-progress {
+  width: 100%;
+  height: 6px;
+  margin-top: 14px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.review-session-watch-progress-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff2d3d, #ff6a3d);
+  box-shadow: 0 0 16px rgba(255, 45, 61, 0.45);
+}
+
+.review-session-judging-panel {
+  margin-top: auto;
+  padding: 18px;
+  border-radius: 26px;
+  background: linear-gradient(180deg, rgba(13, 13, 13, 0.98), rgba(8, 8, 8, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 -12px 40px rgba(255, 43, 43, 0.14);
+  animation: review-session-judging-rise 0.5s ease forwards;
+}
+
+.review-session-judging-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.review-session-unlocked-pill {
+  padding: 0.5rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(255, 45, 61, 0.14);
+  color: #ff9c9c;
+  font-size: 0.74rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.review-session-score-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.review-session-score-row + .review-session-score-row {
+  margin-top: 14px;
+}
+
+.review-session-score-label {
+  color: rgba(255, 255, 255, 0.78);
+  text-transform: capitalize;
+  font-size: 0.88rem;
+  letter-spacing: 0.08em;
+}
+
+.review-session-score-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.review-session-score-pill {
+  min-height: 48px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: white;
+  font-weight: 700;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.review-session-score-pill.is-selected {
+  border-color: rgba(255, 72, 72, 0.6);
+  background: linear-gradient(135deg, rgba(255, 45, 61, 0.9), rgba(255, 106, 61, 0.9));
+  box-shadow: 0 0 18px rgba(255, 45, 61, 0.28);
+}
+
+.review-session-submit-button,
+.review-session-decision-button {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.review-session-submit-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.review-session-decision-modal,
+.review-session-talk-room {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.review-session-decision-card,
+.review-session-talk-card {
+  width: min(100%, 420px);
+  padding: 24px;
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(12, 12, 12, 0.98), rgba(7, 7, 7, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45), 0 0 30px rgba(255, 43, 43, 0.12);
+  text-align: center;
+}
+
+.review-session-decision-card h2,
+.review-session-talk-card h2 {
+  margin-bottom: 10px;
+}
+
+.review-session-match-card-unlocked::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at bottom, rgba(255, 45, 61, 0.18), transparent 45%);
+  animation: review-session-unlock-pulse 1.2s ease-out forwards;
+}
+
 .review-session-status span {
   color: #ff4b4b;
   font-weight: 800;
@@ -2690,6 +3064,61 @@ button {
 @keyframes review-session-fade-blink {
   0%, 100% { opacity: 0.65; }
   50% { opacity: 1; }
+}
+
+@keyframes review-session-stage-fade {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes review-session-screening-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes review-session-eye-scan {
+  from {
+    top: 18%;
+    opacity: 0.5;
+  }
+  to {
+    top: 82%;
+    opacity: 1;
+  }
+}
+
+@keyframes review-session-judging-rise {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes review-session-unlock-pulse {
+  from {
+    opacity: 0.85;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(0);
+  }
 }
 
 @keyframes review-session-slot-avatar {
@@ -2810,6 +3239,10 @@ button {
     padding: 30px 18px;
   }
 
+  .review-session-match-card-post {
+    min-height: 760px;
+  }
+
   .review-session-arena {
     grid-template-columns: 1fr 76px 1fr;
     min-height: 220px;
@@ -2858,6 +3291,36 @@ button {
 
   .review-session-action-button {
     width: 100%;
+  }
+
+  .review-session-match-card-post .review-session-user {
+    top: 18px;
+  }
+
+  .review-session-match-card-post .review-session-user-left {
+    left: 14px;
+  }
+
+  .review-session-match-card-post .review-session-user-right {
+    right: 14px;
+  }
+
+  .review-session-post-stage {
+    padding: 102px 14px 18px;
+  }
+
+  .review-session-eye-stage-avatar {
+    width: 150px;
+    height: 150px;
+  }
+
+  .review-session-video-shell,
+  .review-session-video-frame {
+    min-height: 200px;
+  }
+
+  .review-session-score-options {
+    grid-template-columns: 1fr;
   }
 }
 

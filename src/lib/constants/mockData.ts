@@ -246,6 +246,27 @@ export const mockContent: ContentModel[] = [
     createdAt: iso(0),
     updatedAt: iso(0),
   },
+  {
+    id: "c6",
+    creatorId: "u5",
+    platform: "youtube",
+    sourceUrl: "https://www.youtube.com/watch?v=Ss18tDu25gg",
+    embedUrl: "https://www.youtube.com/embed/Ss18tDu25gg",
+    thumbnailUrl: "https://img.youtube.com/vi/Ss18tDu25gg/hqdefault.jpg",
+    title: "Berto Brown breaks it down in one take",
+    caption: "One clean take, sharp delivery, and creator energy built to hold attention from the first second.",
+    category: "best commentary",
+    tags: ["commentary", "storytelling", "motivation"],
+    status: "published",
+    featured: true,
+    likeCount: 612,
+    commentCount: 89,
+    saveCount: 214,
+    shareCount: 67,
+    voteCount: 0,
+    createdAt: iso(5),
+    updatedAt: iso(2),
+  },
 ];
 
 export function isContentVisible(item: ContentModel, currentTime = Date.now()): boolean {
