@@ -291,7 +291,7 @@ export function ReviewSessionPage() {
 
         setDisplayedOpponent(finalOpponent);
         setIsMatching(false);
-        setMatchingMessage(`Matched with @${finalOpponent.username}. Ready when you are.`);
+        setMatchingMessage("");
         beginPostMatchFlow(finalOpponent);
       }, MATCHMAKING_DURATION_MS);
     }, BLINK_DURATION_MS);

@@ -2689,17 +2689,17 @@ button {
 
 .review-session-match-card-post .review-session-user {
   position: absolute;
-  top: 24px;
+  top: 8px;
   animation: none;
   transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1), top 0.75s cubic-bezier(0.22, 1, 0.36, 1), left 0.75s cubic-bezier(0.22, 1, 0.36, 1), right 0.75s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .review-session-match-card-post .review-session-user-left {
-  left: 18px;
+  left: 10px;
 }
 
 .review-session-match-card-post .review-session-user-right {
-  right: 18px;
+  right: 10px;
 }
 
 .review-session-match-card-post .review-session-avatar-wrap {
@@ -3294,15 +3294,15 @@ button {
   }
 
   .review-session-match-card-post .review-session-user {
-    top: 18px;
+    top: 6px;
   }
 
   .review-session-match-card-post .review-session-user-left {
-    left: 14px;
+    left: 8px;
   }
 
   .review-session-match-card-post .review-session-user-right {
-    right: 14px;
+    right: 8px;
   }
 
   .review-session-post-stage {
