@@ -2308,24 +2308,32 @@ button {
 }
 
 .review-session-matchup-page {
-  min-height: calc(100dvh - 60px);
+  min-height: 0;
+  height: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
   padding: 24px 12px 48px;
   background: #0d0d0d;
+  overflow: visible;
 }
 
 .review-session-match-card {
   width: 100%;
   max-width: 760px;
+  min-height: 0;
+  height: auto;
   padding: 12px 0 0;
   position: relative;
   border-radius: 0;
   border: 0;
   background: transparent;
   box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow: visible;
 }
 
 .review-session-match-title {
@@ -2659,13 +2667,15 @@ button {
 }
 
 .review-session-match-card-post {
-  height: min(690px, calc(100dvh - 72px));
+  height: auto;
+  min-height: auto;
   overflow: visible;
 }
 
 .review-session-intro-shell {
   position: relative;
   z-index: 2;
+  overflow: visible;
   transition: opacity 0.55s ease, filter 0.55s ease;
 }
 
@@ -2833,11 +2843,37 @@ button {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  height: 100%;
+  height: auto;
   min-height: 0;
   width: 100%;
+  flex-grow: 1;
   justify-content: flex-start;
   overflow: visible;
+}
+
+.review-session-scroll-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 16px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.75rem;
+  gap: 4px;
+  animation: review-session-scroll-bounce 2s ease-in-out infinite;
+}
+
+.review-session-scroll-hint svg {
+  animation: review-session-scroll-arrow 1.5s ease-in-out infinite;
+}
+
+@keyframes review-session-scroll-bounce {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes review-session-scroll-arrow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(4px); }
 }
 
 .review-session-video-stage {
@@ -2858,16 +2894,53 @@ button {
 .review-session-home-card-wrap .phone-card-outer {
   width: 100%;
   padding: 0;
+  overflow: visible;
 }
 
 .review-session-home-card-wrap .card {
   width: 100%;
   max-width: 380px;
-  height: 500px;
+  min-height: 500px;
+  height: auto;
+  overflow: visible;
 }
 
 .review-session-home-card-wrap .card-int {
   border-radius: 28px;
+}
+
+.review-session-creator-bottom {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 0 0 16px 16px;
+  margin-top: -4px;
+}
+
+.review-session-creator-photo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.review-session-creator-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.review-session-creator-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: white;
+}
+
+.review-session-creator-username {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .review-session-video-card-revealing {
@@ -2986,8 +3059,8 @@ button {
 
 .review-session-judging-panel {
   width: 100%;
-  max-height: min(42dvh, 360px);
-  overflow-y: auto;
+  max-height: none;
+  overflow-y: visible;
   padding: 16px 14px calc(16px + env(safe-area-inset-bottom, 0px));
   border-radius: 28px;
   background: #0d0d0d;
@@ -3355,18 +3428,24 @@ button {
 
   .review-session-match-card {
     max-width: none;
-    height: calc(100dvh - 66px);
+    min-height: 0;
+    height: auto;
     padding: 8px 0 0;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: visible;
   }
 
   .review-session-match-card-post {
-    height: calc(100dvh - 66px);
+    height: auto;
+    min-height: auto;
     overflow: visible;
   }
 
   .review-session-arena {
     grid-template-columns: 1fr 76px 1fr;
-    min-height: 176px;
+    min-height: auto;
   }
 
   .review-session-avatar-wrap {
@@ -3447,12 +3526,15 @@ button {
   .review-session-home-card-wrap .card {
     width: 100%;
     max-width: 380px;
-    height: 500px;
+    height: auto;
+    min-height: 500px;
+    overflow: visible;
   }
 
   .review-session-home-card-wrap .phone-card-outer {
     width: 100%;
     padding: 0;
+    overflow: visible;
   }
 
   .review-session-video-meta {
@@ -3476,7 +3558,8 @@ button {
   }
 
   .review-session-judging-panel {
-    max-height: min(40dvh, 330px);
+    max-height: none;
+    overflow-y: visible;
     padding: 12px 10px calc(12px + env(safe-area-inset-bottom, 0px));
     border-radius: 22px 22px 0 0;
   }
@@ -4318,12 +4401,14 @@ button {
 .card {
   width: 100%;
   max-width: 380px;
-  height: 500px;
+  min-height: 500px;
+  height: auto;
   background: #1a1a1a;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 7px;
   position: relative;
+  overflow: visible;
 }
 
 .card-fullscreen {

@@ -89,16 +89,31 @@ function ReviewSessionFeedAutoplay({ content }: { content: ContentModel }) {
     return () => setCurrentPlaying(null);
   }, [content.id, setCurrentPlaying]);
 
-  return <ContentCard content={content} />;
+  return <ContentCard content={content} hideActions={true} />;
 }
 
 function ReviewSessionHomeStyleCard({ content }: { content: ContentModel }) {
+  const creator = mockUsers.find((user) => user.id === content.creatorId);
+  
   return (
     <CommentModalProvider>
       <FeedProvider>
         <div className="review-session-home-card-wrap">
           <ReviewSessionFeedAutoplay content={content} />
         </div>
+        
+        <div className="review-session-creator-bottom">
+          <img 
+            src={creator?.photoUrl || "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=100&q=80"} 
+            alt={creator?.displayName}
+            className="review-session-creator-photo"
+          />
+          <div className="review-session-creator-details">
+            <span className="review-session-creator-name">{creator?.displayName}</span>
+            <span className="review-session-creator-username">@{creator?.username}</span>
+          </div>
+        </div>
+        
         <CommentModal />
       </FeedProvider>
     </CommentModalProvider>
@@ -478,7 +493,14 @@ export function ReviewSessionPage() {
                 </div>
 
                 {showJudgingPanel ? (
-                  <div className="review-session-judging-panel">
+                  <>
+                    <div className="review-session-scroll-hint">
+                      <span>Scroll to rate</span>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 5v14M5 12l7 7 7-7" />
+                      </svg>
+                    </div>
+                    <div className="review-session-judging-panel">
                     <div className="review-session-judging-header">
                       <div>
                         <span className="review-session-stage-kicker">Rate this content</span>
@@ -509,6 +531,7 @@ export function ReviewSessionPage() {
                       {postMatchPhase === "submitted" ? "Submitting Review..." : "Submit Review"}
                     </button>
                   </div>
+                  </>
                 ) : null}
               </div>
             ) : null}

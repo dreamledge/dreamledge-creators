@@ -10,6 +10,7 @@ import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
 
 interface ContentCardProps {
   content: ContentModel;
+  hideActions?: boolean;
 }
 
 const InstagramIcon = () => (
@@ -72,7 +73,7 @@ const FullscreenIcon = () => (
   </svg>
 );
 
-export function ContentCard({ content }: ContentCardProps) {
+export function ContentCard({ content, hideActions = false }: ContentCardProps) {
   const { isMuted, setIsMuted, currentPlayingId, setCurrentPlaying, userHasUnmuted } = useFeedContext();
   const { openCommentModal } = useCommentModal();
   const [showControls, setShowControls] = useState(false);
@@ -349,6 +350,7 @@ export function ContentCard({ content }: ContentCardProps) {
 </div>
        
       {/* Likes and Comments - Above the caption */}
+      {!hideActions && (
       <div className="card-stats">
         <button className="stat-btn">
           <Heart size={20} className="stat-icon" />
@@ -365,6 +367,7 @@ export function ContentCard({ content }: ContentCardProps) {
           <Bookmark size={20} className="stat-icon" />
         </button>
       </div>
+      )}
       
       {/* Caption - Below the card */}
       <div className="caption-section">
