@@ -16,9 +16,7 @@ const EYE_STAGE_MS = 1300;
 const TITLE_REVEAL_MS = 1100;
 const VIDEO_REVEAL_MS = 900;
 const SUBMITTING_MS = 1000;
-const RESTART_MATCHING_MS = 900;
 const TALK_DURATION_MS = 180000;
-const TALK_FALLBACK_MS = 12000;
 
 type PostMatchPhase =
   | null
@@ -46,6 +44,12 @@ const reviewOptions: { label: string; value: ReviewScoreLabel }[] = [
   { label: "Ok", value: "ok" },
   { label: "Fire", value: "fire" },
 ];
+
+const reviewCategoryLabels: Record<ReviewCategory, string> = {
+  creativity: "Creativity",
+  execution: "Execution",
+  entertainment: "Engagement",
+};
 
 function createEmptyScores(): ReviewScores {
   return { creativity: null, execution: null, entertainment: null };
@@ -119,14 +123,13 @@ export function ReviewSessionPage() {
   const [watchElapsedMs, setWatchElapsedMs] = useState(0);
   const [reviewUnlockFlash, setReviewUnlockFlash] = useState(false);
   const [talkRemainingMs, setTalkRemainingMs] = useState(TALK_DURATION_MS);
-  const [canTalkFallback, setCanTalkFallback] = useState(false);
+  const [talkToastMode, setTalkToastMode] = useState(false);
   const scaryEyeAudioRef = useRef<HTMLAudioElement | null>(null);
   const matchIntervalRef = useRef<number | null>(null);
   const matchTimeoutRef = useRef<number | null>(null);
   const continuationTimeoutsRef = useRef<number[]>([]);
   const watchIntervalRef = useRef<number | null>(null);
   const talkIntervalRef = useRef<number | null>(null);
-  const talkFallbackTimeoutRef = useRef<number | null>(null);
 
   const currentCreator = useMemo(() => {
     if (!user) return mockUsers[0];
@@ -159,6 +162,13 @@ export function ReviewSessionPage() {
   const reviewUnlocked = postMatchPhase === "reviewUnlocked" || postMatchPhase === "submitted" || postMatchPhase === "decision" || postMatchPhase === "talk" || postMatchPhase === "restarting";
   const postMatchActive = postMatchPhase !== null;
   const isVideoPhase = postMatchPhase === "videoReveal" || postMatchPhase === "videoWatching" || postMatchPhase === "reviewUnlocked" || postMatchPhase === "submitted" || postMatchPhase === "decision" || postMatchPhase === "talk";
+  const showJudgingPanel = postMatchPhase === "reviewUnlocked" || postMatchPhase === "submitted";
+  const helperMessage = useMemo(() => {
+    if (!isVideoPhase) return "";
+    if (watchElapsedMs >= MIN_WATCH_TIME) return "Judging is unlocked";
+    if (watchElapsedMs >= 10000) return "Judging is about to unlock";
+    return "Watch before judging";
+  }, [isVideoPhase, watchElapsedMs]);
 
   const clearContinuationTimers = () => {
     continuationTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
@@ -174,10 +184,6 @@ export function ReviewSessionPage() {
       talkIntervalRef.current = null;
     }
 
-    if (talkFallbackTimeoutRef.current) {
-      window.clearTimeout(talkFallbackTimeoutRef.current);
-      talkFallbackTimeoutRef.current = null;
-    }
   };
 
   const resetPostMatchState = () => {
@@ -188,7 +194,6 @@ export function ReviewSessionPage() {
     setWatchElapsedMs(0);
     setReviewUnlockFlash(false);
     setTalkRemainingMs(TALK_DURATION_MS);
-    setCanTalkFallback(false);
   };
 
   const resetToIdle = () => {
@@ -258,7 +263,6 @@ export function ReviewSessionPage() {
     setWatchElapsedMs(0);
     setReviewUnlockFlash(false);
     setTalkRemainingMs(TALK_DURATION_MS);
-    setCanTalkFallback(false);
     setPostMatchPhase("screeningEntry");
 
     const eyeTimeout = window.setTimeout(() => setPostMatchPhase("eye"), SCREENING_ENTRY_MS);
@@ -335,7 +339,10 @@ export function ReviewSessionPage() {
   const handleStayAndTalk = () => {
     setPostMatchPhase("talk");
     setTalkRemainingMs(TALK_DURATION_MS);
-    setCanTalkFallback(false);
+    setTalkToastMode(false);
+
+    const toastTimeout = window.setTimeout(() => setTalkToastMode(true), 2000);
+    continuationTimeoutsRef.current.push(toastTimeout);
 
     talkIntervalRef.current = window.setInterval(() => {
       setTalkRemainingMs((current) => {
@@ -344,26 +351,17 @@ export function ReviewSessionPage() {
             window.clearInterval(talkIntervalRef.current);
             talkIntervalRef.current = null;
           }
-          handleRestartMatchmaking(true);
+          resetToIdle();
           return 0;
         }
         return current - 1000;
       });
     }, 1000);
-
-    talkFallbackTimeoutRef.current = window.setTimeout(() => setCanTalkFallback(true), TALK_FALLBACK_MS);
   };
 
-  const handleRestartMatchmaking = (fromTalk = false) => {
+  const handleReturnToStart = () => {
     clearContinuationTimers();
-    setPostMatchPhase("restarting");
-    setMatchingMessage(fromTalk ? "Session Complete. Finding next creator..." : "Finding next creator...");
-
-    const restartTimeout = window.setTimeout(() => {
-      resetToIdle();
-      startMatchmakingSequence({ playSound: false });
-    }, RESTART_MATCHING_MS);
-    continuationTimeoutsRef.current.push(restartTimeout);
+    resetToIdle();
   };
 
   const rightProfile = displayedOpponent
@@ -467,9 +465,9 @@ export function ReviewSessionPage() {
                 <div className={`review-session-video-stage ${postMatchPhase === "videoReveal" ? "review-session-video-card-revealing" : "review-session-video-card-live"} ${postMatchPhase === "submitted" || postMatchPhase === "decision" || postMatchPhase === "talk" ? "review-session-video-card-dimmed" : ""}`}>
                   <ReviewSessionHomeStyleCard content={activeMatchContent} />
                   <div className="review-session-video-meta review-session-video-meta-homecard">
-                    <div className="review-session-watch-helper">
-                      <span>{reviewUnlocked ? "Review Unlocked" : "Watch before reviewing"}</span>
-                      {!reviewUnlocked ? <small>{watchElapsedMs >= 5000 ? "Voting unlocks soon" : "Private room active"}</small> : <small>Vote anytime now - no need to finish the full video</small>}
+                    <div className={`review-session-watch-helper ${watchElapsedMs >= 10000 ? "review-session-watch-helper-emphasis" : ""}`}>
+                      <span>{helperMessage}</span>
+                      {!reviewUnlocked ? <small>Private room active</small> : <small>Rate anytime without finishing the full video</small>}
                     </div>
                   </div>
                   {!reviewUnlocked ? (
@@ -479,11 +477,11 @@ export function ReviewSessionPage() {
                   ) : null}
                 </div>
 
-                {reviewUnlocked ? (
+                {showJudgingPanel ? (
                   <div className="review-session-judging-panel">
                     <div className="review-session-judging-header">
                       <div>
-                        <span className="review-session-stage-kicker">Judging Tools</span>
+                        <span className="review-session-stage-kicker">Rate this content</span>
                         <h3>{allReviewSelected ? "Ready to submit" : "Score the screening"}</h3>
                       </div>
                       <span className="review-session-unlocked-pill">Unlocked</span>
@@ -491,7 +489,7 @@ export function ReviewSessionPage() {
 
                     {(["creativity", "execution", "entertainment"] as ReviewCategory[]).map((category) => (
                       <div key={category} className="review-session-score-row">
-                        <span className="review-session-score-label">{category}</span>
+                        <span className="review-session-score-label">{reviewCategoryLabels[category]}</span>
                         <div className="review-session-score-options">
                           {reviewOptions.map((option) => (
                             <button
@@ -521,10 +519,10 @@ export function ReviewSessionPage() {
                   <span className="review-session-stage-kicker">Review Submitted</span>
                   <h2>What do you want to do next?</h2>
                   <button type="button" className="cta-button edit-profile review-session-decision-button" onClick={handleStayAndTalk}>
-                    Stay &amp; Talk (Up to 3:00)
+                    Stay and Talk
                   </button>
-                  <button type="button" className="cta-button edit-profile review-session-decision-button" onClick={() => handleRestartMatchmaking(false)}>
-                    Close &amp; Find Next Match
+                  <button type="button" className="cta-button edit-profile review-session-decision-button" onClick={handleReturnToStart}>
+                    Leave Room
                   </button>
                 </div>
               </div>
@@ -532,15 +530,11 @@ export function ReviewSessionPage() {
 
             {postMatchPhase === "talk" ? (
               <div className="review-session-talk-room">
-                <div className="review-session-talk-card">
+                <div className={`review-session-talk-card ${talkToastMode ? "review-session-talk-toast" : ""}`}>
                   <span className="review-session-stage-kicker">Post-Review Room</span>
-                  <h2>Session ends in {formatTalkTime(talkRemainingMs)}</h2>
+                  <h2>{formatTalkTime(talkRemainingMs)}</h2>
+                  <p>Talk time remaining</p>
                   <p>Waiting for other creator...</p>
-                  {canTalkFallback ? (
-                    <button type="button" className="cta-button edit-profile review-session-decision-button" onClick={() => handleRestartMatchmaking(true)}>
-                      Close &amp; Find Next Match
-                    </button>
-                  ) : null}
                 </div>
               </div>
             ) : null}
