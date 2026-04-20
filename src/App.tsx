@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AppProviders } from "@/app/providers/AppProviders";
 import { AppRouter } from "@/app/router";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import { SplashScreen } from "@/components/ui/SplashScreen";
 
 export function App() {
@@ -20,6 +21,7 @@ export function App() {
   return (
     <AppProviders>
       {showSplash ? <SplashScreen fading={fadeSplash} /> : null}
+      <ScrollToTop />
       <AppRouter />
     </AppProviders>
   );
