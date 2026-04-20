@@ -140,7 +140,7 @@ export function LandingPage() {
                 <p>Win weekly challenges and grow faster.</p>
               </div>
 
-              <div className="landing-reveal-item mt-6 flex gap-3 sm:justify-center lg:justify-start">
+              <div className="landing-reveal-item mt-6">
                 <Link
                   to="/signup"
                   className="landing-cta-button landing-cta-primary w-full"
@@ -155,6 +155,13 @@ export function LandingPage() {
                     </svg>
                   </span>
                 </Link>
+                
+                <div className="landing-scroll-hint">
+                  <span>Scroll for more</span>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 5v14M5 12l7 7 7-7" />
+                  </svg>
+                </div>
               </div>
             </div>
           </LandingRevealSection>
