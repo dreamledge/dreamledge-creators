@@ -4555,16 +4555,6 @@ button {
   top: 0;
   left: 0;
   z-index: 1;
-  pointer-events: none;
-}
-
-.video-tap-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
 }
 
 .video-thumbnail {
@@ -4631,6 +4621,7 @@ button {
   left: 50%;
   bottom: 74px;
   transform: translateX(-50%);
+  z-index: 12;
   min-height: 42px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.25);

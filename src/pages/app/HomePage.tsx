@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { FeedTabs } from "@/components/feed/FeedTabs";
-import { FeedList, FeedProvider, useFeedContext } from "@/components/feed/FeedList";
+import { FeedList, FeedProvider } from "@/components/feed/FeedList";
 import { CommentModalProvider, CommentModal } from "@/components/overlays/CommentModal";
 import { getVisibleMockContent, mockUsers } from "@/lib/constants/mockData";
 import type { FeedTab, UserModel } from "@/types/models";
@@ -101,43 +101,11 @@ export function HomePage() {
             </button>
           </div>
           <FeedTabs active={currentTab} onChange={() => {}} />
-          <HomeVolumeToggle />
         </div>
         <FeedList items={feedItems} />
       </div>
     </FeedProvider>
     <CommentModal />
     </CommentModalProvider>
-  );
-}
-
-function HomeVolumeToggle() {
-  const { isMuted, setIsMuted } = useFeedContext();
-
-  return (
-    <div className="volume-toggle-wrapper">
-      <span className="volume-toggle-label">videos start muted for autoplay</span>
-      <input
-        type="checkbox"
-        id="volumeCheckbox"
-        checked={!isMuted}
-        onChange={(e) => setIsMuted(!e.target.checked)}
-        className="volume-checkbox"
-      />
-      <label htmlFor="volumeCheckbox" className="volume-toggle-switch">
-        <div className="volume-speaker">
-          <svg xmlns="http://www.w3.org/2000/svg" version="1.0" viewBox="0 0 75 75">
-            <path d="M39.389,13.769 L22.235,28.606 L6,28.606 L6,47.699 L21.989,47.699 L39.389,62.75 L39.389,13.769z" stroke="#fff" strokeWidth="5" strokeLinejoin="round" fill="#fff"></path>
-            <path d="M48,27.6a19.5,19.5 0 0 1 0,21.4M55.1,20.5a30,30 0 0 1 0,35.6M61.6,14a38.8,38.8 0 0 1 0,48.6" fill="none" stroke="#fff" strokeWidth="5" strokeLinecap="round"></path>
-          </svg>
-        </div>
-        <div className="volume-mute-speaker">
-          <svg version="1.0" viewBox="0 0 75 75" stroke="#fff" strokeWidth="5">
-            <path d="m39,14-17,15H6V48H22l17,15z" fill="#fff" strokeLinejoin="round"></path>
-            <path d="m49,26 20,24m0-24-20,24" fill="#fff" strokeLinecap="round"></path>
-          </svg>
-        </div>
-      </label>
-    </div>
   );
 }

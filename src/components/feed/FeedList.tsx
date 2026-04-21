@@ -49,7 +49,7 @@ export function FeedList({ items }: { items: ContentModel[] }) {
   const { setCurrentPlaying } = useFeedContext();
   const containerRef = useRef<HTMLDivElement>(null);
   const lastPlayedRef = useRef<string | null>(null);
-  const isInitializedRef = useRef(false);
+  const itemIdsKey = items.map((item) => item.id).join("|");
 
   useEffect(() => {
     let frameId = 0;
@@ -73,14 +73,10 @@ export function FeedList({ items }: { items: ContentModel[] }) {
       for (const card of cards) {
         const ratio = getCardVisibility(card);
 
-        if (ratio > bestRatio) {
+        if (ratio >= 0.5 && ratio > bestRatio) {
           bestRatio = ratio;
           nextId = card.dataset.contentId ?? null;
         }
-      }
-
-      if (bestRatio < 0.2) {
-        nextId = null;
       }
 
       if (nextId !== lastPlayedRef.current) {
@@ -94,12 +90,23 @@ export function FeedList({ items }: { items: ContentModel[] }) {
       frameId = requestAnimationFrame(updateCurrentPlaying);
     };
 
-    if (!isInitializedRef.current) {
-      isInitializedRef.current = true;
-      setTimeout(() => {
-        updateCurrentPlaying();
-      }, 100);
+    const cards = Array.from(container?.querySelectorAll<HTMLElement>("[data-content-id]") ?? []);
+    const observer = new IntersectionObserver(
+      () => {
+        scheduleUpdate();
+      },
+      {
+        threshold: [0, 0.1, 0.25, 0.5, 0.75, 1],
+      }
+    );
+
+    for (const card of cards) {
+      observer.observe(card);
     }
+
+    const initialTimer = setTimeout(scheduleUpdate, 0);
+    const delayedTimer = setTimeout(scheduleUpdate, 200);
+    const safetyTimer = setTimeout(scheduleUpdate, 450);
 
     window.addEventListener("scroll", scheduleUpdate, { passive: true });
     window.addEventListener("resize", scheduleUpdate);
@@ -107,11 +114,15 @@ export function FeedList({ items }: { items: ContentModel[] }) {
 
     return () => {
       cancelAnimationFrame(frameId);
+      clearTimeout(initialTimer);
+      clearTimeout(delayedTimer);
+      clearTimeout(safetyTimer);
+      observer.disconnect();
       window.removeEventListener("scroll", scheduleUpdate);
       window.removeEventListener("resize", scheduleUpdate);
       container?.removeEventListener("scroll", scheduleUpdate);
     };
-  }, [setCurrentPlaying]);
+  }, [setCurrentPlaying, itemIdsKey]);
 
   return (
     <div ref={containerRef} className="feed-list-container">
