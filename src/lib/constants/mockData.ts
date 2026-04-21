@@ -15,7 +15,7 @@ import type {
 
 const now = Date.now();
 const iso = (hoursAgo: number) => new Date(now - hoursAgo * 60 * 60 * 1000).toISOString();
-const LIVE_CONTENT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+export const LIVE_CONTENT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 export const mockUsers: UserModel[] = [
   {
@@ -225,7 +225,7 @@ export const mockContent: ContentModel[] = [
     createdAt: iso(14),
     updatedAt: iso(6),
   },
-  {
+{
     id: "c5",
     creatorId: "u1",
     platform: "twitch",
@@ -243,7 +243,7 @@ export const mockContent: ContentModel[] = [
     saveCount: 0,
     shareCount: 0,
     voteCount: 0,
-    createdAt: iso(0),
+    createdAt: iso(25),
     updatedAt: iso(0),
   },
   {
@@ -367,14 +367,14 @@ export const mockContestEntries: ContestEntryModel[] = [
 ];
 
 export const mockConversations: ConversationModel[] = [
-  { id: "cv1", participantIds: ["u1", "u2"], lastMessage: "Your commentary piece is battle-ready.", lastSenderId: "u1", lastMessageAt: iso(1), createdAt: iso(100) },
-  { id: "cv2", participantIds: ["u1", "u3"], lastMessage: "Want to run a direct challenge this weekend?", lastSenderId: "u3", lastMessageAt: iso(6), createdAt: iso(60) },
+  { id: "cv1", participantIds: ["u1", "u2"], lastMessage: "Your commentary piece is battle-ready.", lastSenderId: "u1", lastMessageAt: iso(1), unreadCount: 1, createdAt: iso(100) },
+  { id: "cv2", participantIds: ["u1", "u3"], lastMessage: "Want to run a direct challenge this weekend?", lastSenderId: "u3", lastMessageAt: iso(6), unreadCount: 0, createdAt: iso(60) },
 ];
 
 export const mockMessages: MessageModel[] = [
-  { id: "m1", conversationId: "cv1", senderId: "u2", body: "Your sports edit feels cinematic.", messageType: "text", createdAt: iso(5) },
-  { id: "m2", conversationId: "cv1", senderId: "u1", body: "Your commentary piece is battle-ready.", messageType: "battle-invite", createdAt: iso(1) },
-  { id: "m3", conversationId: "cv2", senderId: "u3", body: "Want to run a direct challenge this weekend?", messageType: "text", createdAt: iso(6) },
+  { id: "m1", conversationId: "cv1", senderId: "u2", body: "Your sports edit feels cinematic.", messageType: "text", status: "seen", reactions: {}, createdAt: iso(5) },
+  { id: "m2", conversationId: "cv1", senderId: "u1", body: "Your commentary piece is battle-ready.", messageType: "battle-invite", status: "seen", reactions: { u2: "🔥" }, createdAt: iso(1) },
+  { id: "m3", conversationId: "cv2", senderId: "u3", body: "Want to run a direct challenge this weekend?", messageType: "text", status: "seen", reactions: {}, createdAt: iso(6) },
 ];
 
 export const mockCrews: CrewModel[] = [

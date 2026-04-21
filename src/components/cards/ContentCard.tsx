@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Heart, MessageCircle, Share2, Bookmark } from "lucide-react";
 import { formatCompactNumber } from "@/lib/formatters";
-import { mockUsers } from "@/lib/constants/mockData";
+import { mockUsers, LIVE_CONTENT_MAX_AGE_MS } from "@/lib/constants/mockData";
 import type { ContentModel, SocialPlatform } from "@/types/models";
 import { useFeedContext } from "../feed/FeedList";
 import { useCommentModal } from "../overlays/CommentModal";
@@ -84,8 +84,38 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
   const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const isPlaying = currentPlayingId === content.id;
+  const [liveCountdown, setLiveCountdown] = useState<string>("");
 
   const creator = mockUsers.find((user) => user.id === content.creatorId);
+
+  useEffect(() => {
+    if (content.status !== "live" || !content.createdAt) return;
+    
+    const updateCountdown = () => {
+      const createdAt = new Date(content.createdAt).getTime();
+      const now = Date.now();
+      const elapsed = now - createdAt;
+      const remaining = LIVE_CONTENT_MAX_AGE_MS - elapsed;
+      
+      if (remaining <= 0) {
+        setLiveCountdown("Expired");
+        return false;
+      }
+      
+      const hours = Math.floor(remaining / (1000 * 60 * 60));
+      const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+      
+      setLiveCountdown(`${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`);
+      return true;
+    };
+    
+    const isVisible = updateCountdown();
+    if (!isVisible) return;
+    
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [content.status, content.createdAt]);
 
   const getPlatformIcon = () => {
     const platform = content.platform.toLowerCase();
@@ -225,6 +255,7 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
                 </span>
                 <span className="live-pill__inner">
                   <span className="live-pill__label">LIVE</span>
+                  {liveCountdown && <span className="live-countdown">{liveCountdown}</span>}
                 </span>
               </span>
             ) : null}

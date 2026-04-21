@@ -3,6 +3,7 @@ import { ProtectedRoute } from "@/app/router/RouteGuards";
 import { PublicLayout } from "@/app/layouts/PublicLayout";
 import { AppLayout } from "@/app/layouts/AppLayout";
 import { AdminLayout } from "@/app/layouts/AdminLayout";
+import { MessagesLayout } from "@/app/layouts/MessagesLayout";
 import { LandingPage } from "@/pages/public/LandingPage";
 import { AboutPage } from "@/pages/public/AboutPage";
 import { ContactPage } from "@/pages/public/ContactPage";
@@ -63,14 +64,17 @@ export function AppRouter() {
           <Route path="/app/contests" element={<ContestsPage />} />
           <Route path="/app/contests/:contestId" element={<ContestDetailPage />} />
           <Route path="/app/leaderboards" element={<LeaderboardsPage />} />
-          <Route path="/app/messages" element={<MessagesPage />} />
-          <Route path="/app/messages/:conversationId" element={<ConversationPage />} />
           <Route path="/app/crews" element={<CrewsPage />} />
           <Route path="/app/crews/:crewId" element={<CrewDetailPage />} />
           <Route path="/app/notifications" element={<NotificationsPage />} />
           <Route path="/app/profile/:userId" element={<PublicProfilePage />} />
           <Route path="/app/me" element={<MyProfilePage />} />
           <Route path="/app/settings" element={<SettingsPage />} />
+          <Route path="/app/messages" element={<MessagesPage />} />
+        </Route>
+
+        <Route element={<MessagesLayout />}>
+          <Route path="/app/messages/:conversationId" element={<ConversationPage />} />
         </Route>
 
         <Route element={<AdminLayout />}>

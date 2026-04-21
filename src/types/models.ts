@@ -157,6 +157,9 @@ export interface ConversationModel {
   createdAt: string;
 }
 
+export type MessageStatus = "sending" | "sent" | "delivered" | "seen";
+export type MessageReaction = "❤️" | "😂" | "😮" | "😢" | "🔥" | "👏";
+
 export interface MessageModel {
   id: string;
   conversationId: string;
@@ -164,6 +167,19 @@ export interface MessageModel {
   body: string;
   messageType: string;
   sharedContentId?: string;
+  status: MessageStatus;
+  reactions: Record<string, MessageReaction>;
+  replyToId?: string;
+  createdAt: string;
+}
+
+export interface ConversationModel {
+  id: string;
+  participantIds: string[];
+  lastMessage: string;
+  lastSenderId?: string;
+  lastMessageAt: string;
+  unreadCount: number;
   createdAt: string;
 }
 

@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils/cn";
 
-function VerifiedBadge({ className }: { className?: string }) {
+export function VerifiedBadge({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 20 20" aria-label="Verified user" className={cn("verified-label__icon", className)}>
       <circle cx="10" cy="10" r="9" fill="currentColor" />

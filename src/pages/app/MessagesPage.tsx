@@ -2,11 +2,56 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { useMessages } from "@/app/providers/MessagesProvider";
-import { ConversationList } from "@/components/messages/ConversationList";
-import { Button } from "@/components/ui/Button";
-import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
-import { SectionHeader } from "@/components/ui/SectionHeader";
 import { mockUsers } from "@/lib/constants/mockData";
+import { VerifiedBadge, VerifiedLabel } from "@/components/ui/VerifiedLabel";
+
+function formatRelativeTime(iso: string) {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+
+  if (diffMs < minute) return "now";
+  if (diffMs < hour) return `${Math.floor(diffMs / minute)}m`;
+  if (diffMs < day) return `${Math.floor(diffMs / hour)}h`;
+  return `${Math.floor(diffMs / day)}d`;
+}
+
+function InboxRow({ conversation, currentUserId }: { conversation: ReturnType<typeof useMessages>["conversations"][number]; currentUserId: string }) {
+  const navigate = useNavigate();
+  const otherId = conversation.participantIds.find((id) => id !== currentUserId);
+  const other = useMemo(() => {
+    if (!otherId) return null;
+    return mockUsers.find((u) => u.id === otherId) ?? null;
+  }, [otherId]);
+
+  const isUnread = conversation.unreadCount > 0;
+  const isLastMine = conversation.lastSenderId === currentUserId;
+
+  return (
+    <button
+      className="messages-row"
+      onClick={() => navigate(`/app/messages/${conversation.id}`)}
+    >
+      <div className="messages-row__avatar">
+        <img src={other?.photoUrl} alt={other?.displayName} />
+        {isUnread && <span className="messages-row__unread-dot" />}
+      </div>
+
+      <div className="messages-row__content">
+        <div className="messages-row__header">
+          <span className="messages-row__name">{other?.displayName ?? "Unknown"}</span>
+          {other?.verified && <VerifiedBadge className="messages-row__verified" />}
+          <span className="messages-row__time">{formatRelativeTime(conversation.lastMessageAt)}</span>
+        </div>
+        <p className={`messages-row__preview ${isUnread ? "messages-row__preview--unread" : ""}`}>
+          {isLastMine && conversation.lastMessage ? "You: " : ""}
+          {conversation.lastMessage || "Start the conversation"}
+        </p>
+      </div>
+    </button>
+  );
+}
 
 export function MessagesPage() {
   const { user } = useAuth();
@@ -14,10 +59,13 @@ export function MessagesPage() {
   const { conversations, startConversation } = useMessages();
   const [isComposerOpen, setIsComposerOpen] = useState(false);
 
-  const visibleConversations = conversations.filter((conversation) => conversation.participantIds.includes(user?.id ?? ""));
+  const visibleConversations = conversations.filter((conv) =>
+    conv.participantIds.includes(user?.id ?? "")
+  );
+
   const availableCreators = useMemo(
     () => mockUsers.filter((creator) => creator.id !== user?.id),
-    [user?.id],
+    [user?.id]
   );
 
   const handleStartConversation = (targetUserId: string) => {
@@ -28,39 +76,72 @@ export function MessagesPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <SectionHeader eyebrow="Messages" title="Direct creator conversations" />
-        <Button onClick={() => setIsComposerOpen((current) => !current)}>{isComposerOpen ? "Close" : "New Message"}</Button>
+    <div className="messages-page">
+      <div className="messages-header">
+        <h1 className="messages-header__title">Messages</h1>
+        <button
+          className="messages-header__new"
+          onClick={() => setIsComposerOpen(!isComposerOpen)}
+        >
+          {isComposerOpen ? (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="12" y1="5" x2="12" y2="19" strokeLinecap="round" />
+              <line x1="5" y1="12" x2="19" y2="12" strokeLinecap="round" />
+            </svg>
+          )}
+        </button>
       </div>
-      {isComposerOpen ? (
-        <div className="bubble-card rounded-[34px] p-5">
-          <p className="text-sm font-semibold text-text-primary">Start a new conversation</p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+
+      {isComposerOpen && (
+        <div className="messages-composer__picker">
+          <p className="messages-composer__title">New Message</p>
+<div className="messages-composer__list">
             {availableCreators.map((creator) => (
               <button
                 key={creator.id}
-                type="button"
-                className="flex items-center gap-3 rounded-[24px] border border-white/10 bg-white/5 px-4 py-3 text-left transition hover:border-white/20 hover:bg-white/8"
+                className="messages-composer__creator-btn"
                 onClick={() => handleStartConversation(creator.id)}
               >
-                <img src={creator.photoUrl} alt={creator.displayName} className="h-11 w-11 rounded-[22px] object-cover" />
-                <div className="min-w-0">
+                <img
+                  src={creator.photoUrl}
+                  alt={creator.displayName}
+                  className="messages-composer__creator-avatar"
+                />
+                <div className="messages-composer__creator-info">
                   <VerifiedLabel
                     text={creator.displayName}
                     verified={creator.verified}
-                    className="truncate text-sm font-semibold text-text-primary"
-                    textClassName="truncate text-sm font-semibold text-text-primary"
-                    iconClassName="verified-label__icon--tiny"
+                    className="messages-composer__creator-name"
+                    textClassName="messages-composer__creator-name"
+                    iconClassName="messages-composer__creator-verified"
                   />
-                  <p className="truncate text-xs text-text-secondary">@{creator.username}</p>
+                  <span className="messages-composer__creator-username">@{creator.username}</span>
                 </div>
               </button>
             ))}
           </div>
-        </div>
-      ) : null}
-      <ConversationList items={visibleConversations} currentUserId={user?.id ?? "u1"} />
+        </div>)}
+
+      <div className="messages-inbox">
+        {visibleConversations.length === 0 ? (
+          <div className="messages-inbox__empty">
+            <p>No messages yet</p>
+            <span>Start a conversation with a creator</span>
+          </div>
+        ) : (
+          visibleConversations.map((conv) => (
+            <InboxRow
+              key={conv.id}
+              conversation={conv}
+              currentUserId={user?.id ?? ""}
+            />
+          ))
+        )}
+      </div>
     </div>
   );
 }

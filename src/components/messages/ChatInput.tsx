@@ -1,86 +1,91 @@
-import { useId, useMemo, useRef, useState } from "react";
-import { useMessages } from "@/app/providers/MessagesProvider";
+import { useRef, useState, useEffect, useCallback } from "react";
+import { useMessages, useMessageInputState } from "@/app/providers/MessagesProvider";
 
 export function ChatInput({ conversationId, senderId }: { conversationId: string; senderId: string }) {
   const { sendMessage } = useMessages();
+  const { setMyTyping } = useMessageInputState(conversationId);
   const [draft, setDraft] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const fileInputId = useId();
+  const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const fileLabel = useMemo(() => {
-    if (!selectedFile) return null;
-    return selectedFile.name.length > 28 ? `${selectedFile.name.slice(0, 25)}...` : selectedFile.name;
-  }, [selectedFile]);
-
-  const restoreComposerPosition = () => {
-    const resetViewport = () => {
-      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    };
-
-    resetViewport();
-    window.setTimeout(resetViewport, 120);
-    window.setTimeout(resetViewport, 280);
-  };
-
-  const handleSend = () => {
+  const handleSend = useCallback(() => {
     if (!draft.trim()) return;
     sendMessage({ conversationId, senderId, body: draft });
     setDraft("");
-    inputRef.current?.blur();
-    restoreComposerPosition();
-  };
+    setMyTyping(false, senderId);
+    inputRef.current?.focus();
+  }, [draft, conversationId, senderId, sendMessage, setMyTyping]);
+
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setDraft(e.target.value);
+    if (e.target.value) {
+      setMyTyping(true, senderId);
+    } else {
+      setMyTyping(false, senderId);
+    }
+  }, [setMyTyping, senderId]);
+
+  const handleFocus = useCallback(() => {
+    setIsFocused(true);
+  }, []);
+
+  const handleBlur = useCallback(() => {
+    setIsFocused(false);
+  }, []);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  }, [handleSend]);
+
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>;
+    if (!draft) {
+      setMyTyping(false, senderId);
+    } else {
+      timeout = setTimeout(() => {
+        setMyTyping(false, senderId);
+      }, 3000);
+    }
+    return () => clearTimeout(timeout);
+  }, [draft, senderId, setMyTyping]);
 
   return (
-    <div className="message-composer-shell">
-      {selectedFile ? (
-        <div className="message-composer-file-pill">
-          <span className="message-composer-file-pill__label">Image selected</span>
-          <span className="message-composer-file-pill__name">{fileLabel}</span>
-          <button type="button" className="message-composer-file-pill__clear" onClick={() => setSelectedFile(null)}>
-            Remove
-          </button>
-        </div>
-      ) : null}
-      <div className="message-composer">
-        <div className="message-composer__upload">
-          <label htmlFor={fileInputId} className="message-composer__upload-button">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 337 337" aria-hidden="true">
-              <circle strokeWidth="20" r="158.5" cy="168.5" cx="168.5"></circle>
-              <path strokeLinecap="round" strokeWidth="25" d="M167.759 79V259"></path>
-              <path strokeLinecap="round" strokeWidth="25" d="M79 167.138H259"></path>
-            </svg>
-            <span className="message-composer__tooltip">Add an image</span>
-          </label>
-          <input
-            id={fileInputId}
-            type="file"
-            accept="image/*"
-            className="message-composer__file-input"
-            onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
-          />
-        </div>
+    <div className={`dm-composer-shell ${isFocused ? "dm-composer-shell--focused" : ""}`}>
+      <button className="dm-composer-add" type="button" aria-label="Add content">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <line x1="12" y1="5" x2="12" y2="19" strokeLinecap="round" />
+          <line x1="5" y1="12" x2="19" y2="12" strokeLinecap="round" />
+        </svg>
+      </button>
+
+      <div className="dm-composer-input-wrap">
         <input
           ref={inputRef}
-          className="message-composer__input"
+          type="text"
+          className="dm-composer-input"
           placeholder="Message..."
           value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              handleSend();
-            }
-          }}
+          onChange={handleChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
         />
-        <button type="button" className="message-composer__send" onClick={handleSend} aria-label="Send message">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 664 663" aria-hidden="true">
-            <path d="M646.293 331.888L17.7538 17.6187L155.245 331.888M646.293 331.888L17.753 646.157L155.245 331.888M646.293 331.888L318.735 330.228L155.245 331.888"></path>
-          </svg>
-        </button>
       </div>
+
+      <button
+        className="dm-composer-send"
+        type="button"
+        onClick={handleSend}
+        disabled={!draft.trim()}
+        aria-label="Send message"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M2.01 21L23 12 2.01 3 2 10l15-2-15 2z" />
+        </svg>
+      </button>
     </div>
   );
 }
