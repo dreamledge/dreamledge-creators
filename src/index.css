@@ -4564,6 +4564,16 @@ button {
   top: 0;
   left: 0;
   z-index: 1;
+  pointer-events: none;
+}
+
+.video-tap-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
 }
 
 .video-thumbnail {
@@ -4611,10 +4621,44 @@ button {
 }
 
 .play-btn {
+  position: absolute;
+  top: 66%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: 64px;
   height: 64px;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.6);
+}
+
+.play-btn:hover {
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+.audio-toggle-btn {
+  position: absolute;
+  left: 50%;
+  bottom: 74px;
+  transform: translateX(-50%);
+  min-height: 42px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  padding: 8px 14px;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.audio-toggle-btn:hover {
+  transform: translateX(-50%) scale(1.04);
+}
+
+.audio-toggle-btn span {
+  white-space: nowrap;
 }
 
 .bottom-controls {

@@ -83,6 +83,9 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
   const [videoSrc, setVideoSrc] = useState("");
   const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const youtubeSyncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const youtubeSyncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isPlaying = currentPlayingId === content.id;
   const [liveCountdown, setLiveCountdown] = useState<string>("");
 
@@ -133,19 +136,20 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
   const getEmbedSrc = (embedUrl: string, muted: boolean): string => {
     if (!embedUrl) return "";
     let src = embedUrl;
-    const useMute = userHasUnmuted ? 0 : (muted ? 1 : 0);
+    const useMute = muted ? 1 : 0;
+    const origin = typeof window !== "undefined" ? encodeURIComponent(window.location.origin) : "";
     if (embedUrl.includes("youtube.com/shorts/")) {
       const videoId = embedUrl.split("shorts/")[1]?.split("?")[0];
       if (videoId) {
-        src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${useMute}&loop=1&playlist=${videoId}&iv_load_policy=3&modestbranding=1&playsinline=1&showinfo=0&rel=0`;
+        src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${useMute}&controls=0&disablekb=1&loop=1&playlist=${videoId}&iv_load_policy=3&modestbranding=1&playsinline=1&showinfo=0&rel=0&enablejsapi=1${origin ? `&origin=${origin}` : ""}`;
       }
     } else if (embedUrl.includes("youtube.com") || embedUrl.includes("youtu.be")) {
       const videoId = embedUrl.split("v=")[1]?.split("&")[0] || embedUrl.split("/").pop();
-      src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${useMute}&loop=1&playlist=${videoId}&iv_load_policy=3&modestbranding=1&playsinline=1&showinfo=0&rel=0`;
+      src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${useMute}&controls=0&disablekb=1&loop=1&playlist=${videoId}&iv_load_policy=3&modestbranding=1&playsinline=1&showinfo=0&rel=0&enablejsapi=1${origin ? `&origin=${origin}` : ""}`;
     } else if (embedUrl.includes("tiktok.com")) {
       const videoId = embedUrl.match(/video\/(\d+)/)?.[1];
       if (videoId) {
-        src = `https://www.tiktok.com/player/v1/${videoId}?autoplay=1&mute=${useMute}&playsinline=1`;
+        src = `https://www.tiktok.com/player/v1/${videoId}?autoplay=1&mute=${useMute}&controls=0&playsinline=1`;
       }
     } else if (embedUrl.includes("instagram.com")) {
       const shortcode = embedUrl.match(/\/p\/([A-Za-z0-9_-]+)/)?.[1] || embedUrl.match(/\/reel\/([A-Za-z0-9_-]+)/)?.[1];
@@ -180,14 +184,73 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
       setIframeLoaded(false);
       setVideoSrc("");
       const timer = setTimeout(() => {
-        setVideoSrc(getEmbedSrc(content.embedUrl, isMuted));
-      }, 400);
+        setVideoSrc(getEmbedSrc(content.embedUrl, true));
+      }, 80);
       return () => clearTimeout(timer);
     } else {
       setIframeLoaded(false);
       setVideoSrc("");
     }
-  }, [isPlaying, content.embedUrl, isMuted]);
+  }, [isPlaying, content.embedUrl]);
+
+  useEffect(() => {
+    if (youtubeSyncIntervalRef.current) {
+      clearInterval(youtubeSyncIntervalRef.current);
+      youtubeSyncIntervalRef.current = null;
+    }
+    if (youtubeSyncTimeoutRef.current) {
+      clearTimeout(youtubeSyncTimeoutRef.current);
+      youtubeSyncTimeoutRef.current = null;
+    }
+
+    if (!isPlaying || !content.embedUrl) return;
+
+    if (content.platform.toLowerCase() === "youtube") {
+      if (!iframeLoaded || !iframeRef.current) return;
+
+      const postCommand = (func: "playVideo" | "mute" | "unMute" | "setVolume", args: string | number[] = "") => {
+        iframeRef.current?.contentWindow?.postMessage(
+          JSON.stringify({ event: "command", func, args }),
+          "*"
+        );
+      };
+
+      const syncAudio = () => {
+        postCommand("playVideo");
+        if (!isMuted && userHasUnmuted) {
+          postCommand("setVolume", [100]);
+          postCommand("unMute");
+        } else {
+          postCommand("mute");
+        }
+      };
+
+      syncAudio();
+      youtubeSyncIntervalRef.current = setInterval(syncAudio, 100);
+      youtubeSyncTimeoutRef.current = setTimeout(() => {
+        if (youtubeSyncIntervalRef.current) {
+          clearInterval(youtubeSyncIntervalRef.current);
+          youtubeSyncIntervalRef.current = null;
+        }
+      }, 2000);
+      return;
+    }
+
+    setVideoSrc(getEmbedSrc(content.embedUrl, isMuted));
+  }, [isMuted, isPlaying, content.embedUrl, content.platform, iframeLoaded, userHasUnmuted]);
+
+  useEffect(() => {
+    return () => {
+      if (youtubeSyncIntervalRef.current) {
+        clearInterval(youtubeSyncIntervalRef.current);
+        youtubeSyncIntervalRef.current = null;
+      }
+      if (youtubeSyncTimeoutRef.current) {
+        clearTimeout(youtubeSyncTimeoutRef.current);
+        youtubeSyncTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   const showControlsTemporarily = () => {
     setShowControls(true);
@@ -202,6 +265,14 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
   const handlePlayPause = (e: React.MouseEvent) => {
     e.stopPropagation();
     setCurrentPlaying(isPlaying ? null : content.id);
+    showControlsTemporarily();
+  };
+
+  const handleVideoTap = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isPlaying) {
+      setCurrentPlaying(content.id);
+    }
     showControlsTemporarily();
   };
 
@@ -304,12 +375,7 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
         <div className="btn3"></div>
         
         {/* Card Inner - Screen */}
-        <div className="card-int" onClick={() => {
-          if (!isPlaying) {
-            setCurrentPlaying(content.id);
-          }
-          showControlsTemporarily();
-        }}>
+        <div className="card-int" onClick={handleVideoTap}>
           {/* Notch - top */}
           <div className="top">
             <div className="camera">
@@ -337,25 +403,39 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
             </div>
           )}
           {isPlaying && content.embedUrl && videoSrc ? (
-            <iframe
-              src={videoSrc}
-              className="video-embed"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-              allowFullScreen
-              onLoad={() => setIframeLoaded(true)}
-            />
-          ) : (
-            <img 
-              src={content.thumbnailUrl} 
-              alt={content.title} 
-              className="video-thumbnail"
-            />
-          )}
+              <iframe
+                ref={iframeRef}
+                src={videoSrc}
+                className="video-embed"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                allowFullScreen
+                onLoad={() => setIframeLoaded(true)}
+              />
+            ) : (
+              <img 
+                src={content.thumbnailUrl} 
+                alt={content.title} 
+                className="video-thumbnail"
+              />
+            )}
+
+          {isPlaying ? (
+            <button type="button" className="video-tap-layer" onClick={handleVideoTap} aria-label="Show video controls" />
+          ) : null}
           
           {/* Custom Controls - only show on tap */}
           <div className={`video-controls ${showControls ? "video-controls-visible" : ""}`}>
             <button className="control-btn play-btn" onClick={handlePlayPause}>
               {isPlaying ? <PauseIcon /> : <PlayIcon />}
+            </button>
+
+            <button
+              className="control-btn audio-toggle-btn"
+              onClick={handleMuteToggle}
+              aria-label={isMuted ? "Unmute video" : "Mute video"}
+            >
+              {isMuted ? <VolumeMuteIcon /> : <VolumeIcon />}
+              <span>{isMuted ? "Tap to unmute" : "Mute"}</span>
             </button>
             
             <div className="bottom-controls">

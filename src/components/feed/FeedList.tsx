@@ -53,6 +53,7 @@ export function FeedList({ items }: { items: ContentModel[] }) {
 
   useEffect(() => {
     let frameId = 0;
+    const container = containerRef.current;
 
     const getCardVisibility = (card: HTMLElement) => {
       const rect = card.getBoundingClientRect();
@@ -72,13 +73,17 @@ export function FeedList({ items }: { items: ContentModel[] }) {
       for (const card of cards) {
         const ratio = getCardVisibility(card);
 
-        if (ratio > bestRatio && ratio >= 0.5) {
+        if (ratio > bestRatio) {
           bestRatio = ratio;
           nextId = card.dataset.contentId ?? null;
         }
       }
 
-      if (nextId && nextId !== lastPlayedRef.current) {
+      if (bestRatio < 0.2) {
+        nextId = null;
+      }
+
+      if (nextId !== lastPlayedRef.current) {
         lastPlayedRef.current = nextId;
         setCurrentPlaying(nextId);
       }
@@ -98,11 +103,13 @@ export function FeedList({ items }: { items: ContentModel[] }) {
 
     window.addEventListener("scroll", scheduleUpdate, { passive: true });
     window.addEventListener("resize", scheduleUpdate);
+    container?.addEventListener("scroll", scheduleUpdate, { passive: true });
 
     return () => {
       cancelAnimationFrame(frameId);
       window.removeEventListener("scroll", scheduleUpdate);
       window.removeEventListener("resize", scheduleUpdate);
+      container?.removeEventListener("scroll", scheduleUpdate);
     };
   }, [setCurrentPlaying]);
 
