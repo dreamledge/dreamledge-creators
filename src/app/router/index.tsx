@@ -24,6 +24,7 @@ import { ContestsPage } from "@/pages/app/ContestsPage";
 import { ContestDetailPage } from "@/pages/app/ContestDetailPage";
 import { LeaderboardsPage } from "@/pages/app/LeaderboardsPage";
 import { MessagesPage } from "@/pages/app/MessagesPage";
+import { SocialPage } from "@/pages/app/SocialPage";
 import { ConversationPage } from "@/pages/app/ConversationPage";
 import { CrewsPage } from "@/pages/app/CrewsPage";
 import { CrewDetailPage } from "@/pages/app/CrewDetailPage";
@@ -70,6 +71,7 @@ export function AppRouter() {
           <Route path="/app/profile/:userId" element={<PublicProfilePage />} />
           <Route path="/app/me" element={<MyProfilePage />} />
           <Route path="/app/settings" element={<SettingsPage />} />
+          <Route path="/app/social" element={<SocialPage />} />
           <Route path="/app/messages" element={<MessagesPage />} />
         </Route>
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { useMessages } from "@/app/providers/MessagesProvider";
 import { mockUsers } from "@/lib/constants/mockData";
@@ -10,6 +10,7 @@ import { ChatThread } from "@/components/messages/ChatThread";
 export function ConversationPage() {
   const { conversationId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { getConversation, getMessages, markSeen, isTypingUser } = useMessages();
 
@@ -36,11 +37,26 @@ export function ConversationPage() {
 
   const pageTitle = otherUser?.displayName ?? "Conversation";
   const isVerified = otherUser?.verified ?? false;
+  const returnState = location.state as { returnToPath?: string; returnToVoiceRoomId?: string; returnToTab?: string } | null;
+
+  const handleBack = () => {
+    if (returnState?.returnToVoiceRoomId) {
+      navigate(returnState.returnToPath ?? "/app/messages", {
+        state: {
+          restoreVoiceRoomId: returnState.returnToVoiceRoomId,
+          restoreTab: returnState.returnToTab ?? "voice-chat",
+        },
+      });
+      return;
+    }
+
+    navigate("/app/messages");
+  };
 
   return (
     <div className="messages-page messages-page--fullscreen">
       <div className="messages-header">
-        <button className="messages-header__back" onClick={() => navigate("/app/messages")} aria-label="Back to messages">
+        <button className="messages-header__back" onClick={handleBack} aria-label="Back to messages">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>

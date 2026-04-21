@@ -1,186 +1,123 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/app/providers/AuthProvider";
+import { useMessages } from "@/app/providers/MessagesProvider";
 import { mockUsers } from "@/lib/constants/mockData";
-import { VerifiedBadge } from "@/components/ui/VerifiedLabel";
+import { VerifiedBadge, VerifiedLabel } from "@/components/ui/VerifiedLabel";
 
-type SocialHubTab = "voice-chat" | "public-chat" | "watch-parties" | "game-night" | "creator-lounge";
+function formatRelativeTime(iso: string) {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
 
-const socialTabs: { key: SocialHubTab; label: string }[] = [
-  { key: "voice-chat", label: "Voice Chat" },
-  { key: "public-chat", label: "Public Chat" },
-  { key: "watch-parties", label: "Watch Parties" },
-  { key: "game-night", label: "Game Night" },
-  { key: "creator-lounge", label: "Creator Lounge" },
-];
-
-const socialRooms: Record<SocialHubTab, { name: string; status: string; members: string }[]> = {
-  "voice-chat": [
-    { name: "Late Night Debates", status: "Live voice room", members: "128 listening" },
-    { name: "Creator Feedback Lab", status: "Mic open", members: "42 joined" },
-    { name: "Music & Reactions", status: "Now talking", members: "84 listening" },
-  ],
-  "public-chat": [
-    { name: "General Chat", status: "Open thread", members: "1.2k active" },
-    { name: "Hot Takes", status: "Trending topic", members: "510 active" },
-    { name: "Memes Only", status: "Fast mode", members: "740 active" },
-  ],
-  "watch-parties": [
-    { name: "Creator Clash Stream", status: "Party in progress", members: "221 watching" },
-    { name: "Clip Breakdown Room", status: "Starting soon", members: "59 waiting" },
-    { name: "Throwback Reel Night", status: "Queued", members: "96 waiting" },
-  ],
-  "game-night": [
-    { name: "Trivia Sprint", status: "Round 3", members: "36 players" },
-    { name: "Guess the Clip", status: "Live game", members: "77 players" },
-    { name: "Speed Poll Arena", status: "Open lobby", members: "112 players" },
-  ],
-  "creator-lounge": [
-    { name: "Collab Finder", status: "Networking", members: "89 online" },
-    { name: "Brand Deal Tips", status: "Advice thread", members: "154 online" },
-    { name: "Editing Workflow", status: "Q&A room", members: "61 online" },
-  ],
-};
-
-const voiceRooms = [
-  { id: "vr-1", category: "Fandom", openedAtMs: Date.now() - (57 * 60 * 1000 + 40 * 1000), participantIds: ["u1", "u2", "u5"], extraCount: 0 },
-  { id: "vr-2", category: "TV Shows", openedAtMs: Date.now() - (95 * 60 * 1000 + 12 * 1000), participantIds: ["u3", "u4", "u2"], extraCount: 2 },
-  { id: "vr-3", category: "Universities", openedAtMs: Date.now() - (8 * 60 * 1000 + 7 * 1000), participantIds: ["u5", "u1"], extraCount: 0 },
-  { id: "vr-4", category: "TV Shows", openedAtMs: Date.now() - (80 * 60 * 1000 + 52 * 1000), participantIds: ["u4", "u3", "u2"], extraCount: 3 },
-];
-
-function formatRoomOpenTime(elapsedMs: number) {
-  const totalSeconds = Math.max(0, Math.floor(elapsedMs / 1000));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  if (diffMs < minute) return "now";
+  if (diffMs < hour) return `${Math.floor(diffMs / minute)}m`;
+  if (diffMs < day) return `${Math.floor(diffMs / hour)}h`;
+  return `${Math.floor(diffMs / day)}d`;
 }
 
-function getSocialTabIcon(tab: SocialHubTab) {
-  switch (tab) {
-    case "voice-chat":
-      return (
-        <svg viewBox="0 0 24 24" fill="currentColor" height="1em">
-          <path d="M12 3a4 4 0 0 0-4 4v5a4 4 0 1 0 8 0V7a4 4 0 0 0-4-4zm-7 8a1 1 0 0 1 1 1 6 6 0 0 0 12 0 1 1 0 1 1 2 0 8 8 0 0 1-7 7.94V22h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-2.06A8 8 0 0 1 4 12a1 1 0 0 1 1-1z" />
-        </svg>
-      );
-    case "public-chat":
-      return (
-        <svg viewBox="0 0 24 24" fill="currentColor" height="1em">
-          <path d="M4 3h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-6.5L8 21v-4H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
-        </svg>
-      );
-    case "watch-parties":
-      return (
-        <svg viewBox="0 0 24 24" fill="currentColor" height="1em">
-          <path d="M3 5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2l4-3v16l-4-3v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5zm8 3v8l6-4-6-4z" />
-        </svg>
-      );
-    case "game-night":
-      return (
-        <svg viewBox="0 0 24 24" fill="currentColor" height="1em">
-          <path d="M7 6h10a4 4 0 0 1 4 4v3a5 5 0 0 1-5 5h-1l-2-2h-2l-2 2H8a5 5 0 0 1-5-5v-3a4 4 0 0 1 4-4zm1 4v2h2v2h2v-2h2v-2h-2V8h-2v2H8zm8 1.5a1.5 1.5 0 1 0 0 .01V11.5zm2 2a1.5 1.5 0 1 0 0 .01V13.5z" />
-        </svg>
-      );
-    case "creator-lounge":
-      return (
-        <svg viewBox="0 0 24 24" fill="currentColor" height="1em">
-          <path d="M12 2 9.2 7.6 3 8.5l4.5 4.4-1.1 6.1L12 16l5.6 3-1.1-6.1L21 8.5l-6.2-.9L12 2zm-7 18h14v2H5v-2z" />
-        </svg>
-      );
-    default:
-      return null;
-  }
+function InboxRow({ conversation, currentUserId }: { conversation: ReturnType<typeof useMessages>["conversations"][number]; currentUserId: string }) {
+  const navigate = useNavigate();
+  const otherId = conversation.participantIds.find((id) => id !== currentUserId);
+  const other = useMemo(() => {
+    if (!otherId) return null;
+    return mockUsers.find((u) => u.id === otherId) ?? null;
+  }, [otherId]);
+
+  const isUnread = conversation.unreadCount > 0;
+  const isLastMine = conversation.lastSenderId === currentUserId;
+
+  return (
+    <button className="messages-row" onClick={() => navigate(`/app/messages/${conversation.id}`)}>
+      <div className="messages-row__avatar">
+        <img src={other?.photoUrl} alt={other?.displayName} />
+        {isUnread && <span className="messages-row__unread-dot" />}
+      </div>
+
+      <div className="messages-row__content">
+        <div className="messages-row__header">
+          <span className="messages-row__name">{other?.displayName ?? "Unknown"}</span>
+          {other?.verified && <VerifiedBadge className="messages-row__verified" />}
+          <span className="messages-row__time">{formatRelativeTime(conversation.lastMessageAt)}</span>
+        </div>
+        <p className={`messages-row__preview ${isUnread ? "messages-row__preview--unread" : ""}`}>
+          {isLastMine && conversation.lastMessage ? "You: " : ""}
+          {conversation.lastMessage || "Start the conversation"}
+        </p>
+      </div>
+    </button>
+  );
 }
 
 export function MessagesPage() {
-  const [activeTab, setActiveTab] = useState<SocialHubTab>("voice-chat");
-  const activeRooms = useMemo(() => socialRooms[activeTab], [activeTab]);
-  const [nowMs, setNowMs] = useState(() => Date.now());
-  const userById = useMemo(() => new Map(mockUsers.map((user) => [user.id, user])), []);
-  const liveVoiceRooms = useMemo(
-    () =>
-      voiceRooms.map((room) => ({
-        ...room,
-        openTimeLabel: formatRoomOpenTime(nowMs - room.openedAtMs),
-      })),
-    [nowMs],
-  );
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { conversations, startConversation } = useMessages();
+  const [isComposerOpen, setIsComposerOpen] = useState(false);
 
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setNowMs(Date.now());
-    }, 1000);
+  const visibleConversations = conversations.filter((conv) => conv.participantIds.includes(user?.id ?? ""));
 
-    return () => window.clearInterval(timer);
-  }, []);
+  const availableCreators = useMemo(() => mockUsers.filter((creator) => creator.id !== user?.id), [user?.id]);
+
+  const handleStartConversation = (targetUserId: string) => {
+    if (!user) return;
+    const conversationId = startConversation([user.id, targetUserId]);
+    setIsComposerOpen(false);
+    navigate(`/app/messages/${conversationId}`);
+  };
 
   return (
     <div className="messages-page">
       <div className="messages-header">
-        <h1 className="messages-header__title">Social</h1>
+        <h1 className="messages-header__title">Messages</h1>
+        <button className="messages-header__new" onClick={() => setIsComposerOpen(!isComposerOpen)}>
+          {isComposerOpen ? (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="12" y1="5" x2="12" y2="19" strokeLinecap="round" />
+              <line x1="5" y1="12" x2="19" y2="12" strokeLinecap="round" />
+            </svg>
+          )}
+        </button>
       </div>
 
-      <div className="feed-tabs-container" role="tablist" aria-label="Social channel categories">
-        {socialTabs.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            role="tab"
-            aria-selected={activeTab === tab.key}
-            className={`feed-tab ${activeTab === tab.key ? "feed-tab-active" : "feed-tab-inactive"}`}
-            onClick={() => setActiveTab(tab.key)}
-          >
-            <span className="feed-tab-icon">{getSocialTabIcon(tab.key)}</span>
-            <span className="feed-tab-label">{tab.label}</span>
-          </button>
-        ))}
-      </div>
-
-      {activeTab === "voice-chat" ? (
-        <div className="social-hub-voice-list">
-          {liveVoiceRooms.map((room) => (
-            <button key={room.id} type="button" className="social-hub-voice-card">
-              <div className="social-hub-voice-card__top">
-                <div className="social-hub-voice-card__category">
-                  <span className="social-hub-voice-card__mic" aria-hidden="true">🎙</span>
-                  <span>{room.category}</span>
+      {isComposerOpen && (
+        <div className="messages-composer__picker">
+          <p className="messages-composer__title">New Message</p>
+          <div className="messages-composer__list">
+            {availableCreators.map((creator) => (
+              <button key={creator.id} className="messages-composer__creator-btn" onClick={() => handleStartConversation(creator.id)}>
+                <img src={creator.photoUrl} alt={creator.displayName} className="messages-composer__creator-avatar" />
+                <div className="messages-composer__creator-info">
+                  <VerifiedLabel
+                    text={creator.displayName}
+                    verified={creator.verified}
+                    className="messages-composer__creator-name"
+                    textClassName="messages-composer__creator-name"
+                    iconClassName="messages-composer__creator-verified"
+                  />
+                  <span className="messages-composer__creator-username">@{creator.username}</span>
                 </div>
-                <span className="social-hub-voice-card__timer" title="Room open duration">{room.openTimeLabel}</span>
-              </div>
-
-              <div className="social-hub-voice-card__bottom">
-                <div className="social-hub-voice-card__participants">
-                  {room.participantIds.map((id) => {
-                    const user = userById.get(id);
-                    if (!user) return null;
-                    return (
-                      <div key={id} className="social-hub-voice-user">
-                        <img src={user.photoUrl} alt={user.displayName} className="social-hub-voice-user__avatar" />
-                        <div className="social-hub-voice-user__name-row">
-                          <span className="social-hub-voice-user__name">{user.username}</span>
-                          {user.verified ? <VerifiedBadge className="social-hub-voice-user__verified" /> : null}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {room.extraCount > 0 ? <span className="social-hub-voice-user__more">+{room.extraCount}</span> : null}
-                </div>
-
-                <span className="social-hub-voice-card__join">Join</span>
-              </div>
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="social-hub-list">
-          {activeRooms.map((room) => (
-            <button key={room.name} type="button" className="social-hub-room">
-              <div className="social-hub-room__title">{room.name}</div>
-              <div className="social-hub-room__meta">{room.status}</div>
-              <div className="social-hub-room__count">{room.members}</div>
-            </button>
-          ))}
+              </button>
+            ))}
+          </div>
         </div>
       )}
+
+      <div className="messages-inbox">
+        {visibleConversations.length === 0 ? (
+          <div className="messages-inbox__empty">
+            <p>No messages yet</p>
+            <span>Start a conversation with a creator</span>
+          </div>
+        ) : (
+          visibleConversations.map((conv) => <InboxRow key={conv.id} conversation={conv} currentUserId={user?.id ?? ""} />)
+        )}
+      </div>
     </div>
   );
 }
