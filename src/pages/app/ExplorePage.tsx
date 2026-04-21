@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useAuth } from "@/app/providers/AuthProvider";
 import { CreatorCard } from "@/components/cards/CreatorCard";
 import { BattleCard } from "@/components/cards/BattleCard";
 import { ContestCard } from "@/components/cards/ContestCard";
@@ -6,18 +7,22 @@ import { mockBattles, mockContests, mockUsers } from "@/lib/constants/mockData";
 
 export function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const { user } = useAuth();
 
   const filteredUsers = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
+    const currentUserId = user?.id;
 
-    if (!query) return mockUsers;
+    let users = mockUsers.filter((u) => u.id !== currentUserId);
 
-    return mockUsers.filter((user) => {
+    if (!query) return users;
+
+    return users.filter((user) => {
       const username = user.username.toLowerCase();
       const displayName = user.displayName.toLowerCase();
       return username.includes(query) || displayName.includes(query);
     });
-  }, [searchQuery]);
+  }, [searchQuery, user]);
 
   return (
     <div className="space-y-8">

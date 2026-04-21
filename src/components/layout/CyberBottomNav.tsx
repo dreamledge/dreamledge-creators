@@ -1,11 +1,11 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, Search, Video, Swords, User } from "lucide-react";
+import { Home, Search, Video, MessageCircle, User } from "lucide-react";
 
 const navItems = [
   { to: "/app/home", label: "Home", icon: Home, route: "home" },
   { to: "/app/explore", label: "Explore", icon: Search, route: "explore" },
   { to: "/app/review-session", label: "Session", icon: Video, route: "session" },
-  { to: "/app/battles", label: "Battles", icon: Swords, route: "battles" },
+  { to: "/app/messages", label: "Social", icon: MessageCircle, route: "messages" },
   { to: "/app/me", label: "Profile", icon: User, route: "profile" },
 ];
 
@@ -54,6 +54,7 @@ export function CyberBottomNav() {
             onClick={() => handleClick(item.to)}
           >
             <CyberIcon icon={item.icon} />
+            <span className="cyber-label-text">{item.label}</span>
             <span className="glare"></span>
           </button>
         ))}
