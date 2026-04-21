@@ -43,18 +43,6 @@ const TwitchIcon = () => (
   </svg>
 );
 
-const PlayIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" width="32" height="32">
-    <path d="M8 5v14l11-7z"/>
-  </svg>
-);
-
-const PauseIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" width="32" height="32">
-    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
-  </svg>
-);
-
 const VolumeMuteIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
     <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
@@ -67,22 +55,13 @@ const VolumeIcon = () => (
   </svg>
 );
 
-const FullscreenIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-    <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
-  </svg>
-);
-
 export function ContentCard({ content, hideActions = false }: ContentCardProps) {
   const { isMuted, setIsMuted, currentPlayingId, setCurrentPlaying, userHasUnmuted } = useFeedContext();
   const { openCommentModal } = useCommentModal();
   const [showControls, setShowControls] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [videoSrc, setVideoSrc] = useState("");
   const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const youtubeSyncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const youtubeSyncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -174,12 +153,6 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
   };
 
   useEffect(() => {
-    if (!isPlaying) {
-      setProgress(0);
-    }
-  }, [isPlaying]);
-
-  useEffect(() => {
     if (isPlaying) {
       setIframeLoaded(false);
       setVideoSrc("");
@@ -262,12 +235,6 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
     }, 3000);
   };
 
-  const handlePlayPause = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentPlaying(isPlaying ? null : content.id);
-    showControlsTemporarily();
-  };
-
   const handleVideoTap = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isPlaying) {
@@ -282,18 +249,6 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
     showControlsTemporarily();
   };
 
-  const handleFullscreen = () => {
-    if (cardRef.current) {
-      if (!isFullscreen) {
-        cardRef.current.requestFullscreen?.();
-      } else {
-        document.exitFullscreen?.();
-      }
-      setIsFullscreen(!isFullscreen);
-    }
-    showControlsTemporarily();
-  };
-
   const socialLinks = creator?.socialLinks as Partial<Record<SocialPlatform, string>> | undefined;
   const hasInstagram = !!socialLinks?.instagram;
   const hasTikTok = !!socialLinks?.tiktok;
@@ -303,7 +258,7 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
   const isLiveContent = content.status === "live";
 
   return (
-    <div ref={cardRef} className={`phone-card-outer ${isLiveContent ? "phone-card-outer-live" : ""}`} data-content-id={content.id}>
+    <div className={`phone-card-outer ${isLiveContent ? "phone-card-outer-live" : ""}`} data-content-id={content.id}>
       {/* Creator Overlay - Above the card */}
       <div className={`creator-overlay ${isLiveContent ? "creator-overlay-live" : ""}`}>
         <div className="creator-left">
@@ -368,7 +323,7 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
         </div>
       </div>
       
-      <div className={`card ${isFullscreen ? "card-fullscreen" : ""}`}>
+      <div className="card">
         {/* Left Side Buttons - btn1, btn2, btn3 */}
         <div className="btn1"></div>
         <div className="btn2"></div>
@@ -425,10 +380,6 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
           
           {/* Custom Controls - only show on tap */}
           <div className={`video-controls ${showControls ? "video-controls-visible" : ""}`}>
-            <button className="control-btn play-btn" onClick={handlePlayPause}>
-              {isPlaying ? <PauseIcon /> : <PlayIcon />}
-            </button>
-
             <button
               className="control-btn audio-toggle-btn"
               onClick={handleMuteToggle}
@@ -437,25 +388,6 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
               {isMuted ? <VolumeMuteIcon /> : <VolumeIcon />}
               <span>{isMuted ? "Tap to unmute" : "Mute"}</span>
             </button>
-            
-            <div className="bottom-controls">
-              <button className="control-btn mute-btn" onClick={handleMuteToggle}>
-                {isMuted ? <VolumeMuteIcon /> : <VolumeIcon />}
-              </button>
-              <button className="control-btn fullscreen-btn" onClick={handleFullscreen}>
-                <FullscreenIcon />
-              </button>
-            </div>
-            
-            <div className="progress-bar-container">
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: `${progress}%` }}></div>
-              </div>
-              <div className="progress-time">
-                <span>0:00</span>
-                <span>0:30</span>
-              </div>
-</div>
           </div>
         </div>
 </div>

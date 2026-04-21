@@ -4430,24 +4430,25 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 40px 0 12px 0;
+  padding: 16px 0 12px 0;
   width: 100%;
   position: relative;
 }
 
 .phone-card-outer-live {
-  padding-top: 52px;
+  padding-top: 24px;
 }
 
 .card {
   width: 100%;
   max-width: 380px;
   height: 500px;
-  background: #1a1a1a;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 7px;
+  background: transparent;
+  border-radius: 16px;
+  border: none;
+  padding: 0;
   position: relative;
+  overflow: hidden;
 }
 
 .card-fullscreen {
@@ -4462,8 +4463,7 @@ button {
 
 /* Left Buttons - btn1, btn2, btn3 */
 .btn1, .btn2, .btn3 {
-  position: absolute;
-  width: 2px;
+  display: none;
 }
 
 .btn1 {
@@ -4497,7 +4497,7 @@ button {
   background-color: #000000;
   background-image: none;
   height: 100%;
-  border-radius: 25px;
+  border-radius: 16px;
   overflow: hidden;
   position: relative;
   cursor: pointer;
@@ -4510,16 +4510,7 @@ button {
 
 /* Notch - top */
 .top {
-  position: absolute;
-  top: 0px;
-  right: 50%;
-  transform: translate(50%, 0%);
-  width: 35%;
-  height: 18px;
-  background-color: black;
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
-  z-index: 10;
+  display: none;
 }
 
 .speaker {
@@ -4987,9 +4978,75 @@ button {
 .feed-list-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 8px;
+  align-items: stretch;
+  padding: 0;
   width: 100%;
+  gap: 14px;
+}
+
+.feed-list-container .phone-card-outer {
+  align-items: stretch;
+  padding: 0;
+  gap: 8px;
+}
+
+.feed-list-container .card {
+  width: 100%;
+  max-width: none;
+  height: min(76vh, calc(100vw * 1.24));
+  min-height: 460px;
+  border-radius: 0;
+}
+
+.feed-list-container .card-int {
+  border-radius: 0;
+}
+
+.feed-list-container .card-int::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 96px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.68), rgba(0, 0, 0, 0));
+  z-index: 3;
+  pointer-events: none;
+}
+
+.feed-list-container .creator-overlay {
+  position: static;
+  padding: 0 12px;
+  transform: none;
+}
+
+.feed-list-container .creator-left {
+  gap: 10px;
+}
+
+.feed-list-container .creator-photo {
+  width: 34px;
+  height: 34px;
+  border-width: 2px;
+}
+
+.feed-list-container .creator-name {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.feed-list-container .platform-badge {
+  font-size: 10px;
+  letter-spacing: 0.02em;
+}
+
+.feed-list-container .creator-socials {
+  gap: 10px;
+}
+
+.feed-list-container .creator-social-link {
+  width: 22px;
+  height: 22px;
 }
 
 .profile-content-feed .feed-list-container {
@@ -5277,6 +5334,11 @@ button {
   max-width: 380px;
 }
 
+.feed-list-container .caption-section {
+  max-width: none;
+  padding: 0 12px 12px;
+}
+
 .caption-section .caption-text {
   font-size: 13px;
   color: #fff;
@@ -5321,6 +5383,40 @@ button {
   padding: 8px 8px 4px;
   max-width: 380px;
   width: 100%;
+}
+
+.feed-list-container .card-stats {
+  max-width: none;
+  justify-content: flex-start;
+  gap: 0;
+  padding: 10px 12px 8px;
+}
+
+.feed-list-container .card-stats .stat-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  padding: 0;
+  margin-right: 16px;
+}
+
+.feed-list-container .card-stats .stat-btn:last-child {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.feed-list-container .card-stats .stat-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.feed-list-container .card-stats .stat-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* Comment Modal */
