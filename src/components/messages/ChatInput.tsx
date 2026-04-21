@@ -13,7 +13,6 @@ export function ChatInput({ conversationId, senderId }: { conversationId: string
     sendMessage({ conversationId, senderId, body: draft });
     setDraft("");
     setMyTyping(false, senderId);
-    inputRef.current?.focus();
   }, [draft, conversationId, senderId, sendMessage, setMyTyping]);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {

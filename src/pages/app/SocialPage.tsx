@@ -5,6 +5,8 @@ import { useMessages } from "@/app/providers/MessagesProvider";
 import { mockUsers } from "@/lib/constants/mockData";
 import { VerifiedBadge } from "@/components/ui/VerifiedLabel";
 
+const SOCIAL_ROOM_RETURN_KEY = "dreamledge-social-room-return";
+
 type SocialHubTab = "voice-chat" | "public-chat" | "watch-parties" | "game-night" | "creator-lounge";
 
 const socialTabs: { key: SocialHubTab; label: string }[] = [
@@ -65,6 +67,13 @@ function formatRoomOpenTime(elapsedMs: number) {
   return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 }
 
+function formatRoomOpenHoursMinutes(elapsedMs: number) {
+  const totalMinutes = Math.max(0, Math.floor(elapsedMs / 60000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+}
+
 function getSocialTabIcon(tab: SocialHubTab) {
   switch (tab) {
     case "voice-chat":
@@ -119,6 +128,7 @@ export function SocialPage() {
       voiceRooms.map((room) => ({
         ...room,
         openTimeLabel: formatRoomOpenTime(nowMs - room.openedAtMs),
+        openDurationLabel: formatRoomOpenHoursMinutes(nowMs - room.openedAtMs),
       })),
     [nowMs],
   );
@@ -172,12 +182,21 @@ export function SocialPage() {
     if (!user || !previewUser || previewUser.id === user.id) return;
     const conversationId = startConversation([user.id, previewUser.id]);
     setProfilePreviewUserId(null);
+
+    const returnContext = {
+      returnToPath: "/app/social",
+      returnToVoiceRoomId: joinedRoomId,
+      returnToTab: activeTab,
+    };
+
+    try {
+      window.sessionStorage.setItem(SOCIAL_ROOM_RETURN_KEY, JSON.stringify(returnContext));
+    } catch {
+      // Ignore storage failures and rely on route state
+    }
+
     navigate(`/app/messages/${conversationId}`, {
-      state: {
-        returnToPath: "/app/social",
-        returnToVoiceRoomId: joinedRoomId,
-        returnToTab: activeTab,
-      },
+      state: returnContext,
     });
   };
 
@@ -318,7 +337,7 @@ export function SocialPage() {
                   <span className="social-hub-voice-card__mic" aria-hidden="true">🎙</span>
                   <span>{room.category}</span>
                 </div>
-                <span className="social-hub-voice-card__timer" title="Room open duration">{room.openTimeLabel}</span>
+                <span className="social-hub-voice-card__timer" title="Room open duration (hours:minutes)">{room.openDurationLabel}</span>
               </div>
 
               <div className="social-hub-voice-card__bottom">

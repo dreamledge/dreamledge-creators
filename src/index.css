@@ -6250,7 +6250,9 @@ button {
   background: #000;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
+  position: relative;
   z-index: 10;
+  pointer-events: auto;
 }
 
 .messages-header__back {
@@ -6342,11 +6344,16 @@ button {
 .messages-thread {
   flex: 1;
   min-height: 0;
+  position: relative;
+  z-index: 1;
   overflow: hidden;
 }
 
 .messages-composer {
   flex-shrink: 0;
+  position: relative;
+  z-index: 12;
+  pointer-events: auto;
   padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
 }
 
@@ -6399,11 +6406,12 @@ button {
   width: 100%;
   border: 0;
   border-radius: 24px;
-  background: #050505;
-  padding: 14px 14px 12px;
+  background: rgba(255, 45, 61, 0.12);
+  border: 1px solid rgba(255, 45, 61, 0.28);
+  padding: 10px 14px 8px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   text-align: left;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
 }
@@ -6432,7 +6440,7 @@ button {
 
 .social-hub-voice-card__timer {
   font-family: "Courier New", monospace;
-  font-size: 34px;
+  font-size: 22px;
   line-height: 1;
   color: #ffd648;
   letter-spacing: 0.02em;
@@ -6501,12 +6509,13 @@ button {
 .social-hub-voice-card__join {
   min-width: 88px;
   height: 48px;
-  border: 0;
-  border-radius: 14px;
-  background: #f2f2f2;
-  color: #090909;
-  font-size: 28px;
-  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 20em;
+  background: rgba(57, 57, 57, 0.7);
+  color: #a8a8a8;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -6514,8 +6523,9 @@ button {
 }
 
 .social-hub-voice-card__join:disabled {
-  background: #686868;
-  color: #dadada;
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(57, 57, 57, 0.7);
+  color: #a8a8a8;
   cursor: not-allowed;
 }
 
@@ -6567,9 +6577,10 @@ button {
   height: 52px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
-  background: #090909;
-  color: #fff;
-  font-size: 26px;
+  background: #070707;
+  color: #fff8e8;
+  font-size: 22px;
+  font-weight: 700;
   line-height: 1;
 }
 
@@ -6577,9 +6588,9 @@ button {
   border: 0;
   height: 52px;
   border-radius: 14px;
-  background: #ededed;
-  color: #080808;
-  font-size: 28px;
+  background: #fff6db;
+  color: #090909;
+  font-size: 22px;
   font-weight: 700;
   text-align: left;
   padding: 0 16px;
@@ -6593,56 +6604,62 @@ button {
 
 .social-voice-room__member {
   border-radius: 14px;
-  background: #f0f0f0;
-  padding: 8px 10px;
+  background: #090909;
+  border: 1px solid rgba(255, 214, 72, 0.25);
+  padding: 6px 8px;
+  min-height: 50px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
 }
 
 .social-voice-room__member-main {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
 }
 
 .social-voice-room__member-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 11px;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
   object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .social-voice-room__member-name {
-  color: #111;
-  font-size: 27px;
+  color: #fff8e8;
+  font-size: 15px;
   font-weight: 700;
+  line-height: 1.1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .social-voice-room__member-verified {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   color: #ff4d4f;
 }
 
 .social-voice-room__member-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .social-voice-room__member-action {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   border: 0;
-  background: #ffd648;
-  font-size: 20px;
+  background: rgba(255, 45, 61, 0.2);
+  color: #ff5b66;
+  font-size: 15px;
+  line-height: 1;
 }
 
 .social-profile-sheet-overlay {
