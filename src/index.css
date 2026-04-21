@@ -5716,7 +5716,7 @@ button {
   --secondary-glow: #ff4d5a;
   --inactive-color: #8b8b8b;
   --bg-dark: #000000;
-  --switch-height: 56px;
+  --switch-height: 52px;
   --padding: 4px;
 
   position: fixed;
@@ -5750,7 +5750,7 @@ button {
   position: relative;
   width: 100%;
   max-width: 100%;
-  height: 44px;
+  height: var(--switch-height);
   background: #121212;
   border-radius: 8px;
   box-shadow: none;
@@ -5758,7 +5758,7 @@ button {
   align-items: center;
   padding: 4px 8px;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -5770,17 +5770,18 @@ button {
   justify-content: center;
   align-items: center;
   gap: 2px;
+  padding-top: 1px;
   cursor: pointer;
   z-index: 2;
   position: relative;
-  border-radius: 14px;
+  border-radius: 10px;
   transition: all 0.3s ease;
   -webkit-tap-highlight-color: transparent;
   color: var(--inactive-color);
 }
 
 .cyber-label-text {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.3px;
@@ -5794,13 +5795,15 @@ button {
 
 .cyber-label .icon {
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+  position: relative;
+  z-index: 4;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .cyber-label.active .icon {
   color: #ffffff;
   filter: drop-shadow(0 0 8px var(--primary-glow));
-  transform: scale(1.1);
+  transform: translateY(-4px) scale(1.14);
 }
 
 .cyber-highlight {
@@ -5808,18 +5811,18 @@ button {
   top: var(--padding);
   left: var(--padding);
   width: 20%;
-  height: calc(var(--switch-height) - (var(--padding) * 2));
+  height: calc(var(--switch-height) - 10px);
   background: transparent;
   z-index: 1;
   transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   pointer-events: none;
-  border-radius: 14px;
+  border-radius: 8px;
 }
 
 .highlight-inner {
   width: 100%;
   height: 100%;
-  border-radius: 14px;
+  border-radius: 8px;
   background: linear-gradient(
     145deg,
     rgba(255, 255, 255, 0.1) 0%,
@@ -6370,6 +6373,171 @@ button {
 
 .messages-header__new:hover {
   background: rgba(255, 45, 45, 0.1);
+}
+
+.social-hub-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+  padding: 14px 12px calc(20px + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+}
+
+.social-hub-voice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  padding: 14px 12px calc(20px + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+}
+
+.social-hub-voice-card {
+  width: 100%;
+  border: 0;
+  border-radius: 24px;
+  background: #050505;
+  padding: 14px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+}
+
+.social-hub-voice-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.social-hub-voice-card__category {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 18px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.social-hub-voice-card__mic {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.social-hub-voice-card__timer {
+  font-family: "Courier New", monospace;
+  font-size: 34px;
+  line-height: 1;
+  color: #ffd648;
+  letter-spacing: 0.02em;
+}
+
+.social-hub-voice-card__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.social-hub-voice-card__participants {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.social-hub-voice-user {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 52px;
+}
+
+.social-hub-voice-user__avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.social-hub-voice-user__name-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 56px;
+}
+
+.social-hub-voice-user__name {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.86);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.social-hub-voice-user__verified {
+  width: 10px;
+  height: 10px;
+  color: #ff4d4f;
+  flex-shrink: 0;
+}
+
+.social-hub-voice-user__more {
+  align-self: center;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 28px;
+  line-height: 1;
+  padding-left: 2px;
+}
+
+.social-hub-voice-card__join {
+  min-width: 88px;
+  height: 48px;
+  border-radius: 14px;
+  background: #f2f2f2;
+  color: #090909;
+  font-size: 28px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.social-hub-room {
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(32, 32, 32, 0.85), rgba(18, 18, 18, 0.9));
+  border-radius: 14px;
+  padding: 12px 14px;
+  cursor: pointer;
+}
+
+.social-hub-room__title {
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.social-hub-room__meta {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.social-hub-room__count {
+  color: #ff9898;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 8px;
 }
 
 .messages-composer__picker {

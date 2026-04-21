@@ -11,7 +11,7 @@ const navItems = [
 
 function CyberIcon({ icon: Icon }: { icon: any }) {
   return (
-    <Icon size={20} />
+    <Icon size={22} />
   );
 }
 
