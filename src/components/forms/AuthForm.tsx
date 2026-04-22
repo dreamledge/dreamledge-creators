@@ -63,7 +63,7 @@ export function AuthForm({
         </label>
         <label className={signupCard ? "dreamledge-signup-field" : "block space-y-2"}>
           {!signupCard ? <span className="text-sm font-medium text-white">Password</span> : null}
-          <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder={signupCard ? "Password" : "Create a secure password"} className={signupCard ? "dreamledge-signup-input dreamledge-signup-input--last" : "w-full rounded-[28px] border border-white/10 bg-white/5 px-4 py-3 text-text-primary"} disabled={isSubmitting} autoComplete={includeName ? "new-password" : "current-password"} required />
+          <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder={signupCard ? "Password" : includeName ? "Create a secure password" : "Enter password"} className={signupCard ? "dreamledge-signup-input dreamledge-signup-input--last" : "w-full rounded-[28px] border border-white/10 bg-white/5 px-4 py-3 text-text-primary"} disabled={isSubmitting} autoComplete={includeName ? "new-password" : "current-password"} required />
         </label>
       </div>
       {errorMessage ? <p className="text-sm text-red-300">{errorMessage}</p> : null}
