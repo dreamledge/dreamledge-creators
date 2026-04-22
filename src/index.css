@@ -3483,9 +3483,13 @@ button {
   overflow-y: visible;
   padding: 16px 14px calc(16px + env(safe-area-inset-bottom, 0px));
   border-radius: 28px;
-  background: #0d0d0d;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 -12px 40px rgba(255, 43, 43, 0.14);
+  background:
+    radial-gradient(circle at top right, rgba(255, 45, 61, 0.12), transparent 38%),
+    linear-gradient(180deg, rgba(15, 15, 18, 0.98), rgba(10, 10, 12, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  box-shadow:
+    0 -12px 40px rgba(255, 43, 43, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
   animation: review-session-judging-rise 0.5s ease forwards;
 }
 
@@ -3497,11 +3501,20 @@ button {
   margin-bottom: 1rem;
 }
 
+.review-session-judging-header .review-session-stage-kicker {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.review-session-judging-header h3 {
+  letter-spacing: -0.01em;
+}
+
 .review-session-unlocked-pill {
   padding: 0.5rem 0.85rem;
   border-radius: 999px;
-  background: rgba(255, 45, 61, 0.14);
-  color: #ff9c9c;
+  border: 1px solid rgba(255, 45, 61, 0.4);
+  background: linear-gradient(180deg, rgba(255, 45, 61, 0.2), rgba(255, 45, 61, 0.1));
+  color: #ffb2b2;
   font-size: 0.74rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -3518,10 +3531,11 @@ button {
 }
 
 .review-session-score-label {
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(255, 255, 255, 0.84);
   text-transform: capitalize;
   font-size: 0.88rem;
   letter-spacing: 0.08em;
+  font-weight: 600;
 }
 
 .review-session-score-options {
@@ -3533,23 +3547,46 @@ button {
 .review-session-score-pill {
   min-height: 48px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
-  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.02em;
   font-weight: 700;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.review-session-score-pill:hover {
+  border-color: rgba(255, 255, 255, 0.24);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+}
+
+.review-session-score-pill:focus-visible,
+.review-session-submit-button:focus-visible {
+  outline: 2px solid rgba(255, 45, 61, 0.85);
+  outline-offset: 2px;
 }
 
 .review-session-score-pill.is-selected {
   border-color: rgba(255, 72, 72, 0.6);
   background: linear-gradient(135deg, rgba(255, 45, 61, 0.9), rgba(255, 106, 61, 0.9));
   box-shadow: 0 0 18px rgba(255, 45, 61, 0.28);
+  color: #fff;
 }
 
 .review-session-submit-button,
 .review-session-decision-button {
   width: 100%;
   margin-top: 16px;
+}
+
+.review-session-submit-button {
+  border: 1px solid rgba(255, 82, 94, 0.44);
+  box-shadow: 0 10px 26px rgba(255, 45, 61, 0.2);
+}
+
+.review-session-submit-button:not(:disabled):hover {
+  box-shadow: 0 14px 30px rgba(255, 45, 61, 0.3);
 }
 
 .review-session-submit-button:disabled {
@@ -6763,14 +6800,22 @@ button {
   position: relative;
   border: 1px solid rgba(255, 77, 96, 0.26);
   border-radius: 24px;
-  background: rgba(17, 8, 11, 0.96);
-  padding: 10px 14px 8px;
+  background: linear-gradient(165deg, rgba(13, 10, 12, 0.88), rgba(8, 8, 10, 0.82));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 12px 14px 10px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   text-align: left;
-  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 24px rgba(255, 77, 96, 0.12);
+  box-shadow:
+    0 14px 30px rgba(0, 0, 0, 0.44),
+    0 0 28px rgba(255, 77, 96, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -14px 26px rgba(0, 0, 0, 0.2);
   overflow: hidden;
+  animation: social-voice-card-enter 360ms ease both, social-voice-card-breathe 3.2s ease-in-out infinite;
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease, filter 220ms ease;
 }
 
 .social-hub-voice-card > * {
@@ -6781,11 +6826,12 @@ button {
 .social-hub-voice-card::before {
   content: "";
   position: absolute;
-  top: -35%;
-  right: -25%;
-  width: 140px;
-  height: 140px;
-  background: radial-gradient(circle, rgba(255, 214, 72, 0.12), rgba(255, 214, 72, 0));
+  inset: 1px;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.01) 26%, rgba(255, 255, 255, 0.02) 72%, rgba(255, 255, 255, 0.08));
+  mix-blend-mode: screen;
+  opacity: 0.52;
   pointer-events: none;
   z-index: 0;
 }
@@ -6797,7 +6843,22 @@ button {
   border-radius: inherit;
   pointer-events: none;
   z-index: 0;
-  background: linear-gradient(to right, rgba(255, 77, 96, 0.18), rgba(255, 77, 96, 0) 18%, rgba(255, 77, 96, 0) 82%, rgba(255, 77, 96, 0.18)), linear-gradient(to bottom, rgba(255, 77, 96, 0.16), rgba(255, 77, 96, 0) 20%, rgba(255, 77, 96, 0) 80%, rgba(255, 77, 96, 0.16));
+  background:
+    radial-gradient(circle at 100% -10%, rgba(255, 82, 102, 0.24), rgba(255, 82, 102, 0) 42%),
+    linear-gradient(92deg, rgba(255, 77, 96, 0.26), rgba(255, 77, 96, 0.03) 20%, rgba(255, 77, 96, 0.03) 80%, rgba(255, 77, 96, 0.24));
+  background-size: 180% 180%;
+  animation: social-card-edge-shift 9s ease-in-out infinite;
+}
+
+.social-hub-voice-card:hover {
+  transform: translateY(-2px) scale(1.02);
+  border-color: rgba(255, 108, 122, 0.42);
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.48),
+    0 0 38px rgba(255, 77, 96, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -14px 26px rgba(0, 0, 0, 0.24);
+  filter: saturate(1.03);
 }
 
 .social-hub-voice-card__top {
@@ -6811,11 +6872,12 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: rgba(255, 252, 245, 0.9);
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  color: rgba(255, 252, 245, 0.95);
+  font-size: 0.97rem;
+  font-weight: 750;
+  letter-spacing: 0.015em;
+  text-transform: none;
+  animation: social-voice-card-enter 320ms ease both;
 }
 
 .social-hub-voice-card__mic {
@@ -6825,10 +6887,10 @@ button {
 
 .social-hub-voice-card__timer {
   font-family: "Courier New", monospace;
-  font-size: 18px;
+  font-size: 1rem;
   font-weight: 700;
   line-height: 1;
-  color: #ffd648;
+  color: rgba(255, 214, 72, 0.9);
   letter-spacing: 0.01em;
 }
 
@@ -6855,12 +6917,19 @@ button {
 }
 
 .social-hub-voice-user__avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
   object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  box-shadow: 0 0 0 3px rgba(255, 77, 96, 0.2), 0 6px 16px rgba(0, 0, 0, 0.45);
+  animation: social-voice-avatar-pulse 2.1s ease-in-out infinite;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.social-hub-voice-user:hover .social-hub-voice-user__avatar {
+  transform: scale(1.08);
+  box-shadow: 0 0 0 3px rgba(255, 77, 96, 0.32), 0 10px 20px rgba(0, 0, 0, 0.52);
 }
 
 .social-hub-voice-user__name-row {
@@ -6872,7 +6941,7 @@ button {
 
 .social-hub-voice-user__name {
   font-size: 10px;
-  color: rgba(255, 252, 245, 0.84);
+  color: rgba(255, 252, 245, 0.9);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -6896,25 +6965,104 @@ button {
 .social-hub-voice-card__join {
   min-width: 88px;
   height: 48px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  position: relative;
+  border: 1px solid rgba(255, 77, 96, 0.4);
   border-radius: 20em;
-  background: rgba(33, 33, 33, 0.78);
-  color: #dfdfdf;
+  background: linear-gradient(145deg, rgba(98, 15, 24, 0.9), rgba(176, 28, 42, 0.9));
+  color: #f8f8f8;
   font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 10px 18px rgba(255, 45, 61, 0.26);
+  transition: transform 180ms ease, box-shadow 220ms ease, filter 220ms ease;
+}
+
+.social-hub-voice-card__join::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0));
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.social-hub-voice-card__join:hover {
+  transform: scale(1.03);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 12px 24px rgba(255, 45, 61, 0.32);
+}
+
+.social-hub-voice-card__join:hover::after,
+.social-hub-voice-card__join:active::after {
+  opacity: 1;
+}
+
+.social-hub-voice-card__join:active {
+  transform: scale(0.98);
 }
 
 .social-hub-voice-card__join:disabled {
-  border-color: rgba(255, 255, 255, 0.22);
-  background: rgba(33, 33, 33, 0.78);
-  color: #dfdfdf;
+  border-color: rgba(255, 255, 255, 0.2);
+  background: linear-gradient(145deg, rgba(55, 55, 58, 0.72), rgba(44, 44, 48, 0.72));
+  color: rgba(223, 223, 223, 0.78);
+  opacity: 0.78;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  filter: saturate(0.65);
   cursor: not-allowed;
+}
+
+.social-hub-voice-card__join:focus-visible {
+  outline: 2px solid rgba(255, 88, 104, 0.88);
+  outline-offset: 2px;
+}
+
+@keyframes social-voice-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes social-voice-card-breathe {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes social-card-edge-shift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes social-voice-avatar-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px rgba(255, 77, 96, 0.2), 0 6px 16px rgba(0, 0, 0, 0.45);
+  }
+
+  50% {
+    box-shadow: 0 0 0 4px rgba(255, 77, 96, 0.3), 0 8px 18px rgba(0, 0, 0, 0.5);
+  }
 }
 
 .social-voice-room {
@@ -7187,8 +7335,13 @@ button {
   border-radius: 24px;
   padding: 12px 14px;
   cursor: pointer;
-  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 24px rgba(255, 77, 96, 0.12);
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.48),
+    0 0 28px rgba(255, 77, 96, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -14px 24px rgba(0, 0, 0, 0.2);
   overflow: hidden;
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
 }
 
 .social-hub-room > * {
@@ -7199,11 +7352,12 @@ button {
 .social-hub-room::before {
   content: "";
   position: absolute;
-  top: -35%;
-  right: -25%;
-  width: 140px;
-  height: 140px;
-  background: radial-gradient(circle, rgba(255, 214, 72, 0.12), rgba(255, 214, 72, 0));
+  inset: 1px;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.01) 26%, rgba(255, 255, 255, 0.02) 72%, rgba(255, 255, 255, 0.08));
+  mix-blend-mode: screen;
+  opacity: 0.5;
   pointer-events: none;
   z-index: 0;
 }
@@ -7215,7 +7369,21 @@ button {
   border-radius: inherit;
   pointer-events: none;
   z-index: 0;
-  background: linear-gradient(to right, rgba(255, 77, 96, 0.18), rgba(255, 77, 96, 0) 18%, rgba(255, 77, 96, 0) 82%, rgba(255, 77, 96, 0.18)), linear-gradient(to bottom, rgba(255, 77, 96, 0.16), rgba(255, 77, 96, 0) 20%, rgba(255, 77, 96, 0) 80%, rgba(255, 77, 96, 0.16));
+  background:
+    radial-gradient(circle at 100% -10%, rgba(255, 82, 102, 0.22), rgba(255, 82, 102, 0) 42%),
+    linear-gradient(92deg, rgba(255, 77, 96, 0.24), rgba(255, 77, 96, 0.03) 20%, rgba(255, 77, 96, 0.03) 80%, rgba(255, 77, 96, 0.22));
+  background-size: 180% 180%;
+  animation: social-card-edge-shift 9s ease-in-out infinite;
+}
+
+.social-hub-room:hover {
+  transform: translateY(-2px) scale(1.02);
+  border-color: rgba(255, 108, 122, 0.4);
+  box-shadow:
+    0 16px 34px rgba(0, 0, 0, 0.5),
+    0 0 36px rgba(255, 77, 96, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -14px 24px rgba(0, 0, 0, 0.22);
 }
 
 .social-hub-room__title {

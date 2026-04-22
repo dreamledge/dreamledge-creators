@@ -11,9 +11,9 @@ import type { ContentModel, ReviewCategory, ReviewScoreLabel, ReviewScores } fro
 const MATCHMAKING_DURATION_MS = 3000;
 const MATCHMAKING_FRAME_MS = 120;
 const BLINK_DURATION_MS = 850;
-const SCREENING_ENTRY_MS = 900;
+const SCREENING_ENTRY_MS = 1900;
 const EYE_STAGE_MS = 1300;
-const TITLE_REVEAL_MS = 1100;
+const TITLE_REVEAL_MS = 2100;
 const VIDEO_REVEAL_MS = 900;
 const SUBMITTING_MS = 1000;
 const TALK_DURATION_MS = 180000;
@@ -35,7 +35,6 @@ const ORWELLIAN_PLACEHOLDER = {
   photoUrl: "",
   username: "waiting_match",
   displayName: "Waiting Match",
-  role: "Waiting for match",
   verified: false,
 };
 
@@ -124,7 +123,7 @@ export function ReviewSessionPage() {
   const [watchElapsedMs, setWatchElapsedMs] = useState(0);
   const [reviewUnlockFlash, setReviewUnlockFlash] = useState(false);
   const [talkRemainingMs, setTalkRemainingMs] = useState(TALK_DURATION_MS);
-  const [talkToastMode, setTalkToastMode] = useState(false);
+  const [talkToastMode] = useState(false);
   const scaryEyeAudioRef = useRef<HTMLAudioElement | null>(null);
   const matchIntervalRef = useRef<number | null>(null);
   const matchTimeoutRef = useRef<number | null>(null);
@@ -337,27 +336,13 @@ export function ReviewSessionPage() {
     continuationTimeoutsRef.current.push(decisionTimeout);
   };
 
-  const handleStayAndTalk = () => {
-    setPostMatchPhase("talk");
-    setTalkRemainingMs(TALK_DURATION_MS);
-    setTalkToastMode(false);
+  const handleLeaveComment = () => {
+    if (!activeMatchContent?.sourceUrl) {
+      handleReturnToStart();
+      return;
+    }
 
-    const toastTimeout = window.setTimeout(() => setTalkToastMode(true), 2000);
-    continuationTimeoutsRef.current.push(toastTimeout);
-
-    talkIntervalRef.current = window.setInterval(() => {
-      setTalkRemainingMs((current) => {
-        if (current <= 1000) {
-          if (talkIntervalRef.current) {
-            window.clearInterval(talkIntervalRef.current);
-            talkIntervalRef.current = null;
-          }
-          resetToIdle();
-          return 0;
-        }
-        return current - 1000;
-      });
-    }, 1000);
+    window.open(activeMatchContent.sourceUrl, "_blank", "noopener,noreferrer");
   };
 
   const handleReturnToStart = () => {
@@ -366,11 +351,10 @@ export function ReviewSessionPage() {
   };
 
   const rightProfile = displayedOpponent
-    ? {
+      ? {
         photoUrl: displayedOpponent.photoUrl,
         username: displayedOpponent.username,
         displayName: displayedOpponent.displayName,
-        role: "Ready to review",
         verified: displayedOpponent.verified,
       }
     : ORWELLIAN_PLACEHOLDER;
@@ -395,7 +379,6 @@ export function ReviewSessionPage() {
                 <img className="review-session-avatar" src={currentCreator.photoUrl} alt={currentCreator.displayName} />
               </div>
               <div className="review-session-username">@{currentCreator.username}</div>
-              <div className="review-session-role">Ready to review</div>
             </div>
 
             <div className="review-session-center-badge">
@@ -412,7 +395,6 @@ export function ReviewSessionPage() {
                 )}
               </div>
               <div className="review-session-username">@{rightProfile.username}</div>
-              <div className="review-session-role">{rightProfile.role}</div>
             </div>
           </div>
 
@@ -531,8 +513,8 @@ export function ReviewSessionPage() {
                 <div className="review-session-decision-card">
                   <span className="review-session-stage-kicker">Review Submitted</span>
                   <h2>What do you want to do next?</h2>
-                  <button type="button" className="cta-button edit-profile review-session-decision-button" onClick={handleStayAndTalk}>
-                    Stay and Talk
+                  <button type="button" className="cta-button edit-profile review-session-decision-button" onClick={handleLeaveComment}>
+                    Leave a Comment
                   </button>
                   <button type="button" className="cta-button edit-profile review-session-decision-button" onClick={handleReturnToStart}>
                     Leave Room
