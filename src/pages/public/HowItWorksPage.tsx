@@ -30,38 +30,42 @@ const steps = [
 export function HowItWorksPage() {
   return (
     <div className="min-h-screen app-backdrop page-grid text-white">
-      <div className="mx-auto flex h-[70px] w-full max-w-7xl items-center px-5 sm:px-6 lg:px-8">
-        <div className="grid w-full grid-cols-[48px_1fr_auto] items-center gap-4">
-          <div className="flex h-11 w-11 items-center justify-center rounded-[999px] border border-white/8 bg-white/[0.04]">
-            <div className="flex h-7 w-7 items-center justify-center rounded-[999px] bg-[linear-gradient(180deg,rgba(255,91,91,0.92),rgba(255,45,61,0.92))] text-sm font-bold text-[#F5F5F7]">D</div>
+      <div className="public-page-topbar fixed inset-x-0 top-0 z-50">
+        <div className="mx-auto flex h-[70px] w-full max-w-7xl items-center px-5 sm:px-6 lg:px-8">
+          <div className="grid w-full grid-cols-[48px_1fr_auto] items-center gap-4">
+            <div className="flex h-11 w-11 items-center justify-center rounded-[999px] border border-white/8 bg-white/[0.04]">
+              <div className="flex h-7 w-7 items-center justify-center rounded-[999px] bg-[linear-gradient(180deg,rgba(255,91,91,0.92),rgba(255,45,61,0.92))] text-sm font-bold text-[#F5F5F7]">D</div>
+            </div>
+            <div className="min-w-0 text-center">
+              <p className="truncate text-[10px] uppercase tracking-[0.34em] text-[#F5F5F7]/55">Dreamledge</p>
+              <h1 className="truncate text-[1.05rem] font-semibold tracking-tight text-[#F5F5F7]">Creators</h1>
+            </div>
+            <Link to="/" className="public-page-back-btn justify-self-end rounded-[999px] border border-white/8 bg-[#F1F1F3] px-5 py-2.5 text-sm font-semibold transition hover:bg-[#e7e7ea]">Back</Link>
           </div>
-          <div className="min-w-0 text-center">
-            <p className="truncate text-[10px] uppercase tracking-[0.34em] text-[#F5F5F7]/55">Dreamledge</p>
-            <h1 className="truncate text-[1.05rem] font-semibold tracking-tight text-[#F5F5F7]">Creators</h1>
-          </div>
-          <Link to="/" className="justify-self-end rounded-[999px] border border-white/8 bg-[#F1F1F3] px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-[#e7e7ea]">Back</Link>
         </div>
       </div>
 
-      <main className="mx-auto w-full max-w-5xl px-5 pb-16 pt-8 sm:px-6 lg:px-8">
-        <section className="bubble-card rounded-[40px] p-6 sm:p-8 lg:p-10">
-          <p className="text-[11px] uppercase tracking-[0.3em] text-red-300/80">How It Works</p>
-          <h2 className="mt-4 text-4xl font-semibold leading-tight text-white sm:text-5xl">Getting started on Dreamledge is simple.</h2>
-          <p className="mt-4 text-base leading-8 text-zinc-300 sm:text-lg">Jump in, connect, and start growing right away.</p>
+      <main className="mx-auto w-full max-w-6xl px-5 pb-16 pt-24 sm:px-6 lg:px-8">
+        <section className="bubble-card overflow-hidden rounded-[40px] border border-red-400/10 bg-[linear-gradient(180deg,rgba(20,20,26,0.96),rgba(10,10,14,0.98))] p-6 sm:p-8 lg:p-10">
+          <div className="rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(255,45,61,0.2),transparent_42%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))] p-6 sm:p-8">
+            <p className="text-[11px] uppercase tracking-[0.3em] text-red-300/80">How It Works</p>
+            <h2 className="mt-4 text-4xl font-semibold leading-tight text-white sm:text-5xl">Getting started on Dreamledge is simple.</h2>
+            <p className="mt-4 max-w-3xl text-base leading-8 text-zinc-300 sm:text-lg">Jump in, connect, and start growing with a system built around real creator momentum.</p>
+          </div>
 
-          <div className="mt-10 space-y-6">
+          <div className="mt-8 grid gap-4 lg:grid-cols-2">
             {steps.map((step) => (
-              <div key={step.title} className="rounded-[32px] border border-white/8 bg-white/[0.03] p-5 sm:p-6">
-                <h3 className="text-2xl font-semibold text-white">{step.title}</h3>
+              <article key={step.title} className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5 sm:p-6">
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-red-300/85">{step.title}</p>
                 <p className="mt-3 text-base leading-8 text-zinc-300">{step.text}</p>
-              </div>
+              </article>
             ))}
           </div>
 
-          <div className="mt-10 rounded-[34px] border border-red-400/12 bg-red-500/8 p-6">
-            <p className="text-sm uppercase tracking-[0.24em] text-red-300/80">The Result?</p>
-            <p className="mt-4 text-2xl font-semibold text-white">You don't just post and hope.</p>
-            <p className="mt-3 text-lg leading-8 text-zinc-200">You connect, compete, and grow with purpose.</p>
+          <div className="mt-8 rounded-[26px] border border-red-400/20 bg-red-500/8 p-6 sm:p-7">
+            <p className="text-sm uppercase tracking-[0.24em] text-red-300/80">The Result</p>
+            <p className="mt-3 text-2xl font-semibold text-white">You do not just post and hope.</p>
+            <p className="mt-2 text-lg leading-8 text-zinc-200">You connect, compete, and grow with purpose.</p>
           </div>
         </section>
       </main>

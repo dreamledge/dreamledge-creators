@@ -36,20 +36,22 @@ const sections = [
 export function TermsPage() {
   return (
     <div className="min-h-screen app-backdrop page-grid text-white">
-      <div className="mx-auto flex h-[70px] w-full max-w-7xl items-center px-5 sm:px-6 lg:px-8">
-        <div className="grid w-full grid-cols-[48px_1fr_auto] items-center gap-4">
-          <div className="flex h-11 w-11 items-center justify-center rounded-[999px] border border-white/8 bg-white/[0.04]">
-            <div className="flex h-7 w-7 items-center justify-center rounded-[999px] bg-[linear-gradient(180deg,rgba(255,91,91,0.92),rgba(255,45,61,0.92))] text-sm font-bold text-[#F5F5F7]">D</div>
+      <div className="public-page-topbar fixed inset-x-0 top-0 z-50">
+        <div className="mx-auto flex h-[70px] w-full max-w-7xl items-center px-5 sm:px-6 lg:px-8">
+          <div className="grid w-full grid-cols-[48px_1fr_auto] items-center gap-4">
+            <div className="flex h-11 w-11 items-center justify-center rounded-[999px] border border-white/8 bg-white/[0.04]">
+              <div className="flex h-7 w-7 items-center justify-center rounded-[999px] bg-[linear-gradient(180deg,rgba(255,91,91,0.92),rgba(255,45,61,0.92))] text-sm font-bold text-[#F5F5F7]">D</div>
+            </div>
+            <div className="min-w-0 text-center">
+              <p className="truncate text-[10px] uppercase tracking-[0.34em] text-[#F5F5F7]/55">Dreamledge</p>
+              <h1 className="truncate text-[1.05rem] font-semibold tracking-tight text-[#F5F5F7]">Creators</h1>
+            </div>
+            <Link to="/" className="public-page-back-btn justify-self-end rounded-[999px] border border-white/8 bg-[#F1F1F3] px-5 py-2.5 text-sm font-semibold transition hover:bg-[#e7e7ea]">Back</Link>
           </div>
-          <div className="min-w-0 text-center">
-            <p className="truncate text-[10px] uppercase tracking-[0.34em] text-[#F5F5F7]/55">Dreamledge</p>
-            <h1 className="truncate text-[1.05rem] font-semibold tracking-tight text-[#F5F5F7]">Creators</h1>
-          </div>
-          <Link to="/" className="justify-self-end rounded-[999px] border border-white/8 bg-[#F1F1F3] px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-[#e7e7ea]">Back</Link>
         </div>
       </div>
 
-      <main className="mx-auto w-full max-w-5xl px-5 pb-16 pt-8 sm:px-6 lg:px-8">
+      <main className="mx-auto w-full max-w-5xl px-5 pb-16 pt-24 sm:px-6 lg:px-8">
         <section className="bubble-card rounded-[40px] p-6 sm:p-8 lg:p-10">
           <p className="text-[11px] uppercase tracking-[0.3em] text-red-300/80">Terms of Service</p>
           <h2 className="mt-4 text-4xl font-semibold leading-tight text-white sm:text-5xl">Simple terms for a creator-first platform.</h2>
