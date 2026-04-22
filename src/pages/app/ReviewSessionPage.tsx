@@ -438,9 +438,11 @@ export function ReviewSessionPage() {
         {postMatchActive ? (
           <div className="review-session-post-stage">
             {(postMatchPhase === "screeningEntry" || postMatchPhase === "restarting") ? (
-              <div className="review-session-centered-stage review-session-screening-entry">
+              <div className="review-session-centered-stage review-session-title-stage">
                 <span className="review-session-stage-kicker">Private Screening</span>
-                <h2>{postMatchPhase === "restarting" ? "Finding next creator..." : "Entering Private Screening..."}</h2>
+                <div className="review-session-title-content">
+                  <h2 className="review-session-title-headline">{postMatchPhase === "restarting" ? "Finding next creator..." : "Entering Private Screening..."}</h2>
+                </div>
               </div>
             ) : null}
 
