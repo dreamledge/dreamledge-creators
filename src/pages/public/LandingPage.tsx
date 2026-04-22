@@ -41,17 +41,17 @@ const showcaseTweets = [
     metrics: "118 replies · 462 reposts · 2.1k likes",
   },
   {
-    name: "Bert Data",
-    handle: "@bertdata",
+    name: "Berto Brown",
+    handle: "@berto_brown",
     image: "/bertdata.jpg",
     tweet: "Best creator app I have used this year. The judge-for-judge system is the first feedback loop that feels fair.",
     metrics: "84 replies · 311 reposts · 1.6k likes",
   },
   {
-    name: "Orwellian",
-    handle: "@orwellian",
+    name: "dreamledge",
+    handle: "@dreamledge",
     image: "/orwellian profile.png",
-    tweet: "Went from posting into silence to building a real crew and pulling traffic to every platform I own.",
+    tweet: "Creators will never not be seen again if I have something to do with it !!!!!",
     metrics: "95 replies · 388 reposts · 1.9k likes",
   },
 ];

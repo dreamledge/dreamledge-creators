@@ -456,8 +456,10 @@ export function ReviewSessionPage() {
             {postMatchPhase === "titleReveal" && activeMatchContent ? (
               <div className="review-session-centered-stage review-session-title-stage">
                 <span className="review-session-stage-kicker">Now Playing</span>
-                <h2>{activeMatchContent.title}</h2>
-                <p>by @{finalOpponent.username}</p>
+                <div className="review-session-title-content">
+                  <h2 className="review-session-title-headline">{activeMatchContent.title}</h2>
+                  <p className="review-session-title-credit">by @{finalOpponent.username}</p>
+                </div>
               </div>
             ) : null}
 
