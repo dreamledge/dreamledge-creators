@@ -3,14 +3,15 @@ import { useAuth } from "@/app/providers/AuthProvider";
 import { LoadingState } from "@/components/ui/LoadingState";
 
 export function ProtectedRoute() {
-  const { user, loading } = useAuth();
+  const { currentUser, loading } = useAuth();
   if (loading) return <LoadingState />;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!currentUser) return <Navigate to="/login" replace />;
   return <Outlet />;
 }
 
-export function OnboardingGate() {
-  const { user } = useAuth();
-  if (user && !user.onboardingComplete) return <Navigate to="/signup" replace />;
+export function PublicOnlyRoute() {
+  const { currentUser, loading } = useAuth();
+  if (loading) return <LoadingState />;
+  if (currentUser) return <Navigate to="/app/home" replace />;
   return <Outlet />;
 }

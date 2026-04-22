@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/app/providers/AuthProvider";
+import { DEFAULT_AVATAR_URL } from "@/lib/constants/defaults";
 import { EditProfileModal } from "@/components/ui/EditProfileModal";
 import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
 import type { UserModel } from "@/types/models";
@@ -29,7 +30,13 @@ export function ProfileCard({ creator, isOwnProfile = false }: ProfileCardProps)
       <div className="profile-card-container">
         <div className="profile-card">
           <div className="profile-image">
-            <img src={creator.photoUrl} alt={creator.displayName} />
+            <img
+              src={creator.photoUrl || DEFAULT_AVATAR_URL}
+              alt={creator.displayName}
+              onError={(event) => {
+                event.currentTarget.src = DEFAULT_AVATAR_URL;
+              }}
+            />
           </div>
           <div className="profile-info">
             <VerifiedLabel
@@ -136,7 +143,7 @@ export function ProfileCard({ creator, isOwnProfile = false }: ProfileCardProps)
         </div>
       </div>
       
-      <EditProfileModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} />
+      {showEditModal ? <EditProfileModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} /> : null}
     </>
   );
 }

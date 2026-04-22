@@ -3,27 +3,8 @@ import { useAuth } from "@/app/providers/AuthProvider";
 import { FeedTabs } from "@/components/feed/FeedTabs";
 import { FeedList, FeedProvider } from "@/components/feed/FeedList";
 import { CommentModalProvider, CommentModal } from "@/components/overlays/CommentModal";
-import { getVisibleMockContent, mockUsers } from "@/lib/constants/mockData";
-import type { FeedTab, UserModel } from "@/types/models";
-
-function resolveFeedUser(user: { id: string; username: string; email: string; followingIds?: string[] } | null): UserModel | null {
-  if (!user) return null;
-
-  const matchedUser = (
-    mockUsers.find((entry) => entry.id === user.id) ??
-    mockUsers.find((entry) => entry.username === user.username) ??
-    mockUsers.find((entry) => entry.email === user.email) ??
-    null
-  );
-
-  if (!matchedUser) return null;
-
-  return {
-    ...matchedUser,
-    followingIds: user.followingIds ?? matchedUser.followingIds,
-    followingCount: (user.followingIds ?? matchedUser.followingIds).length,
-  };
-}
+import { getVisibleMockContent } from "@/lib/constants/mockData";
+import type { FeedTab } from "@/types/models";
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -40,8 +21,7 @@ export function HomePage() {
   };
 
   const currentTab = getCurrentTabFromParams();
-  const currentUser = resolveFeedUser(user);
-  const followingIds = currentUser?.followingIds ?? [];
+  const followingIds = user?.followingIds ?? [];
   const visibleContent = getVisibleMockContent();
 
   const feedItems = (() => {

@@ -4,34 +4,38 @@ import { ContentGrid } from "@/components/profile/ContentGrid";
 import { ProfileCard } from "@/components/profile/ProfileCard";
 import { ProfileTabs } from "@/components/profile/ProfileTabs";
 import { useAuth } from "@/app/providers/AuthProvider";
-import { getVisibleMockContent, mockUsers } from "@/lib/constants/mockData";
+import { getVisibleMockContent } from "@/lib/constants/mockData";
+import type { UserModel } from "@/types/models";
 
 export function MyProfilePage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("posts");
-  const creator = user ? mockUsers.find((entry) => entry.id === user.id)
-    ?? mockUsers.find((entry) => entry.username === user.username)
-    ?? mockUsers.find((entry) => entry.email === user.email)
-    ?? ({
-    ...user,
-    bannerUrl: "",
-    bio: "",
-    categories: [],
-    goals: [],
-    socialLinks: {},
-    totalPoints: 0,
-    battleWins: 0,
-    contestWins: 0,
-    followerCount: 0,
-    followingCount: 0,
-    followerIds: [],
-    followingIds: [],
-    badges: [],
-    verified: false,
-    rookie: false,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  }) : null;
+  const creator: UserModel | null = user
+    ? {
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName,
+        email: user.email,
+        photoUrl: user.photoUrl,
+        bannerUrl: user.bannerUrl ?? "",
+        bio: user.bio ?? "",
+        categories: [],
+        goals: [],
+        socialLinks: user.socialLinks ?? {},
+        totalPoints: 0,
+        battleWins: 0,
+        contestWins: 0,
+        followerCount: 0,
+        followingCount: (user.followingIds ?? []).length,
+        followerIds: [],
+        followingIds: user.followingIds ?? [],
+        badges: [],
+        verified: user.verified ?? false,
+        rookie: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+    : null;
   const items = getVisibleMockContent().filter((item) => item.creatorId === creator?.id);
 
   return (

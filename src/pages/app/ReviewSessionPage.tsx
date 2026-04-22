@@ -134,18 +134,20 @@ export function ReviewSessionPage() {
   const currentCreator = useMemo(() => {
     if (!user) return mockUsers[0];
 
-    return (
+    const matchedMockUser =
       mockUsers.find((entry) => entry.id === user.id) ??
       mockUsers.find((entry) => entry.username === user.username) ??
-      mockUsers.find((entry) => entry.email === user.email) ?? {
-        ...mockUsers[0],
-        id: user.id,
-        displayName: user.displayName,
-        username: user.username,
-        photoUrl: user.photoUrl,
-        email: user.email,
-      }
-    );
+      mockUsers.find((entry) => entry.email === user.email);
+
+    return {
+      ...(matchedMockUser ?? mockUsers[0]),
+      id: user.id,
+      displayName: user.displayName,
+      username: user.username,
+      photoUrl: user.photoUrl,
+      email: user.email,
+      verified: user.verified ?? false,
+    };
   }, [user]);
 
   const matchableOpponents = useMemo(() => mockUsers.filter((entry) => entry.id !== currentCreator.id), [currentCreator.id]);

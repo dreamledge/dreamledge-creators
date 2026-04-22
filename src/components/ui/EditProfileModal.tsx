@@ -1,5 +1,6 @@
-import { useState, useEffect, type ReactNode, useRef } from "react";
+import { useState, type ReactNode, useRef } from "react";
 import { useAuth } from "@/app/providers/AuthProvider";
+import { DEFAULT_AVATAR_URL } from "@/lib/constants/defaults";
 import type { SocialPlatform } from "@/types/models";
 
 interface EditProfileModalProps {
@@ -48,51 +49,101 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
   const [formData, setFormData] = useState({
     displayName: user?.displayName || "",
     username: user?.username || "",
-    bio: "",
-    photoUrl: user?.photoUrl || "",
-    socialLinks: user && "socialLinks" in user ? (user as any).socialLinks || {} : {},
+    bio: user?.bio || "",
+    photoUrl: user?.photoUrl || DEFAULT_AVATAR_URL,
+    socialLinks: user?.socialLinks || {},
   });
   const [editingLink, setEditingLink] = useState<SocialPlatform | null>(null);
   const [linkInput, setLinkInput] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        displayName: user.displayName || "",
-        username: user.username || "",
-        bio: (user as any).bio || "",
-        photoUrl: user.photoUrl || "",
-        socialLinks: (user as any).socialLinks || {},
-      });
-    }
-  }, [user]);
+  const readFileAsDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(String(reader.result ?? ""));
+      reader.onerror = () => reject(new Error("Failed to read selected image."));
+      reader.readAsDataURL(file);
+    });
+
+  const optimizeImage = async (file: File) => {
+    const source = await readFileAsDataUrl(file);
+
+    return new Promise<string>((resolve, reject) => {
+      const image = new Image();
+
+      image.onload = () => {
+        const maxSize = 512;
+        const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+        const targetWidth = Math.max(1, Math.round(image.width * scale));
+        const targetHeight = Math.max(1, Math.round(image.height * scale));
+
+        const canvas = document.createElement("canvas");
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+
+        const context = canvas.getContext("2d");
+        if (!context) {
+          reject(new Error("Canvas is unavailable."));
+          return;
+        }
+
+        context.drawImage(image, 0, 0, targetWidth, targetHeight);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+
+      image.onerror = () => reject(new Error("Could not process selected image."));
+      image.src = source;
+    });
+  };
 
   const handlePhotoClick = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({ ...prev, photoUrl: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+    if (!file) {
+      return;
+    }
+
+    setSaveError(null);
+
+    try {
+      const previewUrl = await optimizeImage(file);
+      setFormData((prev) => ({ ...prev, photoUrl: previewUrl }));
+    } catch {
+      setSaveError("Could not read this image. Please try a different file.");
+    } finally {
+      e.target.value = "";
     }
   };
 
   if (!isOpen) return null;
 
-  const handleSave = () => {
-    updateProfile({
-      displayName: formData.displayName,
-      username: formData.username,
-      bio: formData.bio,
-      photoUrl: formData.photoUrl,
-      socialLinks: formData.socialLinks,
-    });
-    onClose();
+  const handleSave = async () => {
+    setSaveError(null);
+    setIsSaving(true);
+
+    try {
+      await updateProfile({
+        displayName: formData.displayName,
+        username: formData.username,
+        bio: formData.bio,
+        photoUrl: formData.photoUrl,
+        socialLinks: formData.socialLinks,
+      });
+      onClose();
+    } catch (error) {
+      const maybeCode = typeof error === "object" && error !== null && "code" in error ? String((error as { code?: string }).code) : "";
+      if (maybeCode.includes("permission-denied")) {
+        setSaveError("Save blocked by Firebase rules. Allow authenticated users to update users/{uid}.");
+      } else {
+        setSaveError(maybeCode ? `Could not save your profile (${maybeCode}).` : "Could not save your profile. Please try again.");
+      }
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleAddLink = (platformKey: SocialPlatform) => {
@@ -129,7 +180,7 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
         <div className="edit-profile-modal-body">
           <div className="profile-photo-section">
             <div className="profile-photo-preview" onClick={handlePhotoClick}>
-              <img src={formData.photoUrl || "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=400&q=80"} alt="Profile" />
+              <img src={formData.photoUrl || DEFAULT_AVATAR_URL} alt="Profile" />
               <div className="profile-photo-overlay">
                 <svg viewBox="0 0 24 24" className="w-6 h-6"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
               </div>
@@ -141,6 +192,7 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
               onChange={handleFileChange}
               className="hidden"
             />
+            {formData.photoUrl ? <p className="mt-2 text-xs text-zinc-400">Photo ready. Save changes to apply.</p> : null}
           </div>
 
           <div className="form-group">
@@ -222,9 +274,13 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
           </div>
         </div>
 
+        {saveError ? <p className="px-6 pb-2 text-sm text-red-400">{saveError}</p> : null}
+
         <div className="edit-profile-modal-footer">
           <button className="cancel-button" onClick={onClose}>Cancel</button>
-          <button className="save-button" onClick={handleSave}>Save Changes</button>
+          <button className="save-button" onClick={() => void handleSave()} disabled={isSaving}>
+            {isSaving ? "Saving..." : "Save Changes"}
+          </button>
         </div>
       </div>
     </div>

@@ -10,24 +10,29 @@ export function AuthForm({
   includeName = false,
   animatedSubmit = false,
   signupCard = false,
+  isSubmitting = false,
+  errorMessage = "",
 }: {
   title: string;
   buttonLabel: string;
-  onSubmit: (values: { email: string; password: string; displayName: string; username: string }) => void;
+  onSubmit: (values: { email: string; password: string; displayName: string; username: string }) => void | Promise<void>;
   includeName?: boolean;
   animatedSubmit?: boolean;
   signupCard?: boolean;
+  isSubmitting?: boolean;
+  errorMessage?: string;
 }) {
-  const [email, setEmail] = useState("sosa@dreamledge.app");
-  const [password, setPassword] = useState("password123");
-  const [displayName, setDisplayName] = useState("Sosa Noir");
-  const [username, setUsername] = useState("sosanoir");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [username, setUsername] = useState("");
 
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault();
-        onSubmit({ email, password, displayName, username });
+        if (isSubmitting) return;
+        void onSubmit({ email, password, displayName, username });
       }}
       className={signupCard ? "dreamledge-signup-form" : "space-y-4"}
     >
@@ -43,26 +48,27 @@ export function AuthForm({
         {includeName ? (
           <label className={signupCard ? "dreamledge-signup-field" : "block space-y-2"}>
             {!signupCard ? <span className="text-sm font-medium text-white">Display name</span> : null}
-            <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={signupCard ? "Full Name" : "How your name appears in the app"} className={signupCard ? "dreamledge-signup-input" : "w-full rounded-[28px] border border-white/10 bg-white/5 px-4 py-3 text-text-primary"} />
+            <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={signupCard ? "Full Name" : "How your name appears in the app"} className={signupCard ? "dreamledge-signup-input" : "w-full rounded-[28px] border border-white/10 bg-white/5 px-4 py-3 text-text-primary"} disabled={isSubmitting} autoComplete="name" required />
           </label>
         ) : null}
         {includeName ? (
           <label className={signupCard ? "dreamledge-signup-field" : "block space-y-2"}>
             {!signupCard ? <span className="text-sm font-medium text-white">Username</span> : null}
-            <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder={signupCard ? "Username" : "Choose a username"} className={signupCard ? "dreamledge-signup-input" : "w-full rounded-[28px] border border-white/10 bg-white/5 px-4 py-3 text-text-primary"} />
+            <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder={signupCard ? "Username" : "Choose a username"} className={signupCard ? "dreamledge-signup-input" : "w-full rounded-[28px] border border-white/10 bg-white/5 px-4 py-3 text-text-primary"} disabled={isSubmitting} autoComplete="username" />
           </label>
         ) : null}
         <label className={signupCard ? "dreamledge-signup-field" : "block space-y-2"}>
           {!signupCard ? <span className="text-sm font-medium text-white">Email</span> : null}
-          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder={signupCard ? "Email" : "you@example.com"} className={signupCard ? "dreamledge-signup-input" : "w-full rounded-[28px] border border-white/10 bg-white/5 px-4 py-3 text-text-primary"} />
+          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder={signupCard ? "Email" : "you@example.com"} className={signupCard ? "dreamledge-signup-input" : "w-full rounded-[28px] border border-white/10 bg-white/5 px-4 py-3 text-text-primary"} disabled={isSubmitting} autoComplete="email" required />
         </label>
         <label className={signupCard ? "dreamledge-signup-field" : "block space-y-2"}>
           {!signupCard ? <span className="text-sm font-medium text-white">Password</span> : null}
-          <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder={signupCard ? "Password" : "Create a secure password"} className={signupCard ? "dreamledge-signup-input dreamledge-signup-input--last" : "w-full rounded-[28px] border border-white/10 bg-white/5 px-4 py-3 text-text-primary"} />
+          <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder={signupCard ? "Password" : "Create a secure password"} className={signupCard ? "dreamledge-signup-input dreamledge-signup-input--last" : "w-full rounded-[28px] border border-white/10 bg-white/5 px-4 py-3 text-text-primary"} disabled={isSubmitting} autoComplete={includeName ? "new-password" : "current-password"} required />
         </label>
       </div>
+      {errorMessage ? <p className="text-sm text-red-300">{errorMessage}</p> : null}
       {animatedSubmit ? (
-        <button type="submit" className="dreamledge-signin-btn-wrapper w-full">
+        <button type="submit" className={`dreamledge-signin-btn-wrapper w-full ${isSubmitting ? "pointer-events-none opacity-80" : ""}`} disabled={isSubmitting}>
           <span className="dreamledge-signin-btn">
             <span className="dreamledge-signin-letter">S</span>
             <span className="dreamledge-signin-letter">I</span>
@@ -83,7 +89,7 @@ export function AuthForm({
           <span className="dreamledge-signin-flash" />
         </button>
       ) : (
-        <Button type="submit" className="w-full bg-[linear-gradient(135deg,#ff2d3d,#ff4d4d)] text-white hover:bg-[linear-gradient(135deg,#ff2d3d,#ff4d4d)]">{buttonLabel}</Button>
+        <Button type="submit" className="w-full bg-[linear-gradient(135deg,#ff2d3d,#ff4d4d)] text-white hover:bg-[linear-gradient(135deg,#ff2d3d,#ff4d4d)]" disabled={isSubmitting}>{isSubmitting ? "Please wait..." : buttonLabel}</Button>
       )}
       {signupCard ? <SocialLoginButtons label="Sign up with Gmail" className="dreamledge-signup-google" /> : null}
       {signupCard ? (

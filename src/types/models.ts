@@ -242,6 +242,7 @@ export interface AuthUser {
   displayName: string;
   username: string;
   photoUrl: string;
+  verified: boolean;
   onboardingComplete: boolean;
   followingIds?: string[];
   bio?: string;
