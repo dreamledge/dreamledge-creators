@@ -10,6 +10,8 @@ interface FeedContextType {
   pauseVideo: () => void;
   userHasUnmuted: boolean;
   setUserHasUnmuted: (unmuted: boolean) => void;
+  mediaUnlocked: boolean;
+  mediaUnlockToken: number;
 }
 
 export const FeedContext = createContext<FeedContextType>({
@@ -20,12 +22,44 @@ export const FeedContext = createContext<FeedContextType>({
   pauseVideo: () => {},
   userHasUnmuted: false,
   setUserHasUnmuted: () => {},
+  mediaUnlocked: false,
+  mediaUnlockToken: 0,
 });
 
 export function FeedProvider({ children }: { children: ReactNode }) {
   const [isMuted, setIsMuted] = useState(true);
   const [userHasUnmuted, setUserHasUnmuted] = useState(false);
   const [currentPlayingId, setCurrentPlaying] = useState<string | null>(null);
+  const [mediaUnlocked, setMediaUnlocked] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.sessionStorage.getItem("dreamledge_media_unlocked") === "1";
+  });
+  const [mediaUnlockToken, setMediaUnlockToken] = useState(0);
+
+  useEffect(() => {
+    if (mediaUnlocked) return;
+
+    const unlockMedia = () => {
+      setMediaUnlocked(true);
+      setMediaUnlockToken((value) => value + 1);
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem("dreamledge_media_unlocked", "1");
+      }
+      window.removeEventListener("pointerdown", unlockMedia);
+      window.removeEventListener("keydown", unlockMedia);
+      window.removeEventListener("touchstart", unlockMedia);
+    };
+
+    window.addEventListener("pointerdown", unlockMedia, { passive: true });
+    window.addEventListener("keydown", unlockMedia);
+    window.addEventListener("touchstart", unlockMedia, { passive: true });
+
+    return () => {
+      window.removeEventListener("pointerdown", unlockMedia);
+      window.removeEventListener("keydown", unlockMedia);
+      window.removeEventListener("touchstart", unlockMedia);
+    };
+  }, [mediaUnlocked]);
 
   const handleSetIsMuted = (muted: boolean) => {
     setIsMuted(muted);
@@ -39,14 +73,26 @@ export function FeedProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <FeedContext.Provider value={{ isMuted, setIsMuted: handleSetIsMuted, currentPlayingId, setCurrentPlaying, pauseVideo, userHasUnmuted, setUserHasUnmuted }}>
+    <FeedContext.Provider
+      value={{
+        isMuted,
+        setIsMuted: handleSetIsMuted,
+        currentPlayingId,
+        setCurrentPlaying,
+        pauseVideo,
+        userHasUnmuted,
+        setUserHasUnmuted,
+        mediaUnlocked,
+        mediaUnlockToken,
+      }}
+    >
       {children}
     </FeedContext.Provider>
   );
 }
 
 export function FeedList({ items, creatorsById }: { items: ContentModel[]; creatorsById?: Map<string, UserModel> }) {
-  const { setCurrentPlaying } = useFeedContext();
+  const { setCurrentPlaying, mediaUnlockToken } = useFeedContext();
   const containerRef = useRef<HTMLDivElement>(null);
   const lastPlayedRef = useRef<string | null>(null);
   const itemIdsKey = items.map((item) => item.id).join("|");
@@ -140,7 +186,7 @@ export function FeedList({ items, creatorsById }: { items: ContentModel[]; creat
       window.removeEventListener("resize", scheduleUpdate);
       container?.removeEventListener("scroll", scheduleUpdate);
     };
-  }, [setCurrentPlaying, itemIdsKey]);
+  }, [setCurrentPlaying, itemIdsKey, mediaUnlockToken]);
 
   return (
     <div ref={containerRef} className="feed-list-container">
