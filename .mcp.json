@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "firebase-staging": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "firebase-mcp",
+        "--config",
+        "firebase-mcp.json"
+      ]
+    }
+  }
+}

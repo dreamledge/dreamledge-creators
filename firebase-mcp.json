@@ -1,0 +1,23 @@
+{
+  "projects": {
+    "staging": {
+      "firebase": {
+        "projectId": "studio-6485458642-a0508",
+        "serviceAccountPath": "secrets/firebase-staging.service-account.json"
+      },
+      "firestore": {
+        "rules": {
+          "allow": [
+            "**"
+          ],
+          "deny": []
+        },
+        "maxCollectionReadSize": 200,
+        "maxBatchFetchSize": 200
+      },
+      "timeouts": {
+        "callMs": 20000
+      }
+    }
+  }
+}

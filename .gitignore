@@ -12,6 +12,8 @@ dist
 dist-ssr
 *.local
 .env
+secrets/
+*.service-account.json
 
 # Editor directories and files
 .vscode/*
