@@ -6,7 +6,16 @@ import { mockContestEntries, mockContests, mockLeaderboard } from "@/lib/constan
 
 export function ContestDetailPage() {
   const { contestId } = useParams();
-  const contest = mockContests.find((entry) => entry.id === contestId) ?? mockContests[0];
+  const contest = mockContests.find((entry) => entry.id === contestId) ?? null;
+
+  if (!contest) {
+    return (
+      <div className="bubble-card rounded-[32px] p-6 text-sm text-text-secondary">
+        This contest is not available yet.
+      </div>
+    );
+  }
+
   const entries = mockContestEntries.filter((entry) => entry.contestId === contest.id);
 
   return (

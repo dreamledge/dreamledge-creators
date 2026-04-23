@@ -2,11 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { ContentCard } from "@/components/cards/ContentCard";
-import { FeedProvider, useFeedContext } from "@/components/feed/FeedList";
+import { FeedProvider } from "@/components/feed/FeedList";
 import { CommentModal, CommentModalProvider } from "@/components/overlays/CommentModal";
-import { mockContent, mockUsers } from "@/lib/constants/mockData";
+import { DEFAULT_AVATAR_URL } from "@/lib/constants/defaults";
+import { subscribePublicFeed, subscribePublicUsers } from "@/lib/firebase/publicData";
 import { MIN_WATCH_TIME } from "@/lib/constants/reviewSessions";
-import type { ContentModel, ReviewCategory, ReviewScoreLabel, ReviewScores } from "@/types/models";
+import type { ContentModel, ReviewCategory, ReviewScoreLabel, ReviewScores, UserModel } from "@/types/models";
 
 const MATCHMAKING_DURATION_MS = 3000;
 const MATCHMAKING_FRAME_MS = 120;
@@ -50,6 +51,14 @@ const reviewCategoryLabels: Record<ReviewCategory, string> = {
   entertainment: "Engagement",
 };
 
+type MatchProfile = {
+  id: string;
+  photoUrl: string;
+  username: string;
+  displayName: string;
+  verified: boolean;
+};
+
 function createEmptyScores(): ReviewScores {
   return { creativity: null, execution: null, entertainment: null };
 }
@@ -80,23 +89,12 @@ function OrwellianEyeAvatar({ blinking }: { blinking: boolean }) {
   );
 }
 
-function ReviewSessionFeedAutoplay({ content }: { content: ContentModel }) {
-  const { setCurrentPlaying } = useFeedContext();
-
-  useEffect(() => {
-    setCurrentPlaying(content.id);
-    return () => setCurrentPlaying(null);
-  }, [content.id, setCurrentPlaying]);
-
-  return <ContentCard content={content} hideActions={true} />;
-}
-
-function ReviewSessionHomeStyleCard({ content }: { content: ContentModel }) {
+function ReviewSessionHomeStyleCard({ content, creator }: { content: ContentModel; creator: UserModel | null }) {
   return (
     <CommentModalProvider>
       <FeedProvider>
         <div className="review-session-home-card-wrap">
-          <ReviewSessionFeedAutoplay content={content} />
+          <ContentCard content={content} creatorOverride={creator} hideActions={true} />
         </div>
 
         <CommentModal />
@@ -114,6 +112,8 @@ function formatTalkTime(ms: number) {
 
 export function ReviewSessionPage() {
   const { user } = useAuth();
+  const [availableCreators, setAvailableCreators] = useState<UserModel[]>([]);
+  const [availableContent, setAvailableContent] = useState<ContentModel[]>([]);
   const [matchingMessage, setMatchingMessage] = useState("Tap start matching to begin pairing.");
   const [isMatching, setIsMatching] = useState(false);
   const [isBlinking, setIsBlinking] = useState(false);
@@ -131,31 +131,49 @@ export function ReviewSessionPage() {
   const watchIntervalRef = useRef<number | null>(null);
   const talkIntervalRef = useRef<number | null>(null);
 
-  const currentCreator = useMemo(() => {
-    if (!user) return mockUsers[0];
+  useEffect(() => {
+    const unsubscribeUsers = subscribePublicUsers(setAvailableCreators);
+    const unsubscribeContent = subscribePublicFeed(setAvailableContent);
 
-    const matchedMockUser =
-      mockUsers.find((entry) => entry.id === user.id) ??
-      mockUsers.find((entry) => entry.username === user.username) ??
-      mockUsers.find((entry) => entry.email === user.email);
+    return () => {
+      unsubscribeUsers();
+      unsubscribeContent();
+    };
+  }, []);
+
+  const currentCreator = useMemo(() => {
+    if (!user) {
+      return {
+        id: "guest",
+        displayName: "You",
+        username: "you",
+        photoUrl: DEFAULT_AVATAR_URL,
+        verified: false,
+      };
+    }
+
+    const matchedUser =
+      availableCreators.find((entry) => entry.id === user.id) ??
+      availableCreators.find((entry) => entry.username === user.username) ??
+      availableCreators.find((entry) => entry.email === user.email);
 
     return {
-      ...(matchedMockUser ?? mockUsers[0]),
+      ...(matchedUser ?? {}),
       id: user.id,
       displayName: user.displayName,
       username: user.username,
-      photoUrl: user.photoUrl,
-      email: user.email,
+      photoUrl: user.photoUrl || DEFAULT_AVATAR_URL,
       verified: user.verified ?? false,
     };
-  }, [user]);
+  }, [availableCreators, user]);
 
-  const matchableOpponents = useMemo(() => mockUsers.filter((entry) => entry.id !== currentCreator.id), [currentCreator.id]);
+  const usersById = useMemo(() => new Map(availableCreators.map((entry) => [entry.id, entry])), [availableCreators]);
+  const matchableOpponents = useMemo(() => availableCreators.filter((entry) => entry.id !== currentCreator.id), [availableCreators, currentCreator.id]);
   const finalOpponent = useMemo(
-    () => matchableOpponents.find((entry) => entry.username === "berto_brown") ?? matchableOpponents[0] ?? currentCreator,
+    () => matchableOpponents.find((entry) => entry.username === "berto_brown") ?? matchableOpponents[0] ?? null,
     [currentCreator, matchableOpponents],
   );
-  const [displayedOpponent, setDisplayedOpponent] = useState<typeof finalOpponent | null>(null);
+  const [displayedOpponent, setDisplayedOpponent] = useState<MatchProfile | null>(null);
 
   const allReviewSelected = useMemo(
     () => Object.values(reviewScores).every((value) => value !== null),
@@ -251,14 +269,14 @@ export function ReviewSessionPage() {
   }, [postMatchPhase]);
 
   const resolveOpponentContent = (opponentId: string) => {
-    const directMatch = mockContent
+    const directMatch = availableContent
       .filter((item) => item.creatorId === opponentId && item.status !== "live")
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
 
-    return directMatch ?? mockContent.find((item) => item.status !== "live") ?? null;
+    return directMatch ?? availableContent.find((item) => item.status !== "live") ?? null;
   };
 
-  const beginPostMatchFlow = (matchedOpponent: typeof finalOpponent) => {
+  const beginPostMatchFlow = (matchedOpponent: MatchProfile) => {
     const matchedContent = resolveOpponentContent(matchedOpponent.id);
     setActiveMatchContent(matchedContent);
     setReviewScores(createEmptyScores());
@@ -285,7 +303,11 @@ export function ReviewSessionPage() {
   };
 
   const startMatchmakingSequence = ({ playSound }: { playSound: boolean }) => {
-    if (isMatching || isBlinking || !matchableOpponents.length) return;
+    if (isMatching || isBlinking) return;
+    if (!matchableOpponents.length || !finalOpponent) {
+      setMatchingMessage("No creators are available to match yet.");
+      return;
+    }
 
     if (matchIntervalRef.current) window.clearInterval(matchIntervalRef.current);
     if (matchTimeoutRef.current) window.clearTimeout(matchTimeoutRef.current);
@@ -405,7 +427,7 @@ export function ReviewSessionPage() {
               type="button"
               className="cta-button edit-profile review-session-action-button"
               onClick={handleStartMatching}
-              disabled={isMatching || isBlinking || postMatchActive}
+              disabled={isMatching || isBlinking || postMatchActive || !matchableOpponents.length}
             >
               {isBlinking ? "Initializing..." : isMatching ? "Matching..." : "Start Matching"}
             </button>
@@ -444,7 +466,7 @@ export function ReviewSessionPage() {
                 <span className="review-session-stage-kicker">Now Playing</span>
                 <div className="review-session-title-content">
                   <h2 className="review-session-title-headline">{activeMatchContent.title}</h2>
-                  <p className="review-session-title-credit">by @{finalOpponent.username}</p>
+                  <p className="review-session-title-credit">by @{displayedOpponent?.username ?? "creator"}</p>
                 </div>
               </div>
             ) : null}
@@ -452,7 +474,7 @@ export function ReviewSessionPage() {
             {(postMatchPhase === "videoReveal" || postMatchPhase === "videoWatching" || postMatchPhase === "reviewUnlocked" || postMatchPhase === "submitted" || postMatchPhase === "decision" || postMatchPhase === "talk") && activeMatchContent ? (
               <div className="review-session-watch-stage">
                 <div className={`review-session-video-stage ${postMatchPhase === "videoReveal" ? "review-session-video-card-revealing" : "review-session-video-card-live"} ${postMatchPhase === "submitted" || postMatchPhase === "decision" || postMatchPhase === "talk" ? "review-session-video-card-dimmed" : ""}`}>
-                  <ReviewSessionHomeStyleCard content={activeMatchContent} />
+                  <ReviewSessionHomeStyleCard content={activeMatchContent} creator={usersById.get(activeMatchContent.creatorId) ?? null} />
                   <div className="review-session-video-meta review-session-video-meta-homecard">
                     <div className={`review-session-watch-helper ${watchElapsedMs >= 10000 ? "review-session-watch-helper-emphasis" : ""}`}>
                       <span>{helperMessage}</span>

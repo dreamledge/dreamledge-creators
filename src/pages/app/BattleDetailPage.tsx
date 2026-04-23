@@ -10,7 +10,16 @@ import { mockBattles, mockUsers } from "@/lib/constants/mockData";
 
 export function BattleDetailPage() {
   const { battleId } = useParams();
-  const battle = mockBattles.find((entry) => entry.id === battleId) ?? mockBattles[1];
+  const battle = mockBattles.find((entry) => entry.id === battleId) ?? null;
+
+  if (!battle) {
+    return (
+      <div className="bubble-card rounded-[32px] p-6 text-sm text-text-secondary">
+        This battle is not available yet.
+      </div>
+    );
+  }
+
   const [watchedSeconds, setWatchedSeconds] = useState(battle.creatorBWatchTime);
   const unlocked = watchedSeconds >= 10;
   const winnerName = useMemo(() => {

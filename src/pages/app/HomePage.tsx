@@ -1,15 +1,28 @@
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { FeedTabs } from "@/components/feed/FeedTabs";
 import { FeedList, FeedProvider } from "@/components/feed/FeedList";
 import { CommentModalProvider, CommentModal } from "@/components/overlays/CommentModal";
-import { getVisibleMockContent } from "@/lib/constants/mockData";
-import type { FeedTab } from "@/types/models";
+import { subscribePublicFeed, subscribePublicUsers } from "@/lib/firebase/publicData";
+import type { ContentModel, FeedTab, UserModel } from "@/types/models";
 
 export function HomePage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const [feedContent, setFeedContent] = useState<ContentModel[]>([]);
+  const [users, setUsers] = useState<UserModel[]>([]);
+
+  useEffect(() => {
+    const unsubscribeFeed = subscribePublicFeed(setFeedContent);
+    const unsubscribeUsers = subscribePublicUsers(setUsers);
+
+    return () => {
+      unsubscribeFeed();
+      unsubscribeUsers();
+    };
+  }, []);
 
   const getCurrentTabFromParams = (): FeedTab => {
     const params = new URLSearchParams(location.search);
@@ -22,21 +35,21 @@ export function HomePage() {
 
   const currentTab = getCurrentTabFromParams();
   const followingIds = user?.followingIds ?? [];
-  const visibleContent = getVisibleMockContent();
+  const usersById = useMemo(() => new Map(users.map((entry) => [entry.id, entry])), [users]);
 
   const feedItems = (() => {
     switch (currentTab) {
       case "live-now":
-        return visibleContent.filter((item) => item.platform === "twitch" && item.status === "live");
+        return feedContent.filter((item) => item.platform === "twitch" && item.status === "live");
       case "following":
-        return visibleContent.filter((item) => followingIds.includes(item.creatorId));
+        return feedContent.filter((item) => followingIds.includes(item.creatorId));
       case "new":
-        return [...visibleContent].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        return [...feedContent].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       case "trending":
-        return [...visibleContent].sort((a, b) => (b.likeCount + b.commentCount + b.shareCount + b.saveCount) - (a.likeCount + a.commentCount + a.shareCount + a.saveCount));
+        return [...feedContent].sort((a, b) => (b.likeCount + b.commentCount + b.shareCount + b.saveCount) - (a.likeCount + a.commentCount + a.shareCount + a.saveCount));
       case "for-you":
       default:
-        return visibleContent;
+        return feedContent;
     }
   })();
 
@@ -82,7 +95,7 @@ export function HomePage() {
           </div>
           <FeedTabs active={currentTab} onChange={() => {}} />
         </div>
-        <FeedList items={feedItems} />
+        {feedItems.length ? <FeedList items={feedItems} creatorsById={usersById} /> : <div className="bubble-card rounded-[32px] p-6 text-sm text-text-secondary">No content has been posted yet.</div>}
       </div>
     </FeedProvider>
     <CommentModal />

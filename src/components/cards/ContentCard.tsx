@@ -3,15 +3,20 @@ import { Link } from "react-router-dom";
 import { Heart, MessageCircle, Share2, Bookmark } from "lucide-react";
 import { formatCompactNumber } from "@/lib/formatters";
 import { mockUsers, LIVE_CONTENT_MAX_AGE_MS } from "@/lib/constants/mockData";
-import type { ContentModel, SocialPlatform } from "@/types/models";
+import type { ContentModel, SocialPlatform, UserModel } from "@/types/models";
 import { useFeedContext } from "../feed/FeedList";
 import { useCommentModal } from "../overlays/CommentModal";
 import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
-import { DEFAULT_AVATAR_URL } from "@/lib/constants/defaults";
+import { DEFAULT_AVATAR_URL, DEFAULT_CONTENT_THUMBNAIL } from "@/lib/constants/defaults";
+
+function extractTikTokVideoId(url: string) {
+  return url.match(/embed\/v2\/(\d+)/i)?.[1] ?? url.match(/video\/(\d+)/i)?.[1] ?? null;
+}
 
 interface ContentCardProps {
   content: ContentModel;
   hideActions?: boolean;
+  creatorOverride?: UserModel | null;
 }
 
 const InstagramIcon = () => (
@@ -44,7 +49,7 @@ const TwitchIcon = () => (
   </svg>
 );
 
-export function ContentCard({ content, hideActions = false }: ContentCardProps) {
+export function ContentCard({ content, hideActions = false, creatorOverride = null }: ContentCardProps) {
   const { currentPlayingId, setCurrentPlaying } = useFeedContext();
   const { openCommentModal } = useCommentModal();
   const [iframeLoaded, setIframeLoaded] = useState(false);
@@ -52,10 +57,14 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const youtubeSyncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const youtubeSyncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tiktokFallbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isPlaying = currentPlayingId === content.id;
   const [liveCountdown, setLiveCountdown] = useState<string>("");
+  const isTikTok = content.platform.toLowerCase() === "tiktok" || /tiktok\.com/i.test(content.sourceUrl || content.embedUrl || "");
+  const [tiktokVariant, setTiktokVariant] = useState<"player" | "v2">("player");
+  const showVideoLoader = isPlaying && !!videoSrc && !iframeLoaded;
 
-  const creator = mockUsers.find((user) => user.id === content.creatorId);
+  const creator = creatorOverride ?? mockUsers.find((user) => user.id === content.creatorId) ?? null;
 
   useEffect(() => {
     if (content.status !== "live" || !content.createdAt) return;
@@ -99,7 +108,7 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
     }
   };
 
-  const getEmbedSrc = (embedUrl: string, muted: boolean): string => {
+  const getEmbedSrc = (embedUrl: string, muted: boolean, options?: { tiktokVariant?: "player" | "v2" }): string => {
     if (!embedUrl) return "";
     let src = embedUrl;
     const useMute = muted ? 1 : 0;
@@ -113,9 +122,13 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
       const videoId = embedUrl.split("v=")[1]?.split("&")[0] || embedUrl.split("/").pop();
       src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${useMute}&loop=1&playlist=${videoId}&iv_load_policy=3&modestbranding=1&playsinline=1&showinfo=0&rel=0&enablejsapi=1${origin ? `&origin=${origin}` : ""}`;
     } else if (embedUrl.includes("tiktok.com")) {
-      const videoId = embedUrl.match(/video\/(\d+)/)?.[1];
+      const videoId = extractTikTokVideoId(embedUrl) ?? extractTikTokVideoId(content.sourceUrl || "");
       if (videoId) {
-        src = `https://www.tiktok.com/player/v1/${videoId}?autoplay=1&mute=${useMute}&playsinline=1`;
+        if (options?.tiktokVariant === "v2") {
+          src = `https://www.tiktok.com/embed/v2/${videoId}?autoplay=1&auto_play=1&mute=${useMute}&muted=${useMute}&controls=0&loop=1&playsinline=1`;
+        } else {
+          src = `https://www.tiktok.com/player/v1/${videoId}?autoplay=1&auto_play=1&mute=${useMute}&muted=${useMute}&controls=0&loop=1&playsinline=1`;
+        }
       }
     } else if (embedUrl.includes("instagram.com")) {
       const shortcode = embedUrl.match(/\/p\/([A-Za-z0-9_-]+)/)?.[1] || embedUrl.match(/\/reel\/([A-Za-z0-9_-]+)/)?.[1];
@@ -142,16 +155,42 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
   useEffect(() => {
     if (isPlaying) {
       setIframeLoaded(false);
-      setVideoSrc("");
+      setTiktokVariant("player");
+      const nextSrc = getEmbedSrc(content.embedUrl || content.sourceUrl || "", true, { tiktokVariant: "player" });
+      setVideoSrc(nextSrc);
+
       const timer = setTimeout(() => {
-        setVideoSrc(getEmbedSrc(content.embedUrl, true));
+        setVideoSrc(getEmbedSrc(content.embedUrl || content.sourceUrl || "", true, { tiktokVariant: "player" }));
       }, 80);
-      return () => clearTimeout(timer);
+      return () => window.clearTimeout(timer);
     } else {
       setIframeLoaded(false);
       setVideoSrc("");
     }
-  }, [isPlaying, content.embedUrl]);
+  }, [content.embedUrl, content.sourceUrl, isPlaying]);
+
+  useEffect(() => {
+    if (tiktokFallbackTimeoutRef.current) {
+      clearTimeout(tiktokFallbackTimeoutRef.current);
+      tiktokFallbackTimeoutRef.current = null;
+    }
+
+    if (!isPlaying || !isTikTok || iframeLoaded) return;
+
+    if (tiktokVariant === "player") {
+      tiktokFallbackTimeoutRef.current = setTimeout(() => {
+        setTiktokVariant("v2");
+        setVideoSrc(getEmbedSrc(content.embedUrl || content.sourceUrl || "", true, { tiktokVariant: "v2" }));
+      }, 2200);
+    }
+
+    return () => {
+      if (tiktokFallbackTimeoutRef.current) {
+        clearTimeout(tiktokFallbackTimeoutRef.current);
+        tiktokFallbackTimeoutRef.current = null;
+      }
+    };
+  }, [content.embedUrl, content.sourceUrl, iframeLoaded, isPlaying, isTikTok, tiktokVariant]);
 
   useEffect(() => {
     if (youtubeSyncIntervalRef.current) {
@@ -163,7 +202,7 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
       youtubeSyncTimeoutRef.current = null;
     }
 
-    if (!isPlaying || !content.embedUrl) return;
+    if (!isPlaying || !videoSrc || isTikTok) return;
 
     if (content.platform.toLowerCase() === "youtube") {
       if (!iframeLoaded || !iframeRef.current) return;
@@ -191,8 +230,8 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
       return;
     }
 
-    setVideoSrc(getEmbedSrc(content.embedUrl, true));
-  }, [isPlaying, content.embedUrl, content.platform, iframeLoaded]);
+    setVideoSrc(getEmbedSrc(content.embedUrl || content.sourceUrl || "", true, { tiktokVariant }));
+  }, [content.embedUrl, content.platform, content.sourceUrl, iframeLoaded, isPlaying, isTikTok, tiktokVariant, videoSrc]);
 
   useEffect(() => {
     return () => {
@@ -203,6 +242,10 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
       if (youtubeSyncTimeoutRef.current) {
         clearTimeout(youtubeSyncTimeoutRef.current);
         youtubeSyncTimeoutRef.current = null;
+      }
+      if (tiktokFallbackTimeoutRef.current) {
+        clearTimeout(tiktokFallbackTimeoutRef.current);
+        tiktokFallbackTimeoutRef.current = null;
       }
     };
   }, []);
@@ -305,7 +348,7 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
           </div>
           
           {/* Video Embed or Thumbnail or Loading */}
-          {isPlaying && content.embedUrl && (
+          {showVideoLoader ? (
             <div className={`video-loader ${iframeLoaded ? "fade-out" : ""}`}>
               <div className="loader-wrapper">
                 <span className="loader-letter">d</span>
@@ -321,8 +364,8 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
                 <div className="loader"></div>
               </div>
             </div>
-          )}
-          {isPlaying && content.embedUrl && videoSrc ? (
+          ) : null}
+          {isPlaying && videoSrc ? (
               <iframe
                 ref={iframeRef}
                 src={videoSrc}
@@ -330,12 +373,16 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
                 allowFullScreen
                 onLoad={() => setIframeLoaded(true)}
+                onError={() => setIframeLoaded(true)}
               />
             ) : (
-              <img 
-                src={content.thumbnailUrl} 
+              <img
+                src={content.thumbnailUrl || DEFAULT_CONTENT_THUMBNAIL}
                 alt={content.title} 
                 className="video-thumbnail"
+                onError={(event) => {
+                  event.currentTarget.src = DEFAULT_CONTENT_THUMBNAIL;
+                }}
               />
             )}
 

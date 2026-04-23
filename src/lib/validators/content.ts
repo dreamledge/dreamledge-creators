@@ -1,5 +1,9 @@
 import type { ContentPlatform } from "@/types/models";
 
+function extractTikTokVideoId(url: string) {
+  return url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/i)?.[1] ?? url.match(/\/video\/(\d+)/i)?.[1] ?? null;
+}
+
 export function detectPlatform(url: string): ContentPlatform {
   const value = url.toLowerCase();
   if (value.includes("tiktok.com")) return "tiktok";
@@ -15,6 +19,11 @@ export function buildEmbedUrl(url: string, platform: ContentPlatform): string {
     const longMatch = url.match(/[?&]v=([^?&]+)/);
     const id = shortMatch?.[1] ?? longMatch?.[1];
     return id ? `https://www.youtube.com/embed/${id}` : url;
+  }
+
+  if (platform === "tiktok") {
+    const id = extractTikTokVideoId(url);
+    return id ? `https://www.tiktok.com/player/v1/${id}` : url;
   }
 
   return url;

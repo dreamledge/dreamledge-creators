@@ -1,6 +1,6 @@
 import { useState, createContext, useContext, useRef, useEffect, type ReactNode } from "react";
 import { ContentCard } from "@/components/cards/ContentCard";
-import type { ContentModel } from "@/types/models";
+import type { ContentModel, UserModel } from "@/types/models";
 
 interface FeedContextType {
   isMuted: boolean;
@@ -45,7 +45,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function FeedList({ items }: { items: ContentModel[] }) {
+export function FeedList({ items, creatorsById }: { items: ContentModel[]; creatorsById?: Map<string, UserModel> }) {
   const { setCurrentPlaying } = useFeedContext();
   const containerRef = useRef<HTMLDivElement>(null);
   const lastPlayedRef = useRef<string | null>(null);
@@ -69,18 +69,36 @@ export function FeedList({ items }: { items: ContentModel[] }) {
       const cards = Array.from(containerRef.current.querySelectorAll<HTMLElement>("[data-content-id]"));
       let nextId: string | null = null;
       let bestRatio = 0;
+      let highestVisibleRatio = 0;
+      let highestVisibleId: string | null = null;
 
       for (const card of cards) {
         const ratio = getCardVisibility(card);
 
-        if (ratio >= 0.5 && ratio > bestRatio) {
+        if (ratio > highestVisibleRatio) {
+          highestVisibleRatio = ratio;
+          highestVisibleId = card.dataset.contentId ?? null;
+        }
+
+        if (ratio >= 0.3 && ratio > bestRatio) {
           bestRatio = ratio;
           nextId = card.dataset.contentId ?? null;
         }
       }
 
+      if (!nextId && highestVisibleRatio > 0.08) {
+        nextId = highestVisibleId;
+      }
+
+      if (!nextId && cards.length > 0) {
+        nextId = cards[0]?.dataset.contentId ?? null;
+      }
+
       if (nextId !== lastPlayedRef.current) {
         lastPlayedRef.current = nextId;
+        if (import.meta.env.DEV) {
+          console.debug("[FeedList] currentPlayingId", nextId);
+        }
         setCurrentPlaying(nextId);
       }
     };
@@ -127,7 +145,7 @@ export function FeedList({ items }: { items: ContentModel[] }) {
   return (
     <div ref={containerRef} className="feed-list-container">
       {items.map((item) => (
-        <ContentCard key={item.id} content={item} />
+        <ContentCard key={item.id} content={item} creatorOverride={creatorsById?.get(item.creatorId) ?? null} />
       ))}
     </div>
   );

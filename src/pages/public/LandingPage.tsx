@@ -1,14 +1,12 @@
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { mockUsers } from "@/lib/constants/mockData";
-
-const sosaNoir = mockUsers.find((user) => user.username === "sosanoir");
+import { DEFAULT_AVATAR_URL } from "@/lib/constants/defaults";
 
 const features = [
   {
     title: "Trusted by creators",
-    text: "Featuring creators like Sosa Noir, Way Off Script, and Audioswim.",
-    image: sosaNoir?.photoUrl ?? "/sosadata.jpg",
+    text: "Built for real creators who want feedback, growth, and visibility.",
+    image: DEFAULT_AVATAR_URL,
   },
   {
     title: "Judge & Get Judged",
@@ -34,16 +32,16 @@ const footerLinks = [
 
 const showcaseTweets = [
   {
-    name: "Sosa Noir",
-    handle: "@sosanoir",
-    image: sosaNoir?.photoUrl ?? "/sosadata.jpg",
+    name: "Creator One",
+    handle: "@creatorone",
+    image: DEFAULT_AVATAR_URL,
     tweet: "Dreamledge changed everything. Real creators review my content, and every post now turns into actual growth.",
     metrics: "118 replies · 462 reposts · 2.1k likes",
   },
   {
-    name: "Berto Brown",
-    handle: "@berto_brown",
-    image: "/bertdata.jpg",
+    name: "Creator Two",
+    handle: "@creatortwo",
+    image: DEFAULT_AVATAR_URL,
     tweet: "Best creator app I have used this year. The judge-for-judge system is the first feedback loop that feels fair.",
     metrics: "84 replies · 311 reposts · 1.6k likes",
   },
