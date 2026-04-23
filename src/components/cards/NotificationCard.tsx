@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { mockUsers } from "@/lib/constants/mockData";
+import { DEFAULT_AVATAR_URL } from "@/lib/constants/defaults";
 import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
 import type { NotificationModel } from "@/types/models";
 
@@ -57,7 +58,7 @@ export function NotificationCard({ notification }: { notification: NotificationM
     <div className={`notification-card ${notification.read ? "" : "notification-unread"}`}>
       <div className="notification-img">
         <img 
-          src={actor?.photoUrl || "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=100&q=80"} 
+          src={actor?.photoUrl || DEFAULT_AVATAR_URL}
           alt={actor?.displayName}
         />
       </div>

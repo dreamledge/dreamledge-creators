@@ -7,6 +7,7 @@ import type { ContentModel, SocialPlatform } from "@/types/models";
 import { useFeedContext } from "../feed/FeedList";
 import { useCommentModal } from "../overlays/CommentModal";
 import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
+import { DEFAULT_AVATAR_URL } from "@/lib/constants/defaults";
 
 interface ContentCardProps {
   content: ContentModel;
@@ -228,7 +229,7 @@ export function ContentCard({ content, hideActions = false }: ContentCardProps) 
         <div className="creator-left">
           <Link to={`/app/profile/${creator?.id}`} className="creator-link">
             <img 
-              src={creator?.photoUrl || "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=100&q=80"} 
+              src={creator?.photoUrl || DEFAULT_AVATAR_URL}
               alt={creator?.displayName}
               className={`creator-photo ${isLiveContent ? "creator-photo-live" : ""}`}
             />
