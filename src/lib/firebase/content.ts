@@ -1,4 +1,4 @@
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc } from "firebase/firestore";
 import { firestore } from "@/lib/firebase";
 import { DEFAULT_CONTENT_THUMBNAIL } from "@/lib/constants/defaults";
 import type { ContentModel, ContentPlatform } from "@/types/models";
@@ -120,4 +120,13 @@ export async function publishContent(input: CreateContentInput) {
 
   const snapshot = await addDoc(collection(firestore, CONTENT_COLLECTION), payload);
   return { id: snapshot.id, payload };
+}
+
+export async function deleteContent(contentId: string, _creatorId: string) {
+  if (!firestore) {
+    throw new Error("Firebase Firestore is not configured.");
+  }
+
+  const contentRef = doc(firestore, CONTENT_COLLECTION, contentId);
+  await deleteDoc(contentRef);
 }

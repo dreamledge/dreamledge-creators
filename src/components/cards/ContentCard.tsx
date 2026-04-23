@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Heart, MessageCircle, Share2, Bookmark } from "lucide-react";
+import { Heart, MessageCircle, Share2, Bookmark, Trash2, X } from "lucide-react";
 import { formatCompactNumber } from "@/lib/formatters";
 import { mockUsers, LIVE_CONTENT_MAX_AGE_MS } from "@/lib/constants/mockData";
 import type { ContentModel, SocialPlatform, UserModel } from "@/types/models";
 import { useFeedContext } from "../feed/FeedList";
+import { useAuth } from "@/app/providers/AuthProvider";
+import { deleteContent } from "@/lib/firebase/content";
 import { useCommentModal } from "../overlays/CommentModal";
 import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
 import { DEFAULT_AVATAR_URL, DEFAULT_CONTENT_THUMBNAIL } from "@/lib/constants/defaults";
@@ -83,6 +85,7 @@ const TwitchIcon = () => (
 export function ContentCard({ content, hideActions = false, creatorOverride = null }: ContentCardProps) {
   const { currentPlayingId, setCurrentPlaying, mediaUnlockToken } = useFeedContext();
   const { openCommentModal } = useCommentModal();
+  const { user } = useAuth();
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [videoSrc, setVideoSrc] = useState("");
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -96,6 +99,24 @@ export function ContentCard({ content, hideActions = false, creatorOverride = nu
   const [tiktokVariant, setTiktokVariant] = useState<"player" | "v2">("player");
   const [tiktokMode, setTiktokMode] = useState<"iframe" | "script">("iframe");
   const showVideoLoader = isPlaying && !!videoSrc && !iframeLoaded;
+  
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  const isOwnContent = user?.id === content.creatorId;
+
+  const handleDelete = async () => {
+    if (!isOwnContent || isDeleting) return;
+    
+    setIsDeleting(true);
+    
+    try {
+      await deleteContent(content.id, content.creatorId);
+      setShowDeleteConfirm(false);
+    } catch {
+      setIsDeleting(false);
+    }
+  };
 
   const creator = creatorOverride ?? mockUsers.find((user) => user.id === content.creatorId) ?? null;
 
@@ -421,6 +442,40 @@ export function ContentCard({ content, hideActions = false, creatorOverride = nu
             </a>
           )}
         </div>
+        
+        {isOwnContent && (
+          <button
+            className="delete-post-button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowDeleteConfirm(true);
+            }}
+            title="Delete post"
+          >
+            <Trash2 size={16} />
+          </button>
+        )}
+        
+        {showDeleteConfirm && (
+          <div className="delete-confirm-overlay" onClick={() => setShowDeleteConfirm(false)}>
+            <div className="delete-confirm-modal" onClick={(e) => e.stopPropagation()}>
+              <button className="delete-confirm-close" onClick={() => setShowDeleteConfirm(false)}>
+                <X size={20} />
+              </button>
+              <h3>Delete post?</h3>
+              <p>Are you sure you want to delete this post? This cannot be undone.</p>
+              <div className="delete-confirm-actions">
+                <button className="delete-confirm-cancel" onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting}>
+                  Cancel
+                </button>
+                <button className="delete-confirm-delete" onClick={handleDelete} disabled={isDeleting}>
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       
       <div className="card">
