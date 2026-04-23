@@ -63,6 +63,7 @@ function mapUserDoc(id: string, data: DocumentData): UserModel {
     badges: asStringArray(data.badges),
     verified: Boolean(data.verified),
     rookie: Boolean(data.rookie),
+    matchmakingContentId: typeof data.matchmakingContentId === "string" ? data.matchmakingContentId : null,
     createdAt: toIso(data.createdAt),
     updatedAt: toIso(data.updatedAt),
   };

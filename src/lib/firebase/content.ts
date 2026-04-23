@@ -1,4 +1,4 @@
-import { addDoc, collection, deleteDoc, doc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { firestore } from "@/lib/firebase";
 import { DEFAULT_CONTENT_THUMBNAIL } from "@/lib/constants/defaults";
 import type { ContentModel, ContentPlatform } from "@/types/models";
@@ -129,4 +129,11 @@ export async function deleteContent(contentId: string, _creatorId: string) {
 
   const contentRef = doc(firestore, CONTENT_COLLECTION, contentId);
   await deleteDoc(contentRef);
+}
+
+export async function setMatchmakingContent(userId: string, contentId: string) {
+  if (!firestore) return;
+  
+  const userRef = doc(firestore, "users", userId);
+  await updateDoc(userRef, { matchmakingContentId: contentId });
 }

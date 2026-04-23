@@ -6,10 +6,11 @@ import { FeedProvider } from "@/components/feed/FeedList";
 import { CommentModal, CommentModalProvider } from "@/components/overlays/CommentModal";
 import { DEFAULT_AVATAR_URL } from "@/lib/constants/defaults";
 import { subscribePublicFeed, subscribePublicUsers } from "@/lib/firebase/publicData";
+import { joinMatchmaking, leaveMatchmaking, findAndClaimMatchmakingOpponent } from "@/lib/firebase/matchmaking";
 import { MIN_WATCH_TIME } from "@/lib/constants/reviewSessions";
 import type { ContentModel, ReviewCategory, ReviewScoreLabel, ReviewScores, UserModel } from "@/types/models";
 
-const MATCHMAKING_DURATION_MS = 3000;
+const MATCHMAKING_DURATION_MS = 60000;
 const MATCHMAKING_FRAME_MS = 120;
 const BLINK_DURATION_MS = 850;
 const SCREENING_ENTRY_MS = 1900;
@@ -18,9 +19,11 @@ const TITLE_REVEAL_MS = 2100;
 const VIDEO_REVEAL_MS = 900;
 const SUBMITTING_MS = 1000;
 const TALK_DURATION_MS = 180000;
+const CONTENT_SELECTION_MS = 10000;
 
 type PostMatchPhase =
   | null
+  | "contentSelection"
   | "screeningEntry"
   | "eye"
   | "titleReveal"
@@ -119,6 +122,8 @@ export function ReviewSessionPage() {
   const [isBlinking, setIsBlinking] = useState(false);
   const [postMatchPhase, setPostMatchPhase] = useState<PostMatchPhase>(null);
   const [activeMatchContent, setActiveMatchContent] = useState<ContentModel | null>(null);
+  const [userSelectedContent, setUserSelectedContent] = useState<ContentModel | null>(null);
+  const [selectionCountdown, setSelectionCountdown] = useState(CONTENT_SELECTION_MS / 1000);
   const [reviewScores, setReviewScores] = useState<ReviewScores>(createEmptyScores());
   const [watchElapsedMs, setWatchElapsedMs] = useState(0);
   const [reviewUnlockFlash, setReviewUnlockFlash] = useState(false);
@@ -168,12 +173,8 @@ export function ReviewSessionPage() {
   }, [availableCreators, user]);
 
   const usersById = useMemo(() => new Map(availableCreators.map((entry) => [entry.id, entry])), [availableCreators]);
-  const matchableOpponents = useMemo(() => availableCreators.filter((entry) => entry.id !== currentCreator.id), [availableCreators, currentCreator.id]);
-  const finalOpponent = useMemo(
-    () => matchableOpponents.find((entry) => entry.username === "berto_brown") ?? matchableOpponents[0] ?? null,
-    [currentCreator, matchableOpponents],
-  );
   const [displayedOpponent, setDisplayedOpponent] = useState<MatchProfile | null>(null);
+  const [matchmakingEntryId, setMatchmakingEntryId] = useState<string | null>(null);
 
   const allReviewSelected = useMemo(
     () => Object.values(reviewScores).every((value) => value !== null),
@@ -268,23 +269,67 @@ export function ReviewSessionPage() {
     };
   }, [postMatchPhase]);
 
-  const resolveOpponentContent = (opponentId: string) => {
-    const directMatch = availableContent
-      .filter((item) => item.creatorId === opponentId && item.status !== "live")
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
-
-    return directMatch ?? availableContent.find((item) => item.status !== "live") ?? null;
-  };
-
-  const beginPostMatchFlow = (matchedOpponent: MatchProfile) => {
-    const matchedContent = resolveOpponentContent(matchedOpponent.id);
-    setActiveMatchContent(matchedContent);
+  const beginPostMatchFlow = () => {
     setReviewScores(createEmptyScores());
     setWatchElapsedMs(0);
     setReviewUnlockFlash(false);
     setTalkRemainingMs(TALK_DURATION_MS);
-    setPostMatchPhase("screeningEntry");
+    setPostMatchPhase("contentSelection");
+    setSelectionCountdown(CONTENT_SELECTION_MS / 1000);
 
+    const countdownInterval = window.setInterval(() => {
+      setSelectionCountdown((prev) => {
+        if (prev <= 1) {
+          window.clearInterval(countdownInterval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    continuationTimeoutsRef.current.push(countdownInterval);
+
+    const selectionTimeout = window.setTimeout(() => {
+      const savedContentId = user?.matchmakingContentId;
+      const userContent = userSelectedContent || availableContent.find((item) => item.id === savedContentId) || availableContent.find((item) => item.creatorId === currentCreator.id && item.status !== "live") || null;
+      
+      setActiveMatchContent(userContent);
+
+      if (userContent) {
+        window.clearInterval(countdownInterval);
+        setPostMatchPhase("screeningEntry");
+        
+        const eyeTimeout = window.setTimeout(() => setPostMatchPhase("eye"), SCREENING_ENTRY_MS);
+        const titleTimeout = window.setTimeout(() => setPostMatchPhase("titleReveal"), SCREENING_ENTRY_MS + EYE_STAGE_MS);
+        const revealTimeout = window.setTimeout(() => setPostMatchPhase("videoReveal"), SCREENING_ENTRY_MS + EYE_STAGE_MS + TITLE_REVEAL_MS);
+        const watchingTimeout = window.setTimeout(() => {
+          setPostMatchPhase("videoWatching");
+          setWatchElapsedMs(0);
+        }, SCREENING_ENTRY_MS + EYE_STAGE_MS + TITLE_REVEAL_MS + VIDEO_REVEAL_MS);
+        const unlockTimeout = window.setTimeout(() => {
+          setPostMatchPhase("reviewUnlocked");
+          setReviewUnlockFlash(true);
+          const flashTimeout = window.setTimeout(() => setReviewUnlockFlash(false), 1200);
+          continuationTimeoutsRef.current.push(flashTimeout);
+        }, SCREENING_ENTRY_MS + EYE_STAGE_MS + TITLE_REVEAL_MS + VIDEO_REVEAL_MS + MIN_WATCH_TIME);
+
+        continuationTimeoutsRef.current.push(eyeTimeout, titleTimeout, revealTimeout, watchingTimeout, unlockTimeout);
+      } else {
+        setMatchingMessage("No content available for review.");
+        setIsMatching(false);
+        setPostMatchPhase(null);
+      }
+    }, CONTENT_SELECTION_MS);
+    continuationTimeoutsRef.current.push(selectionTimeout);
+  };
+
+  const handleSelectContent = (content: ContentModel) => {
+    setUserSelectedContent(content);
+    window.clearInterval(continuationTimeoutsRef.current.pop() as unknown as number);
+    window.clearTimeout(continuationTimeoutsRef.current.pop() as unknown as number);
+    
+    setActiveMatchContent(content);
+    setPostMatchPhase("screeningEntry");
+    
     const eyeTimeout = window.setTimeout(() => setPostMatchPhase("eye"), SCREENING_ENTRY_MS);
     const titleTimeout = window.setTimeout(() => setPostMatchPhase("titleReveal"), SCREENING_ENTRY_MS + EYE_STAGE_MS);
     const revealTimeout = window.setTimeout(() => setPostMatchPhase("videoReveal"), SCREENING_ENTRY_MS + EYE_STAGE_MS + TITLE_REVEAL_MS);
@@ -302,12 +347,9 @@ export function ReviewSessionPage() {
     continuationTimeoutsRef.current.push(eyeTimeout, titleTimeout, revealTimeout, watchingTimeout, unlockTimeout);
   };
 
-  const startMatchmakingSequence = ({ playSound }: { playSound: boolean }) => {
+  const startMatchmakingSequence = async ({ playSound }: { playSound: boolean }) => {
     if (isMatching || isBlinking) return;
-    if (!matchableOpponents.length || !finalOpponent) {
-      setMatchingMessage("No creators are available to match yet.");
-      return;
-    }
+    if (!currentCreator?.id) return;
 
     if (matchIntervalRef.current) window.clearInterval(matchIntervalRef.current);
     if (matchTimeoutRef.current) window.clearTimeout(matchTimeoutRef.current);
@@ -324,26 +366,41 @@ export function ReviewSessionPage() {
     setIsBlinking(true);
     setDisplayedOpponent(null);
 
-    matchTimeoutRef.current = window.setTimeout(() => {
+    matchTimeoutRef.current = window.setTimeout(async () => {
       setIsBlinking(false);
       setIsMatching(true);
-      setMatchingMessage("Matchmaking in progress. Scanning creators now.");
+      setMatchingMessage("Searching for an opponent...");
 
-      matchIntervalRef.current = window.setInterval(() => {
-        const randomOpponent = matchableOpponents[Math.floor(Math.random() * matchableOpponents.length)] ?? finalOpponent;
-        setDisplayedOpponent(randomOpponent);
+      const entryId = await joinMatchmaking(currentCreator.id);
+      setMatchmakingEntryId(entryId);
+
+      const pollingInterval = window.setInterval(async () => {
+        const opponentId = await findAndClaimMatchmakingOpponent(currentCreator.id);
+        
+        if (opponentId) {
+          window.clearInterval(pollingInterval);
+          setMatchmakingEntryId(null);
+
+          const matchedOpponent = availableCreators.find(c => c.id === opponentId);
+          if (matchedOpponent) {
+            setDisplayedOpponent(matchedOpponent);
+            setIsMatching(false);
+            setMatchingMessage("");
+            beginPostMatchFlow();
+          } else {
+            setMatchingMessage("No opponents found. Try again later.");
+            setIsMatching(false);
+          }
+        }
       }, MATCHMAKING_FRAME_MS);
 
-      matchTimeoutRef.current = window.setTimeout(() => {
-        if (matchIntervalRef.current) {
-          window.clearInterval(matchIntervalRef.current);
-          matchIntervalRef.current = null;
-        }
+      matchTimeoutRef.current = window.setTimeout(async () => {
+        window.clearInterval(pollingInterval);
+        setMatchmakingEntryId(null);
 
-        setDisplayedOpponent(finalOpponent);
+        setDisplayedOpponent(null);
         setIsMatching(false);
-        setMatchingMessage("");
-        beginPostMatchFlow(finalOpponent);
+        setMatchingMessage("No opponents found. Try again later.");
       }, MATCHMAKING_DURATION_MS);
     }, BLINK_DURATION_MS);
   };
@@ -369,8 +426,12 @@ export function ReviewSessionPage() {
     window.open(activeMatchContent.sourceUrl, "_blank", "noopener,noreferrer");
   };
 
-  const handleReturnToStart = () => {
+  const handleReturnToStart = async () => {
     clearContinuationTimers();
+    if (matchmakingEntryId) {
+      await leaveMatchmaking(matchmakingEntryId);
+      setMatchmakingEntryId(null);
+    }
     resetToIdle();
   };
 
@@ -427,11 +488,11 @@ export function ReviewSessionPage() {
               type="button"
               className="cta-button edit-profile review-session-action-button"
               onClick={handleStartMatching}
-              disabled={isMatching || isBlinking || postMatchActive || !matchableOpponents.length}
+              disabled={isMatching || isBlinking || postMatchActive}
             >
-              {isBlinking ? "Initializing..." : isMatching ? "Matching..." : "Start Matching"}
+              {isBlinking ? "Initializing..." : isMatching ? matchingMessage || "Searching..." : "Start Matching"}
             </button>
-            <Link to="/app/create" className="cta-button edit-profile review-session-action-button review-session-action-link">
+            <Link to="/app/review-select" className="cta-button edit-profile review-session-action-button review-session-action-link">
               Add Your Content
             </Link>
           </div>
@@ -457,6 +518,35 @@ export function ReviewSessionPage() {
                 <div className="review-session-eye-stage-avatar">
                   <OrwellianEyeAvatar blinking={false} />
                   <div className="review-session-eye-scan-beam" />
+                </div>
+              </div>
+            ) : null}
+
+            {postMatchPhase === "contentSelection" ? (
+              <div className="review-session-centered-stage review-session-title-stage">
+                <span className="review-session-stage-kicker">Select Content to Review</span>
+                <div className="review-session-title-content">
+                  <p className="review-session-title-credit">Choose a video you want your opponent to watch ({selectionCountdown}s remaining)</p>
+                </div>
+                <div className="review-session-content-selection-grid">
+                  {availableContent
+                    .filter((item) => item.creatorId === currentCreator.id && item.status !== "live")
+                    .slice(0, 6)
+                    .map((content) => (
+                      <button
+                        key={content.id}
+                        type="button"
+                        className="review-session-content-selection-card"
+                        onClick={() => handleSelectContent(content)}
+                      >
+                        {content.thumbnailUrl ? (
+                          <img src={content.thumbnailUrl} alt={content.title} className="review-session-content-selection-thumbnail" />
+                        ) : (
+                          <div className="review-session-content-selection-placeholder" />
+                        )}
+                        <span className="review-session-content-selection-title">{content.title}</span>
+                      </button>
+                    ))}
                 </div>
               </div>
             ) : null}

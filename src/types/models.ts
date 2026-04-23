@@ -62,6 +62,7 @@ export interface UserModel {
   badges: string[];
   verified: boolean;
   rookie: boolean;
+  matchmakingContentId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -248,6 +249,7 @@ export interface AuthUser {
   bio?: string;
   socialLinks?: Partial<Record<SocialPlatform, string>>;
   bannerUrl?: string;
+  matchmakingContentId?: string | null;
 }
 
 export type ReviewSessionState = "waiting" | "selection" | "watching" | "scoring" | "completed" | "cancelled";
