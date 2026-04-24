@@ -2344,6 +2344,27 @@ button {
 .profile-card-container {
   display: flex;
   justify-content: center;
+  position: relative;
+}
+
+.profile-signout-btn {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.75rem;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.profile-signout-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .profile-card {

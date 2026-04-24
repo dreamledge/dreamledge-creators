@@ -6,18 +6,18 @@ import { FeedProvider } from "@/components/feed/FeedList";
 import { CommentModal, CommentModalProvider } from "@/components/overlays/CommentModal";
 import { DEFAULT_AVATAR_URL } from "@/lib/constants/defaults";
 import { subscribePublicFeed, subscribePublicUsers } from "@/lib/firebase/publicData";
+import { leaveWaitingQueue, startMatchmaking } from "@/lib/firebase/matchmaking";
 import { MIN_WATCH_TIME } from "@/lib/constants/reviewSessions";
 import type { ContentModel, ReviewCategory, ReviewScoreLabel, ReviewScores, UserModel } from "@/types/models";
 
-const MATCHMAKING_DURATION_MS = 3000;
-const MATCHMAKING_FRAME_MS = 120;
-const BLINK_DURATION_MS = 850;
+const MATCHMAKING_TIMEOUT_MS = 30000;
 const SCREENING_ENTRY_MS = 1900;
 const EYE_STAGE_MS = 1300;
 const TITLE_REVEAL_MS = 2100;
 const VIDEO_REVEAL_MS = 900;
 const SUBMITTING_MS = 1000;
 const TALK_DURATION_MS = 180000;
+const BLINK_DURATION_MS = 850;
 
 type PostMatchPhase =
   | null
@@ -135,9 +135,21 @@ export function ReviewSessionPage() {
     const unsubscribeUsers = subscribePublicUsers(setAvailableCreators);
     const unsubscribeContent = subscribePublicFeed(setAvailableContent);
 
+    const handleBeforeUnload = () => {
+      if (currentCreator?.id) {
+        leaveWaitingQueue(currentCreator.id);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     return () => {
       unsubscribeUsers();
       unsubscribeContent();
+      if (currentCreator?.id) {
+        leaveWaitingQueue(currentCreator.id);
+      }
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
 
@@ -168,11 +180,6 @@ export function ReviewSessionPage() {
   }, [availableCreators, user]);
 
   const usersById = useMemo(() => new Map(availableCreators.map((entry) => [entry.id, entry])), [availableCreators]);
-  const matchableOpponents = useMemo(() => availableCreators.filter((entry) => entry.id !== currentCreator.id), [availableCreators, currentCreator.id]);
-  const finalOpponent = useMemo(
-    () => matchableOpponents.find((entry) => entry.username === "berto_brown") ?? matchableOpponents[0] ?? null,
-    [currentCreator, matchableOpponents],
-  );
   const [displayedOpponent, setDisplayedOpponent] = useState<MatchProfile | null>(null);
 
   const allReviewSelected = useMemo(
@@ -302,16 +309,16 @@ export function ReviewSessionPage() {
     continuationTimeoutsRef.current.push(eyeTimeout, titleTimeout, revealTimeout, watchingTimeout, unlockTimeout);
   };
 
-  const startMatchmakingSequence = ({ playSound }: { playSound: boolean }) => {
+  const startMatchmakingSequence = async ({ playSound }: { playSound: boolean }) => {
     if (isMatching || isBlinking) return;
-    if (!matchableOpponents.length || !finalOpponent) {
-      setMatchingMessage("No creators are available to match yet.");
-      return;
-    }
+    if (!currentCreator?.id) return;
 
-    if (matchIntervalRef.current) window.clearInterval(matchIntervalRef.current);
     if (matchTimeoutRef.current) window.clearTimeout(matchTimeoutRef.current);
     resetPostMatchState();
+    setIsMatching(true);
+    setIsBlinking(true);
+    setDisplayedOpponent(null);
+    setMatchingMessage("Searching for opponent...");
 
     if (playSound) {
       if (!scaryEyeAudioRef.current) {
@@ -321,30 +328,39 @@ export function ReviewSessionPage() {
       void scaryEyeAudioRef.current.play().catch(() => undefined);
     }
 
-    setIsBlinking(true);
-    setDisplayedOpponent(null);
-
-    matchTimeoutRef.current = window.setTimeout(() => {
+    matchTimeoutRef.current = window.setTimeout(async () => {
       setIsBlinking(false);
-      setIsMatching(true);
-      setMatchingMessage("Matchmaking in progress. Scanning creators now.");
 
-      matchIntervalRef.current = window.setInterval(() => {
-        const randomOpponent = matchableOpponents[Math.floor(Math.random() * matchableOpponents.length)] ?? finalOpponent;
-        setDisplayedOpponent(randomOpponent);
-      }, MATCHMAKING_FRAME_MS);
+      const cleanup = await startMatchmaking(
+        currentCreator.id,
+        async (result) => {
+          cleanup();
+          
+          if (result.matched && result.opponentId) {
+            const matchedOpponent = availableCreators.find(c => c.id === result.opponentId);
+            if (matchedOpponent) {
+              setDisplayedOpponent(matchedOpponent);
+              setIsMatching(false);
+              setMatchingMessage("");
+              beginPostMatchFlow(matchedOpponent);
+            }
+          }
+        },
+        MATCHMAKING_TIMEOUT_MS
+      );
 
-      matchTimeoutRef.current = window.setTimeout(() => {
-        if (matchIntervalRef.current) {
-          window.clearInterval(matchIntervalRef.current);
-          matchIntervalRef.current = null;
-        }
-
-        setDisplayedOpponent(finalOpponent);
-        setIsMatching(false);
-        setMatchingMessage("");
-        beginPostMatchFlow(finalOpponent);
-      }, MATCHMAKING_DURATION_MS);
+      // Only set up timeout if we didn't get an immediate match
+      // The startMatchmaking function returns a cleanup function that handles timeouts
+      // if there was no immediate match
+      if (typeof cleanup === 'function') {
+        matchTimeoutRef.current = window.setTimeout(async () => {
+          cleanup();
+          await leaveWaitingQueue(currentCreator.id);
+          setDisplayedOpponent(null);
+          setIsMatching(false);
+          setMatchingMessage("No users in queue. Try again later.");
+        }, MATCHMAKING_TIMEOUT_MS);
+      }
     }, BLINK_DURATION_MS);
   };
 
@@ -369,8 +385,11 @@ export function ReviewSessionPage() {
     window.open(activeMatchContent.sourceUrl, "_blank", "noopener,noreferrer");
   };
 
-  const handleReturnToStart = () => {
+  const handleReturnToStart = async () => {
     clearContinuationTimers();
+    if (currentCreator?.id) {
+      await leaveWaitingQueue(currentCreator.id);
+    }
     resetToIdle();
   };
 
@@ -427,9 +446,9 @@ export function ReviewSessionPage() {
               type="button"
               className="cta-button edit-profile review-session-action-button"
               onClick={handleStartMatching}
-              disabled={isMatching || isBlinking || postMatchActive || !matchableOpponents.length}
+              disabled={isMatching || isBlinking || postMatchActive}
             >
-              {isBlinking ? "Initializing..." : isMatching ? "Matching..." : "Start Matching"}
+              {isBlinking ? "Initializing..." : isMatching ? matchingMessage || "Searching..." : "Start Matching"}
             </button>
             <Link to="/app/create" className="cta-button edit-profile review-session-action-button review-session-action-link">
               Add Your Content

@@ -12,10 +12,19 @@ interface ProfileCardProps {
 }
 
 export function ProfileCard({ creator, isOwnProfile = false }: ProfileCardProps) {
-  const { user, toggleFollow } = useAuth();
+  const { user, toggleFollow, logout } = useAuth();
   const navigate = useNavigate();
   const isOwn = isOwnProfile || user?.id === creator.id;
   const [showEditModal, setShowEditModal] = useState(false);
+
+  const handleSignOut = async () => {
+    try {
+      await logout();
+      navigate("/");
+    } catch (error) {
+      console.error("Failed to sign out:", error);
+    }
+  };
 
   const currentFollowingIds = user?.followingIds ?? [];
   const isFollowing = !isOwn && currentFollowingIds.includes(creator.id);
@@ -28,6 +37,11 @@ export function ProfileCard({ creator, isOwnProfile = false }: ProfileCardProps)
   return (
     <>
       <div className="profile-card-container">
+        {isOwn && (
+          <button type="button" className="profile-signout-btn" onClick={handleSignOut}>
+            Sign out
+          </button>
+        )}
         <div className="profile-card">
           <div className="profile-image">
             <img
