@@ -8,7 +8,9 @@ import { DEFAULT_AVATAR_URL } from "@/lib/constants/defaults";
 import { subscribePublicFeed, subscribePublicUsers } from "@/lib/firebase/publicData";
 import { leaveWaitingQueue, startMatchmaking } from "@/lib/firebase/matchmaking";
 import { MIN_WATCH_TIME } from "@/lib/constants/reviewSessions";
-import type { ContentModel, ReviewCategory, ReviewScoreLabel, ReviewScores, UserModel } from "@/types/models";
+import type { ContentModel, ReviewCategory, ReviewScoreLabel, ReviewScores, UserModel, ReviewSessionModel } from "@/types/models";
+import { createReviewRecord } from "@/features/reviewSessions/sessionLogic";
+import { upsertReviewSession } from "@/lib/firebase/reviewSessions";
 
 const MATCHMAKING_TIMEOUT_MS = 30000;
 const SCREENING_ENTRY_MS = 1900;
@@ -119,11 +121,12 @@ export function ReviewSessionPage() {
   const [isBlinking, setIsBlinking] = useState(false);
   const [postMatchPhase, setPostMatchPhase] = useState<PostMatchPhase>(null);
   const [activeMatchContent, setActiveMatchContent] = useState<ContentModel | null>(null);
-  const [reviewScores, setReviewScores] = useState<ReviewScores>(createEmptyScores());
-  const [watchElapsedMs, setWatchElapsedMs] = useState(0);
-  const [reviewUnlockFlash, setReviewUnlockFlash] = useState(false);
-  const [talkRemainingMs, setTalkRemainingMs] = useState(TALK_DURATION_MS);
-  const [talkToastMode] = useState(false);
+   const [reviewScores, setReviewScores] = useState<ReviewScores>(createEmptyScores());
+   const [watchElapsedMs, setWatchElapsedMs] = useState(0);
+   const [reviewUnlockFlash, setReviewUnlockFlash] = useState(false);
+   const [talkRemainingMs, setTalkRemainingMs] = useState(TALK_DURATION_MS);
+   const [talkToastMode] = useState(false);
+   const [hasSubmitted, setHasSubmitted] = useState(false);
   const scaryEyeAudioRef = useRef<HTMLAudioElement | null>(null);
   const matchIntervalRef = useRef<number | null>(null);
   const matchTimeoutRef = useRef<number | null>(null);
@@ -137,7 +140,7 @@ export function ReviewSessionPage() {
 
     const handleBeforeUnload = () => {
       if (currentCreator?.id) {
-        leaveWaitingQueue(currentCreator.id);
+        leaveWaitingQueue();
       }
     };
 
@@ -146,9 +149,9 @@ export function ReviewSessionPage() {
     return () => {
       unsubscribeUsers();
       unsubscribeContent();
-      if (currentCreator?.id) {
-        leaveWaitingQueue(currentCreator.id);
-      }
+       if (currentCreator?.id) {
+         leaveWaitingQueue();
+       }
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
@@ -331,36 +334,34 @@ export function ReviewSessionPage() {
     matchTimeoutRef.current = window.setTimeout(async () => {
       setIsBlinking(false);
 
-      const cleanup = await startMatchmaking(
+      const cleanup = startMatchmaking(
         currentCreator.id,
-        async (result) => {
+        (opponentId) => {
           cleanup();
           
-          if (result.matched && result.opponentId) {
-            const matchedOpponent = availableCreators.find(c => c.id === result.opponentId);
-            if (matchedOpponent) {
-              setDisplayedOpponent(matchedOpponent);
-              setIsMatching(false);
-              setMatchingMessage("");
-              beginPostMatchFlow(matchedOpponent);
-            }
+          const matchedOpponent = availableCreators.find(c => c.id === opponentId);
+          if (matchedOpponent) {
+            setDisplayedOpponent(matchedOpponent);
+            setIsMatching(false);
+            setMatchingMessage("");
+            beginPostMatchFlow(matchedOpponent);
           }
         },
         MATCHMAKING_TIMEOUT_MS
       );
 
-      // Only set up timeout if we didn't get an immediate match
-      // The startMatchmaking function returns a cleanup function that handles timeouts
-      // if there was no immediate match
-      if (typeof cleanup === 'function') {
-        matchTimeoutRef.current = window.setTimeout(async () => {
-          cleanup();
-          await leaveWaitingQueue(currentCreator.id);
-          setDisplayedOpponent(null);
-          setIsMatching(false);
-          setMatchingMessage("No users in queue. Try again later.");
-        }, MATCHMAKING_TIMEOUT_MS);
-      }
+       // Only set up timeout if we didn't get an immediate match
+       // The startMatchmaking function returns a cleanup function that handles timeouts
+       // if there was no immediate match
+       if (typeof cleanup === 'function') {
+         matchTimeoutRef.current = window.setTimeout(async () => {
+           cleanup();
+           await leaveWaitingQueue();
+           setDisplayedOpponent(null);
+           setIsMatching(false);
+           setMatchingMessage("No users in queue. Try again later.");
+         }, MATCHMAKING_TIMEOUT_MS);
+       }
     }, BLINK_DURATION_MS);
   };
 
@@ -368,13 +369,67 @@ export function ReviewSessionPage() {
     startMatchmakingSequence({ playSound: true });
   };
 
-  const handleSubmitReview = () => {
-    if (!reviewUnlocked || !allReviewSelected) return;
+    const handleSubmitReview = async () => {
+      if (!reviewUnlocked || !allReviewSelected) return;
 
-    setPostMatchPhase("submitted");
-    const decisionTimeout = window.setTimeout(() => setPostMatchPhase("decision"), SUBMITTING_MS);
-    continuationTimeoutsRef.current.push(decisionTimeout);
-  };
+      // Save review records for both users
+      if (currentCreator?.id && displayedOpponent?.id) {
+        // Create review records
+        const reviewForA = createReviewRecord(currentCreator.id, displayedOpponent.id, reviewScores);
+        const reviewForB = createReviewRecord(displayedOpponent.id, currentCreator.id, reviewScores);
+        
+        // Create and save the session to Firebase
+        try {
+          const sessionId = `session-${Date.now()}`;
+          const session: ReviewSessionModel = {
+            id: sessionId,
+            creatorA: currentCreator.id,
+            creatorB: displayedOpponent.id,
+            creatorASubmission: null, // We don't have this info in the UI
+            creatorBSubmission: null, // We don't have this info in the UI
+            creatorAWatchProgress: {
+              watchedMilliseconds: watchElapsedMs,
+              hasMetMinimumWatchRequirement: watchElapsedMs >= MIN_WATCH_TIME,
+              lastPlaybackPosition: 0,
+              watchStartedAt: new Date().toISOString()
+            },
+            creatorBWatchProgress: {
+              watchedMilliseconds: watchElapsedMs,
+              hasMetMinimumWatchRequirement: watchElapsedMs >= MIN_WATCH_TIME,
+              lastPlaybackPosition: 0,
+              watchStartedAt: new Date().toISOString()
+            },
+            creatorAReviewForB: reviewForA,
+            creatorBReviewForA: reviewForB,
+            status: "completed",
+            selectionExpiresAt: null,
+            scoringExpiresAt: null,
+            watchingDeadlineAt: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          
+          await upsertReviewSession(session);
+          console.log('Saved review session:', sessionId);
+        } catch (error) {
+          console.error('Error saving review session:', error);
+        }
+        
+        // Mark that the current user has submitted their review
+        setHasSubmitted(true);
+        
+        // In a real implementation, we would subscribe to Firebase updates to check when opponent submits
+        // For this implementation, we'll use a timeout to simulate waiting for opponent
+        // In practice, this would be replaced with real-time Firebase updates
+        setPostMatchPhase("submitted");
+        const decisionTimeout = window.setTimeout(() => {
+          // Check if opponent has also submitted (simulated)
+          // In a real app, this would check Firebase for opponent's submission
+          setPostMatchPhase("decision");
+        }, SUBMITTING_MS);
+        continuationTimeoutsRef.current.push(decisionTimeout);
+      }
+    };
 
   const handleLeaveComment = () => {
     if (!activeMatchContent?.sourceUrl) {
@@ -385,13 +440,13 @@ export function ReviewSessionPage() {
     window.open(activeMatchContent.sourceUrl, "_blank", "noopener,noreferrer");
   };
 
-  const handleReturnToStart = async () => {
-    clearContinuationTimers();
-    if (currentCreator?.id) {
-      await leaveWaitingQueue(currentCreator.id);
-    }
-    resetToIdle();
-  };
+   const handleReturnToStart = async () => {
+     clearContinuationTimers();
+     if (currentCreator?.id) {
+       await leaveWaitingQueue();
+     }
+     resetToIdle();
+   };
 
   const rightProfile = displayedOpponent
       ? {

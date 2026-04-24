@@ -4,6 +4,9 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { firebaseConfig, firebaseConfigured } from "@/lib/firebase/config";
 
+console.log('Firebase config:', firebaseConfig);
+console.log('Firebase configured:', firebaseConfigured);
+
 const app = firebaseConfigured ? (getApps().length ? getApp() : initializeApp(firebaseConfig)) : null;
 const authInstance = app ? getAuth(app) : null;
 
