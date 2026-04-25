@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { ContentCard } from "@/components/cards/ContentCard";
@@ -10,14 +10,14 @@ import { leaveWaitingQueue, startMatchmaking } from "@/lib/firebase/matchmaking"
 import { MIN_WATCH_TIME } from "@/lib/constants/reviewSessions";
 import type { ContentModel, ReviewCategory, ReviewScoreLabel, ReviewScores, UserModel, ReviewSessionModel } from "@/types/models";
 import { createReviewRecord } from "@/features/reviewSessions/sessionLogic";
-import { upsertReviewSession } from "@/lib/firebase/reviewSessions";
+import { upsertReviewSession, subscribeReviewSession, findOrCreateSession } from "@/lib/firebase/reviewSessions";
+import { ReviewSummaryCard } from "@/components/reviewSessions/ReviewSummaryCard";
 
 const MATCHMAKING_TIMEOUT_MS = 30000;
 const SCREENING_ENTRY_MS = 1900;
 const EYE_STAGE_MS = 1300;
 const TITLE_REVEAL_MS = 2100;
 const VIDEO_REVEAL_MS = 900;
-const SUBMITTING_MS = 1000;
 const TALK_DURATION_MS = 180000;
 const BLINK_DURATION_MS = 850;
 
@@ -30,6 +30,7 @@ type PostMatchPhase =
   | "videoWatching"
   | "reviewUnlocked"
   | "submitted"
+  | "completed"
   | "decision"
   | "talk"
   | "restarting";
@@ -63,6 +64,34 @@ type MatchProfile = {
 
 function createEmptyScores(): ReviewScores {
   return { creativity: null, execution: null, entertainment: null };
+}
+
+function createMinimalUserModel(user: UserModel | MatchProfile): UserModel {
+  return {
+    id: user.id,
+    displayName: user.displayName,
+    username: user.username,
+    photoUrl: user.photoUrl,
+    verified: user.verified,
+    email: '',
+    bannerUrl: '',
+    bio: '',
+    categories: [],
+    goals: [],
+    socialLinks: {},
+    totalPoints: 0,
+    battleWins: 0,
+    contestWins: 0,
+    followerCount: 0,
+    followingCount: 0,
+    followerIds: [],
+    followingIds: [],
+    badges: [],
+    rookie: false,
+    matchmakingContentId: null,
+    createdAt: '',
+    updatedAt: ''
+  };
 }
 
 function ReviewSessionVerifiedBadge() {
@@ -117,17 +146,18 @@ export function ReviewSessionPage() {
   const [availableCreators, setAvailableCreators] = useState<UserModel[]>([]);
   const [availableContent, setAvailableContent] = useState<ContentModel[]>([]);
   const [matchingMessage, setMatchingMessage] = useState("Tap start matching to begin pairing.");
-  const [isMatching, setIsMatching] = useState(false);
-  const [isBlinking, setIsBlinking] = useState(false);
-  const [postMatchPhase, setPostMatchPhase] = useState<PostMatchPhase>(null);
-  const [activeMatchContent, setActiveMatchContent] = useState<ContentModel | null>(null);
-   const [reviewScores, setReviewScores] = useState<ReviewScores>(createEmptyScores());
-   const [watchElapsedMs, setWatchElapsedMs] = useState(0);
-   const [reviewUnlockFlash, setReviewUnlockFlash] = useState(false);
-   const [talkRemainingMs, setTalkRemainingMs] = useState(TALK_DURATION_MS);
-   const [talkToastMode] = useState(false);
-   const [hasSubmitted, setHasSubmitted] = useState(false);
+   const [isMatching, setIsMatching] = useState(false);
+   const [isBlinking, setIsBlinking] = useState(false);
+   const [postMatchPhase, setPostMatchPhase] = useState<PostMatchPhase>(null);
+   const [activeMatchContent, setActiveMatchContent] = useState<ContentModel | null>(null);
+    const [reviewScores, setReviewScores] = useState<ReviewScores>(createEmptyScores());
+    const [watchElapsedMs, setWatchElapsedMs] = useState(0);
+    const [reviewUnlockFlash, setReviewUnlockFlash] = useState(false);
+    const [talkRemainingMs, setTalkRemainingMs] = useState(TALK_DURATION_MS);
+    const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+    const [reviewSessionData, setReviewSessionData] = useState<ReviewSessionModel | null>(null);
   const scaryEyeAudioRef = useRef<HTMLAudioElement | null>(null);
+  const availableCreatorsRef = useRef<UserModel[]>([]);
   const matchIntervalRef = useRef<number | null>(null);
   const matchTimeoutRef = useRef<number | null>(null);
   const continuationTimeoutsRef = useRef<number[]>([]);
@@ -140,20 +170,20 @@ export function ReviewSessionPage() {
 
     const handleBeforeUnload = () => {
       if (currentCreator?.id) {
-        leaveWaitingQueue();
+        leaveWaitingQueue(currentCreator.id);
       }
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
 
-    return () => {
-      unsubscribeUsers();
-      unsubscribeContent();
-       if (currentCreator?.id) {
-         leaveWaitingQueue();
-       }
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
+     return () => {
+       unsubscribeUsers();
+       unsubscribeContent();
+        if (currentCreator?.id) {
+         leaveWaitingQueue(currentCreator.id);
+        }
+       window.removeEventListener('beforeunload', handleBeforeUnload);
+     };
   }, []);
 
   const currentCreator = useMemo(() => {
@@ -185,6 +215,10 @@ export function ReviewSessionPage() {
   const usersById = useMemo(() => new Map(availableCreators.map((entry) => [entry.id, entry])), [availableCreators]);
   const [displayedOpponent, setDisplayedOpponent] = useState<MatchProfile | null>(null);
 
+  useEffect(() => {
+    availableCreatorsRef.current = availableCreators;
+  }, [availableCreators]);
+
   const allReviewSelected = useMemo(
     () => Object.values(reviewScores).every((value) => value !== null),
     [reviewScores],
@@ -200,23 +234,28 @@ export function ReviewSessionPage() {
     return "Watch before judging";
   }, [isVideoPhase, watchElapsedMs]);
 
-  const clearContinuationTimers = () => {
-    continuationTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
-    continuationTimeoutsRef.current = [];
+   const clearContinuationTimers = useCallback(() => {
+     continuationTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
+     continuationTimeoutsRef.current = [];
 
-    if (watchIntervalRef.current) {
-      window.clearInterval(watchIntervalRef.current);
-      watchIntervalRef.current = null;
-    }
+     if (watchIntervalRef.current) {
+       window.clearInterval(watchIntervalRef.current);
+       watchIntervalRef.current = null;
+     }
 
-    if (talkIntervalRef.current) {
-      window.clearInterval(talkIntervalRef.current);
-      talkIntervalRef.current = null;
-    }
+      if (talkIntervalRef.current) {
+        window.clearInterval(talkIntervalRef.current);
+        talkIntervalRef.current = null;
+      }
+    }, []);
 
-  };
+   // Talk mode toast handling - temporarily disabled for simplicity
+   // const handleTalkToast = () => {
+   //   setTalkToastMode(true);
+   //   setTimeout(() => setTalkToastMode(false), 3000);
+   // };
 
-  const resetPostMatchState = () => {
+  const resetPostMatchState = useCallback(() => {
     clearContinuationTimers();
     setPostMatchPhase(null);
     setActiveMatchContent(null);
@@ -224,9 +263,9 @@ export function ReviewSessionPage() {
     setWatchElapsedMs(0);
     setReviewUnlockFlash(false);
     setTalkRemainingMs(TALK_DURATION_MS);
-  };
+  }, [clearContinuationTimers]);
 
-  const resetToIdle = () => {
+  const resetToIdle = useCallback(() => {
     if (matchIntervalRef.current) {
       window.clearInterval(matchIntervalRef.current);
       matchIntervalRef.current = null;
@@ -241,11 +280,42 @@ export function ReviewSessionPage() {
     setIsMatching(false);
     setIsBlinking(false);
     setMatchingMessage("Tap start matching to begin pairing.");
-  };
+  }, [resetPostMatchState]);
 
-  useEffect(() => {
-    resetToIdle();
-  }, [currentCreator.id]);
+    useEffect(() => {
+      resetToIdle();
+    }, [currentCreator.id, resetToIdle]);
+
+    // Subscribe to review session updates when we have a session ID
+    useEffect(() => {
+      if (!currentSessionId) return;
+
+      const unsubscribe = subscribeReviewSession(
+        currentSessionId,
+        (session) => {
+          if (!session) return;
+
+          // Store the session data for use in the completed screen
+          setReviewSessionData(session);
+
+          // Check if both users have submitted their reviews
+          if (session.creatorAReviewForB && session.creatorBReviewForA) {
+            // Both users have submitted - transition to completed phase
+            setPostMatchPhase("completed");
+          }
+        },
+        (error) => {
+          console.error('Error subscribing to review session:', error);
+        }
+      );
+
+      // Cleanup subscription on unmount or when sessionId changes
+      return () => {
+        if (unsubscribe) {
+          unsubscribe();
+        }
+      };
+    }, [currentSessionId]);
 
   useEffect(() => {
     return () => {
@@ -255,7 +325,7 @@ export function ReviewSessionPage() {
       scaryEyeAudioRef.current?.pause();
       scaryEyeAudioRef.current = null;
     };
-  }, []);
+  }, [resetPostMatchState]);
 
   useEffect(() => {
     if (postMatchPhase !== "videoWatching" && postMatchPhase !== "reviewUnlocked") {
@@ -278,13 +348,21 @@ export function ReviewSessionPage() {
     };
   }, [postMatchPhase]);
 
-  const resolveOpponentContent = (opponentId: string) => {
-    const directMatch = availableContent
-      .filter((item) => item.creatorId === opponentId && item.status !== "live")
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+   const resolveOpponentContent = (opponentId: string) => {
+     // First, try to find content marked as default for review
+     const defaultContent = availableContent
+       .filter((item) => item.creatorId === opponentId && item.status !== "live" && item.isDefaultForReview)
+       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
 
-    return directMatch ?? availableContent.find((item) => item.status !== "live") ?? null;
-  };
+     if (defaultContent) return defaultContent;
+
+     // Fallback to most recent content (original behavior)
+     const directMatch = availableContent
+       .filter((item) => item.creatorId === opponentId && item.status !== "live")
+       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+
+     return directMatch ?? availableContent.find((item) => item.status !== "live") ?? null;
+   };
 
   const beginPostMatchFlow = (matchedOpponent: MatchProfile) => {
     const matchedContent = resolveOpponentContent(matchedOpponent.id);
@@ -338,14 +416,28 @@ export function ReviewSessionPage() {
         currentCreator.id,
         (opponentId) => {
           cleanup();
-          
-          const matchedOpponent = availableCreators.find(c => c.id === opponentId);
-          if (matchedOpponent) {
-            setDisplayedOpponent(matchedOpponent);
-            setIsMatching(false);
-            setMatchingMessage("");
-            beginPostMatchFlow(matchedOpponent);
-          }
+
+          const matchedOpponent = availableCreatorsRef.current.find((creator) => creator.id === opponentId);
+          const opponentProfile: MatchProfile = matchedOpponent
+            ? {
+                id: matchedOpponent.id,
+                photoUrl: matchedOpponent.photoUrl,
+                username: matchedOpponent.username,
+                displayName: matchedOpponent.displayName,
+                verified: matchedOpponent.verified,
+              }
+            : {
+                id: opponentId,
+                photoUrl: DEFAULT_AVATAR_URL,
+                username: "creator",
+                displayName: "Matched Creator",
+                verified: false,
+              };
+
+          setDisplayedOpponent(opponentProfile);
+          setIsMatching(false);
+          setMatchingMessage("");
+          beginPostMatchFlow(opponentProfile);
         },
         MATCHMAKING_TIMEOUT_MS
       );
@@ -356,7 +448,7 @@ export function ReviewSessionPage() {
        if (typeof cleanup === 'function') {
          matchTimeoutRef.current = window.setTimeout(async () => {
            cleanup();
-           await leaveWaitingQueue();
+           await leaveWaitingQueue(currentCreator.id);
            setDisplayedOpponent(null);
            setIsMatching(false);
            setMatchingMessage("No users in queue. Try again later.");
@@ -369,67 +461,46 @@ export function ReviewSessionPage() {
     startMatchmakingSequence({ playSound: true });
   };
 
-    const handleSubmitReview = async () => {
-      if (!reviewUnlocked || !allReviewSelected) return;
-
-      // Save review records for both users
-      if (currentCreator?.id && displayedOpponent?.id) {
-        // Create review records
-        const reviewForA = createReviewRecord(currentCreator.id, displayedOpponent.id, reviewScores);
-        const reviewForB = createReviewRecord(displayedOpponent.id, currentCreator.id, reviewScores);
-        
-        // Create and save the session to Firebase
-        try {
-          const sessionId = `session-${Date.now()}`;
-          const session: ReviewSessionModel = {
-            id: sessionId,
-            creatorA: currentCreator.id,
-            creatorB: displayedOpponent.id,
-            creatorASubmission: null, // We don't have this info in the UI
-            creatorBSubmission: null, // We don't have this info in the UI
-            creatorAWatchProgress: {
-              watchedMilliseconds: watchElapsedMs,
-              hasMetMinimumWatchRequirement: watchElapsedMs >= MIN_WATCH_TIME,
-              lastPlaybackPosition: 0,
-              watchStartedAt: new Date().toISOString()
-            },
-            creatorBWatchProgress: {
-              watchedMilliseconds: watchElapsedMs,
-              hasMetMinimumWatchRequirement: watchElapsedMs >= MIN_WATCH_TIME,
-              lastPlaybackPosition: 0,
-              watchStartedAt: new Date().toISOString()
-            },
-            creatorAReviewForB: reviewForA,
-            creatorBReviewForA: reviewForB,
-            status: "completed",
-            selectionExpiresAt: null,
-            scoringExpiresAt: null,
-            watchingDeadlineAt: null,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          };
+      const handleSubmitReview = async () => {
+        if (!reviewUnlocked || !allReviewSelected) return;
+  
+        // Save review record for current user
+        if (currentCreator?.id && displayedOpponent?.id) {
+          // Create review record for current user
+          const reviewForCurrentUser = createReviewRecord(currentCreator.id, displayedOpponent.id, reviewScores);
           
-          await upsertReviewSession(session);
-          console.log('Saved review session:', sessionId);
-        } catch (error) {
-          console.error('Error saving review session:', error);
+          // Find or create session between current user and opponent
+          try {
+            const session: ReviewSessionModel = await findOrCreateSession(
+              currentCreator.id,
+              displayedOpponent.id
+            );
+            
+            // Update the session with current user's review
+            const updatedSession: ReviewSessionModel = {
+              ...session,
+              creatorAReviewForB: 
+                session.creatorA === currentCreator.id 
+                  ? reviewForCurrentUser 
+                  : session.creatorAReviewForB,
+              creatorBReviewForA: 
+                session.creatorB === currentCreator.id 
+                  ? reviewForCurrentUser 
+                  : session.creatorBReviewForA,
+              updatedAt: new Date().toISOString()
+            };
+            
+            await upsertReviewSession(updatedSession);
+            setCurrentSessionId(updatedSession.id);
+            console.log('Updated review session:', updatedSession.id);
+          } catch (error) {
+            console.error('Error saving review session:', error);
+          }
+          
+          // Mark that the current user has submitted their review
+          // In practice, we'll rely on Firebase subscription to detect when both have submitted
         }
-        
-        // Mark that the current user has submitted their review
-        setHasSubmitted(true);
-        
-        // In a real implementation, we would subscribe to Firebase updates to check when opponent submits
-        // For this implementation, we'll use a timeout to simulate waiting for opponent
-        // In practice, this would be replaced with real-time Firebase updates
-        setPostMatchPhase("submitted");
-        const decisionTimeout = window.setTimeout(() => {
-          // Check if opponent has also submitted (simulated)
-          // In a real app, this would check Firebase for opponent's submission
-          setPostMatchPhase("decision");
-        }, SUBMITTING_MS);
-        continuationTimeoutsRef.current.push(decisionTimeout);
-      }
-    };
+      };
 
   const handleLeaveComment = () => {
     if (!activeMatchContent?.sourceUrl) {
@@ -443,7 +514,7 @@ export function ReviewSessionPage() {
    const handleReturnToStart = async () => {
      clearContinuationTimers();
      if (currentCreator?.id) {
-       await leaveWaitingQueue();
+       await leaveWaitingQueue(currentCreator.id);
      }
      resetToIdle();
    };
@@ -621,16 +692,103 @@ export function ReviewSessionPage() {
               </div>
             ) : null}
 
-            {postMatchPhase === "talk" ? (
-              <div className="review-session-talk-room">
-                <div className={`review-session-talk-card ${talkToastMode ? "review-session-talk-toast" : ""}`}>
-                  <span className="review-session-stage-kicker">Post-Review Room</span>
-                  <h2>{formatTalkTime(talkRemainingMs)}</h2>
-                  <p>Talk time remaining</p>
-                  <p>Waiting for other creator...</p>
-                </div>
-              </div>
-            ) : null}
+               {postMatchPhase === "talk" ? (
+                 <div className="review-session-talk-room">
+                   <div className="review-session-talk-card">
+                     <span className="review-session-stage-kicker">Post-Review Room</span>
+                     <h2>{formatTalkTime(talkRemainingMs)}</h2>
+                     <p>Talk time remaining</p>
+                     <p>Waiting for other creator...</p>
+                   </div>
+                 </div>
+               ) : null}
+             
+             {postMatchPhase === "completed" && activeMatchContent && displayedOpponent && reviewSessionData ? (
+               <div className="review-session-complete-screen">
+                 <div className="review-session-complete-card">
+                   <span className="review-session-stage-kicker">Review Complete</span>
+                   <h2>Session Results</h2>
+                   
+                   <div className="review-session-results-grid">
+                     {/* User's review of opponent */}
+                     <div className="review-session-result-column">
+                       <h3>Your Review of @{displayedOpponent.username}</h3>
+                       <ReviewSummaryCard 
+                         title="Your Score" 
+                         creator={createMinimalUserModel(currentCreator)} 
+                         review={reviewSessionData.creatorAReviewForB} 
+                       />
+                     </div>
+                     
+                     {/* Opponent's review of user */}
+                     <div className="review-session-result-column">
+                       <h3>@{displayedOpponent.username}'s Review of You</h3>
+                       <ReviewSummaryCard 
+                         title="Their Score" 
+                         creator={createMinimalUserModel(displayedOpponent)} 
+                         review={reviewSessionData.creatorBReviewForA} 
+                       />
+                     </div>
+                   </div>
+                   
+                   <div className="review-session-tally-section">
+                     <h3>Combined Results</h3>
+                     <div className="review-session-tally-grid">
+                       <div className="review-session-tally-item">
+                         <span>Creativity:</span>
+                         <span className="review-session-tally-value">
+                           {reviewSessionData.creatorAReviewForB?.scores.creativity === 'trash' ? 1 : 0} + 
+                           {reviewSessionData.creatorBReviewForA?.scores.creativity === 'trash' ? 1 : 0} Trash, 
+                           {reviewSessionData.creatorAReviewForB?.scores.creativity === 'ok' ? 1 : 0} + 
+                           {reviewSessionData.creatorBReviewForA?.scores.creativity === 'ok' ? 1 : 0} Ok, 
+                           {reviewSessionData.creatorAReviewForB?.scores.creativity === 'fire' ? 1 : 0} + 
+                           {reviewSessionData.creatorBReviewForA?.scores.creativity === 'fire' ? 1 : 0} Fire
+                         </span>
+                       </div>
+                       <div className="review-session-tally-item">
+                         <span>Execution:</span>
+                         <span className="review-session-tally-value">
+                           {reviewSessionData.creatorAReviewForB?.scores.execution === 'trash' ? 1 : 0} + 
+                           {reviewSessionData.creatorBReviewForA?.scores.execution === 'trash' ? 1 : 0} Trash, 
+                           {reviewSessionData.creatorAReviewForB?.scores.execution === 'ok' ? 1 : 0} + 
+                           {reviewSessionData.creatorBReviewForA?.scores.execution === 'ok' ? 1 : 0} Ok, 
+                           {reviewSessionData.creatorAReviewForB?.scores.execution === 'fire' ? 1 : 0} + 
+                           {reviewSessionData.creatorBReviewForA?.scores.execution === 'fire' ? 1 : 0} Fire
+                         </span>
+                       </div>
+                       <div className="review-session-tally-item">
+                         <span>Entertainment:</span>
+                         <span className="review-session-tally-value">
+                           {reviewSessionData.creatorAReviewForB?.scores.entertainment === 'trash' ? 1 : 0} + 
+                           {reviewSessionData.creatorBReviewForA?.scores.entertainment === 'trash' ? 1 : 0} Trash, 
+                           {reviewSessionData.creatorAReviewForB?.scores.entertainment === 'ok' ? 1 : 0} + 
+                           {reviewSessionData.creatorBReviewForA?.scores.entertainment === 'ok' ? 1 : 0} Ok, 
+                           {reviewSessionData.creatorAReviewForB?.scores.entertainment === 'fire' ? 1 : 0} + 
+                           {reviewSessionData.creatorBReviewForA?.scores.entertainment === 'fire' ? 1 : 0} Fire
+                         </span>
+                       </div>
+                     </div>
+                   </div>
+                   
+                   <div className="review-session-actions">
+                     <button 
+                       type="button" 
+                       className="cta-button edit-profile review-session-action-button"
+                       onClick={handleLeaveComment}
+                     >
+                       Leave a Comment
+                     </button>
+                     <button 
+                       type="button" 
+                       className="cta-button edit-profile review-session-action-button"
+                       onClick={handleReturnToStart}
+                     >
+                       Leave Room
+                     </button>
+                   </div>
+                 </div>
+               </div>
+             ) : null}
           </div>
         ) : null}
       </div>

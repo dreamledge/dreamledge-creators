@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { DEFAULT_CONTENT_THUMBNAIL } from "@/lib/constants/defaults";
-import { publishContent } from "@/lib/firebase/content";
+import { publishContent, setContentAsDefaultReview, setMatchmakingContent } from "@/lib/firebase/content";
 import { buildEmbedUrl, validateCreatorUrl } from "@/lib/validators/content";
 
 export function ContentImportForm() {
@@ -23,46 +23,53 @@ export function ContentImportForm() {
     };
   }, [url]);
 
-  const handlePublish = async () => {
-    if (!user) {
-      setErrorMessage("Please sign in before publishing content.");
-      return;
-    }
+const handlePublish = async () => {
+  if (!user) {
+    setErrorMessage("Please sign in before publishing content.");
+    return;
+  }
 
-    if (!preview.valid || preview.platform === "unknown") {
-      setErrorMessage("Use a valid TikTok, YouTube, X, or Facebook public link.");
-      return;
-    }
+  if (!preview.valid || preview.platform === "unknown") {
+    setErrorMessage("Use a valid TikTok, YouTube, X, or Facebook public link.");
+    return;
+  }
 
-    setIsSubmitting(true);
-    setErrorMessage(null);
-    setStatusMessage(null);
+  setIsSubmitting(true);
+  setErrorMessage(null);
+  setStatusMessage(null);
 
-    try {
-      const result = await publishContent({
-        creatorId: user.id,
-        sourceUrl: url,
-        embedUrl: preview.embedUrl,
-        platform: preview.platform,
-        title,
-        caption,
-        category,
-        tags: category
-          .split(/[,\s]+/)
-          .map((entry) => entry.trim().toLowerCase())
-          .filter(Boolean),
-        thumbnailUrl: DEFAULT_CONTENT_THUMBNAIL,
-        status: "published",
-        featured: false,
-      });
+  try {
+    const result = await publishContent({
+      creatorId: user.id,
+      sourceUrl: url,
+      embedUrl: preview.embedUrl,
+      platform: preview.platform,
+      title,
+      caption,
+      category,
+      tags: category
+        .split(/[,\s]+/)
+        .map((entry) => entry.trim().toLowerCase())
+        .filter(Boolean),
+      thumbnailUrl: DEFAULT_CONTENT_THUMBNAIL,
+      status: "published",
+      featured: false,
+      isDefaultForReview: true, // Always set as default for review
+    });
 
-      setStatusMessage(`Content published successfully. ID: ${result.id}`);
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Could not publish content.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    // Also update the user's matchmaking content ID
+    await setMatchmakingContent(user.id, result.id);
+    
+    // And set this content as default for review
+    await setContentAsDefaultReview(user.id, result.id);
+
+    setStatusMessage(`Content published successfully. ID: ${result.id}`);
+  } catch (error) {
+    setErrorMessage(error instanceof Error ? error.message : "Could not publish content.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_0.95fr]">

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { BadgeList } from "@/components/profile/BadgeList";
 import { ContentGrid } from "@/components/profile/ContentGrid";
 import { ProfileCard } from "@/components/profile/ProfileCard";
@@ -8,10 +9,20 @@ import { subscribeCreatorContent, subscribeProfile } from "@/lib/firebase/public
 import type { ContentModel, UserModel } from "@/types/models";
 
 export function MyProfilePage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("posts");
   const [profile, setProfile] = useState<UserModel | null>(null);
   const [items, setItems] = useState<ContentModel[]>([]);
+
+  const handleSignOut = async () => {
+    try {
+      await logout();
+      navigate("/");
+    } catch (error) {
+      console.error("Failed to sign out:", error);
+    }
+  };
 
   useEffect(() => {
     if (!user?.id) {
@@ -51,6 +62,7 @@ export function MyProfilePage() {
         badges: [],
         verified: user.verified ?? false,
         rookie: false,
+        matchmakingContentId: user.matchmakingContentId ?? null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }
@@ -65,6 +77,13 @@ export function MyProfilePage() {
   return (
     <div className="space-y-6">
       {creator ? <ProfileCard creator={creator} isOwnProfile /> : null}
+      <button
+        type="button"
+        onClick={handleSignOut}
+        className="text-sm text-zinc-400 hover:text-zinc-200 underline"
+      >
+        Sign out
+      </button>
       <BadgeList badges={creator?.badges ?? []} />
       <ProfileTabs activeTab={activeTab} onChange={setActiveTab} />
       {activeTab === "posts" ? <ContentGrid items={items} creatorsById={creatorsById} /> : null}

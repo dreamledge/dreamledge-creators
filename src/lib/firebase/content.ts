@@ -1,4 +1,4 @@
-import { addDoc, collection, deleteDoc, doc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { firestore } from "@/lib/firebase";
 import { DEFAULT_CONTENT_THUMBNAIL } from "@/lib/constants/defaults";
 import type { ContentModel, ContentPlatform } from "@/types/models";
@@ -17,6 +17,7 @@ export const CONTENT_REQUIRED_FIELDS = [
   "tags",
   "status",
   "featured",
+  "isDefaultForReview",
   "likeCount",
   "commentCount",
   "saveCount",
@@ -40,6 +41,7 @@ export interface CreateContentInput {
   thumbnailUrl?: string;
   status?: string;
   featured?: boolean;
+  isDefaultForReview?: boolean;
 }
 
 function sanitizeText(value: string, fallback = "") {
@@ -72,6 +74,7 @@ export function buildContentPayload(input: CreateContentInput): Omit<ContentMode
     tags: sanitizeTags(input.tags),
     status: sanitizeText(input.status ?? "published", "published"),
     featured: Boolean(input.featured),
+    isDefaultForReview: Boolean(input.isDefaultForReview ?? false),
     likeCount: 0,
     commentCount: 0,
     saveCount: 0,
@@ -129,4 +132,37 @@ export async function deleteContent(contentId: string, _creatorId: string) {
 
   const contentRef = doc(firestore, CONTENT_COLLECTION, contentId);
   await deleteDoc(contentRef);
+}
+
+export async function setMatchmakingContent(userId: string, contentId: string) {
+  if (!firestore) return;
+  
+  const userRef = doc(firestore, "users", userId);
+  await updateDoc(userRef, { matchmakingContentId: contentId });
+}
+
+export async function setContentAsDefaultReview(userId: string, contentId: string) {
+  if (!firestore) return;
+
+  // First, find any existing default content for this user and unset it
+  const userContentQuery = query(
+    collection(firestore, CONTENT_COLLECTION),
+    where("creatorId", "==", userId),
+    where("isDefaultForReview", "==", true)
+  );
+
+  const userContentSnapshot = await getDocs(userContentQuery);
+  
+  // Unset any existing defaults
+  const unsetPromises = userContentSnapshot.docs
+    .filter(doc => doc.id !== contentId) // Don't unset the one we're setting
+    .map(doc => 
+      updateDoc(doc.ref, { isDefaultForReview: false })
+    );
+  
+  await Promise.all(unsetPromises);
+
+  // Set the new content as default for review
+  const contentRef = doc(firestore, CONTENT_COLLECTION, contentId);
+  await updateDoc(contentRef, { isDefaultForReview: true });
 }

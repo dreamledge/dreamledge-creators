@@ -13,7 +13,7 @@ export function ExplorePage() {
     const query = searchQuery.trim().toLowerCase();
     const currentUserId = user?.id;
 
-    let users = mockUsers.filter((u) => u.id !== currentUserId);
+    const users = mockUsers.filter((u) => u.id !== currentUserId);
 
     if (!query) return users;
 
@@ -79,3 +79,5 @@ export function ExplorePage() {
     </div>
   );
 }
+
+export default ExplorePage;

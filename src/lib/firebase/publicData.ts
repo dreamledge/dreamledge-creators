@@ -63,6 +63,7 @@ function mapUserDoc(id: string, data: DocumentData): UserModel {
     badges: asStringArray(data.badges),
     verified: Boolean(data.verified),
     rookie: Boolean(data.rookie),
+    matchmakingContentId: typeof data.matchmakingContentId === "string" ? data.matchmakingContentId : null,
     createdAt: toIso(data.createdAt),
     updatedAt: toIso(data.updatedAt),
   };
@@ -82,6 +83,7 @@ function mapContentDoc(id: string, data: DocumentData): ContentModel {
     tags: asStringArray(data.tags),
     status: typeof data.status === "string" ? data.status : "published",
     featured: Boolean(data.featured),
+    isDefaultForReview: Boolean(data.isDefaultForReview),
     likeCount: typeof data.likeCount === "number" ? data.likeCount : 0,
     commentCount: typeof data.commentCount === "number" ? data.commentCount : 0,
     saveCount: typeof data.saveCount === "number" ? data.saveCount : 0,

@@ -6,66 +6,75 @@ import {
   deleteDoc,
   getDocs,
   query,
-  where,
   serverTimestamp,
+  where,
 } from "firebase/firestore";
 import { firestore } from "./index";
 
 const WAITING_QUEUE_COLLECTION = "waitingQueue";
 
 export async function joinWaitingQueue(userId: string): Promise<string | null> {
-  console.log('joinWaitingQueue called for user:', userId);
-  console.log('firestore available:', !!firestore);
-  
-  if (!firestore) {
-    console.error('Firestore is not available!');
-    return null;
-  }
+  if (!firestore) return null;
   
   try {
-    // First check if anyone is already waiting
-    console.log('Checking waiting queue...');
     const q = collection(firestore, WAITING_QUEUE_COLLECTION);
     const snapshot = await getDocs(q);
-    console.log('Waiting queue snapshot size:', snapshot.size);
-    
-    // Look for the first user that's not us
+
+    let hasSelfEntry = false;
+    const selfEntries = [] as typeof snapshot.docs;
+    let opponentDoc: (typeof snapshot.docs)[number] | null = null;
+
     for (const docSnapshot of snapshot.docs) {
       const data = docSnapshot.data() as DocumentData;
-      console.log('Found user in queue:', data.userId);
-      if (data.userId !== userId) {
-        const opponentId = data.userId as string;
-        
-        // Remove the waiting user from queue
-        await deleteDoc(docSnapshot.ref);
-        console.log('Removed waiting user from queue');
-        
-        // Return the opponent ID to indicate match found
-        return opponentId;
+      if (data.userId === userId) {
+        hasSelfEntry = true;
+        selfEntries.push(docSnapshot);
+        continue;
       }
+
+      if (!opponentDoc) opponentDoc = docSnapshot;
     }
-    
-    // No one waiting, add current user to queue
-    console.log('No one waiting, adding user to queue');
-    await addDoc(collection(firestore, WAITING_QUEUE_COLLECTION), {
-      userId,
-      joinedAt: serverTimestamp(),
-    });
-    console.log('Added user to waiting queue');
-    
-    return null; // null means added to queue, not matched
+
+    // If we found an opponent and we were not queued yet, add ourselves so the opponent can detect us too.
+    if (opponentDoc && !hasSelfEntry) {
+      await addDoc(collection(firestore, WAITING_QUEUE_COLLECTION), {
+        userId,
+        joinedAt: serverTimestamp(),
+      });
+      return (opponentDoc.data() as DocumentData).userId as string;
+    }
+
+    // If we found an opponent and we were already queued, complete the handshake and clean both queue entries.
+    if (opponentDoc && hasSelfEntry) {
+      for (const selfEntry of selfEntries) {
+        await deleteDoc(selfEntry.ref);
+      }
+      await deleteDoc(opponentDoc.ref);
+      return (opponentDoc.data() as DocumentData).userId as string;
+    }
+
+    // No opponent yet, ensure we are queued once.
+    if (!hasSelfEntry) {
+      await addDoc(collection(firestore, WAITING_QUEUE_COLLECTION), {
+        userId,
+        joinedAt: serverTimestamp(),
+      });
+    }
+
+    return null;
   } catch (error) {
     console.error("Error joining queue:", error);
     return null;
   }
 }
 
-export async function leaveWaitingQueue(): Promise<void> {
+export async function leaveWaitingQueue(userId: string): Promise<void> {
   if (!firestore) return;
+  if (!userId) return;
   
   try {
-    // Remove all entries (in case of duplicates)
-    const q = collection(firestore, WAITING_QUEUE_COLLECTION);
+    // Remove only current user's entries (in case of duplicates)
+    const q = query(collection(firestore, WAITING_QUEUE_COLLECTION), where("userId", "==", userId));
     const snapshot = await getDocs(q);
     
     for (const docSnapshot of snapshot.docs) {
@@ -85,17 +94,30 @@ export function startMatchmaking(
     // Return a cleanup function that does nothing
     return () => {};
   }
-  
-  // Set up the subscription
-  const unsubscribe = subscribeWaitingQueue(
-    userId,
-    onOpponentFound,
-    () => {}, // We'll handle timeout in the returned cleanup function
-    timeoutMs
-  );
-  
-  // Return a cleanup function
+
+  let unsubscribe = () => {};
+  let cancelled = false;
+
+  void (async () => {
+    await leaveWaitingQueue(userId);
+    const immediateOpponent = await joinWaitingQueue(userId);
+    if (cancelled) return;
+
+    if (immediateOpponent) {
+      onOpponentFound(immediateOpponent);
+      return;
+    }
+
+    unsubscribe = subscribeWaitingQueue(
+      userId,
+      onOpponentFound,
+      () => {},
+      timeoutMs,
+    );
+  })();
+
   return () => {
+    cancelled = true;
     unsubscribe();
   };
 }
@@ -133,26 +155,12 @@ export function subscribeWaitingQueue(
       timedOut = true;
       unsubscribe();
       
-      // Remove ourselves from the queue and match with the opponent
-      try {
-        // First, remove our own entry from queue
-        const ourQuery = query(q, where("userId", "==", userId));
-        const ourSnapshot = await getDocs(ourQuery);
-        for (const docSnapshot of ourSnapshot.docs) {
-          await deleteDoc(docSnapshot.ref);
-        }
-        
-        // Now remove the opponent's entry
-        const opponentQuery = query(q, where("userId", "==", opponentId));
-        const opponentSnapshot = await getDocs(opponentQuery);
-        for (const docSnapshot of opponentSnapshot.docs) {
-          await deleteDoc(docSnapshot.ref);
-        }
-        
-        // Notify that we found a match
-        onOpponentFound(opponentId);
-      } catch (error) {
-        console.error("Error in matchmaking process:", error);
+      // Try to match with the opponent
+      const matchedOpponent = await joinWaitingQueue(userId);
+      if (matchedOpponent) {
+        onOpponentFound(matchedOpponent);
+      } else {
+        // This shouldn't happen in theory, but handle just in case
         onTimeout();
       }
     }

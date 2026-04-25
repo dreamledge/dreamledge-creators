@@ -149,3 +149,29 @@ export function cancelSession(session: ReviewSessionModel): ReviewSessionModel {
     updatedAt: new Date().toISOString(),
   };
 }
+
+export function tallyReviewLabels(reviews: ReviewSubmissionRecord[]) {
+  // Initialize counters for each category
+  const tallies = {
+    creativity: { trash: 0, ok: 0, fire: 0 },
+    execution: { trash: 0, ok: 0, fire: 0 },
+    entertainment: { trash: 0, ok: 0, fire: 0 }
+  };
+
+  // Tally each review
+  reviews.forEach(review => {
+    if (review?.scores) {
+      if (review.scores.creativity) {
+        tallies.creativity[review.scores.creativity as keyof typeof tallies.creativity]++;
+      }
+      if (review.scores.execution) {
+        tallies.execution[review.scores.execution as keyof typeof tallies.execution]++;
+      }
+      if (review.scores.entertainment) {
+        tallies.entertainment[review.scores.entertainment as keyof typeof tallies.entertainment]++;
+      }
+    }
+  });
+
+  return tallies;
+}
