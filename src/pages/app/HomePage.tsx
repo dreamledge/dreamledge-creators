@@ -4,6 +4,7 @@ import { useAuth } from "@/app/providers/AuthProvider";
 import { FeedTabs } from "@/components/feed/FeedTabs";
 import { FeedList, FeedProvider } from "@/components/feed/FeedList";
 import { CommentModalProvider, CommentModal } from "@/components/overlays/CommentModal";
+import { NotificationsDropdown } from "@/components/overlays/NotificationsDropdown";
 import { subscribePublicFeed, subscribePublicUsers } from "@/lib/firebase/publicData";
 import type { ContentModel, FeedTab, UserModel } from "@/types/models";
 
@@ -13,6 +14,7 @@ export function HomePage() {
   const { user } = useAuth();
   const [feedContent, setFeedContent] = useState<ContentModel[]>([]);
   const [users, setUsers] = useState<UserModel[]>([]);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   useEffect(() => {
     const unsubscribeFeed = subscribePublicFeed(setFeedContent);
@@ -77,6 +79,8 @@ export function HomePage() {
                 ></path>
                 <path strokeWidth="1.5" d="M8 12H16"></path>
                 <path strokeWidth="1.5" d="M12 16V8"></path>
+
+
               </svg>
             </button>
             <div className="home-header-text">
@@ -85,7 +89,7 @@ export function HomePage() {
             </div>
             <button
               className="notification-btn"
-              onClick={() => navigate("/app/notifications")}
+              onClick={() => setIsNotificationsOpen((prev) => !prev)}
               title="Notifications"
             >
               <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -94,6 +98,11 @@ export function HomePage() {
             </button>
           </div>
           <FeedTabs active={currentTab} onChange={() => {}} />
+          <NotificationsDropdown 
+            userId={user?.id ?? ""} 
+            isOpen={isNotificationsOpen} 
+            onClose={() => setIsNotificationsOpen(false)} 
+          />
         </div>
         {feedItems.length ? <FeedList items={feedItems} creatorsById={usersById} /> : <div className="bubble-card rounded-[32px] p-6 text-sm text-text-secondary">No content has been posted yet.</div>}
       </div>
