@@ -12,7 +12,7 @@ export function ProfileHeader({ creator }: { creator: UserModel }) {
             <img src={creator.photoUrl} alt={creator.displayName} className="-mt-16 h-24 w-24 rounded-[36px] border-4 border-card object-cover" />
             <div>
               <VerifiedLabel text={creator.displayName} verified={creator.verified} className="text-3xl font-semibold text-text-primary" textClassName="text-3xl font-semibold text-text-primary" iconClassName="h-[18px] w-[18px]" />
-              <VerifiedLabel text={`@${creator.username}`} verified={false} className="text-text-secondary" textClassName="text-text-secondary" />
+              <VerifiedLabel text={`@${creator.username}`} verified={creator.verified} className="text-text-secondary" textClassName="text-text-secondary" />
             </div>
           </div>
           <div className="flex flex-wrap gap-2">

@@ -11,6 +11,7 @@ import {
 import { doc, getDoc, setDoc, updateDoc, type Firestore } from "firebase/firestore";
 import { firebaseAuth, firestore } from "@/lib/firebase";
 import { DEFAULT_AVATAR_URL } from "@/lib/constants/defaults";
+import { isAlwaysVerifiedAccount } from "@/lib/utils/accountIdentity";
 import type { AuthUser, SocialPlatform } from "@/types/models";
 
 interface UserProfile {
@@ -59,6 +60,7 @@ function sanitizeUsername(raw: string, fallbackEmail: string) {
 
 function toAuthUser(currentUser: User, profile: UserProfile | null): AuthUser {
   const fallbackUsername = sanitizeUsername(profile?.username ?? "", currentUser.email ?? "creator@dreamledge.app");
+  const alwaysVerified = isAlwaysVerifiedAccount({ email: currentUser.email ?? profile?.email ?? "" });
 
   return {
     id: currentUser.uid,
@@ -66,7 +68,7 @@ function toAuthUser(currentUser: User, profile: UserProfile | null): AuthUser {
     displayName: profile?.displayName || currentUser.displayName || "",
     username: profile?.username || fallbackUsername,
     photoUrl: profile?.photoURL || currentUser.photoURL || DEFAULT_AVATAR_URL,
-    verified: profile?.verified ?? false,
+    verified: alwaysVerified || (profile?.verified ?? false),
     onboardingComplete: true,
     followingIds: profile?.followingIds ?? [],
     bio: profile?.bio ?? "",
@@ -87,9 +89,17 @@ async function ensureUserProfile(currentUser: User, input?: { displayName?: stri
   if (!firestore) return null;
   const userRef = doc(firestore, "users", currentUser.uid);
   const snapshot = await getDoc(userRef);
+  const alwaysVerified = isAlwaysVerifiedAccount({ email: currentUser.email ?? "" });
 
   if (snapshot.exists()) {
-    return snapshot.data() as UserProfile;
+    const existingProfile = snapshot.data() as UserProfile;
+
+    if (alwaysVerified && !existingProfile.verified) {
+      await setDoc(userRef, { verified: true }, { merge: true });
+      return { ...existingProfile, verified: true };
+    }
+
+    return existingProfile;
   }
 
   const displayName = input?.displayName?.trim() ?? currentUser.displayName ?? "";
@@ -99,7 +109,7 @@ async function ensureUserProfile(currentUser: User, input?: { displayName?: stri
     displayName,
     username: sanitizeUsername(input?.username ?? "", currentUser.email ?? "creator@dreamledge.app"),
     photoURL: currentUser.photoURL ?? DEFAULT_AVATAR_URL,
-    verified: false,
+    verified: alwaysVerified,
     bio: "",
     createdAt: new Date().toISOString(),
     followingIds: [],
@@ -276,7 +286,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             displayName: currentUser.displayName ?? "",
             username: sanitizeUsername("", currentUser.email ?? "creator@dreamledge.app"),
             photoURL: currentUser.photoURL ?? DEFAULT_AVATAR_URL,
-            verified: false,
+            verified: isAlwaysVerifiedAccount({ email: currentUser.email ?? "" }),
             bio: "",
             createdAt: new Date().toISOString(),
             followingIds: [],
@@ -287,6 +297,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return {
             ...baseProfile,
             ...updatePayload,
+            verified: isAlwaysVerifiedAccount({ email: currentUser.email ?? "" }) || baseProfile.verified,
             uid: currentUser.uid,
             email: currentUser.email ?? baseProfile.email,
           };

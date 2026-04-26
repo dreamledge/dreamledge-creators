@@ -10,6 +10,7 @@ import {
 } from "firebase/firestore";
 import { firestore } from "@/lib/firebase";
 import { DEFAULT_AVATAR_URL, DEFAULT_CONTENT_THUMBNAIL } from "@/lib/constants/defaults";
+import { isAlwaysVerifiedAccount } from "@/lib/utils/accountIdentity";
 import type { ContentPlatform, ContentModel, UserModel } from "@/types/models";
 
 const CONTENT_COLLECTION = "content";
@@ -41,12 +42,14 @@ function asStringArray(raw: unknown) {
 function mapUserDoc(id: string, data: DocumentData): UserModel {
   const followerIds = asStringArray(data.followerIds);
   const followingIds = asStringArray(data.followingIds);
+  const email = typeof data.email === "string" ? data.email : "";
+  const alwaysVerified = isAlwaysVerifiedAccount({ email });
 
   return {
     id,
     username: typeof data.username === "string" && data.username.trim() ? data.username : id,
     displayName: typeof data.displayName === "string" && data.displayName.trim() ? data.displayName : "Creator",
-    email: typeof data.email === "string" ? data.email : "",
+    email,
     photoUrl: typeof data.photoURL === "string" && data.photoURL.trim() ? data.photoURL : DEFAULT_AVATAR_URL,
     bannerUrl: typeof data.bannerUrl === "string" ? data.bannerUrl : "",
     bio: typeof data.bio === "string" ? data.bio : "",
@@ -61,7 +64,7 @@ function mapUserDoc(id: string, data: DocumentData): UserModel {
     followerIds,
     followingIds,
     badges: asStringArray(data.badges),
-    verified: Boolean(data.verified),
+    verified: alwaysVerified || Boolean(data.verified),
     rookie: Boolean(data.rookie),
     matchmakingContentId: typeof data.matchmakingContentId === "string" ? data.matchmakingContentId : null,
     createdAt: toIso(data.createdAt),

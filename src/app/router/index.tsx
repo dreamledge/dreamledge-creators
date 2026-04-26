@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import { ProtectedRoute, PublicOnlyRoute } from "@/app/router/RouteGuards";
+import { ProtectedRoute, PublicOnlyRoute, RealAdminRoute } from "@/app/router/RouteGuards";
 import { PublicLayout } from "@/app/layouts/PublicLayout";
 import { AppLayout } from "@/app/layouts/AppLayout";
 import { AdminLayout } from "@/app/layouts/AdminLayout";
@@ -38,6 +38,8 @@ import { AdminContestsPage } from "@/pages/admin/AdminContestsPage";
 import { AdminReportsPage } from "@/pages/admin/AdminReportsPage";
 import { AdminFeaturedPage } from "@/pages/admin/AdminFeaturedPage";
 import { AdminBattlesPage } from "@/pages/admin/AdminBattlesPage";
+import { BackOfficePage } from "@/pages/realadmin/BackOfficePage";
+import { RealAdminHomePage } from "@/pages/realadmin/RealAdminHomePage";
 
 export function AppRouter() {
   return (
@@ -89,6 +91,14 @@ export function AppRouter() {
           <Route path="/admin/reports" element={<AdminReportsPage />} />
           <Route path="/admin/featured" element={<AdminFeaturedPage />} />
           <Route path="/admin/battles" element={<AdminBattlesPage />} />
+        </Route>
+
+        <Route element={<RealAdminRoute />}>
+          <Route element={<AdminLayout />}>
+            <Route path="/realadmin" element={<RealAdminHomePage />} />
+            <Route path="/realadmin/accounts" element={<BackOfficePage />} />
+            <Route path="/realadmin/back-office" element={<Navigate to="/realadmin/accounts" replace />} />
+          </Route>
         </Route>
       </Route>
 

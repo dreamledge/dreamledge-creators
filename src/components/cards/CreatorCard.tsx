@@ -101,7 +101,7 @@ export function CreatorCard({ creator, showSocialLinks = false }: { creator: Use
             iconClassName="h-[18px] w-[18px]"
           />
           <div className="profile-title-row">
-            <VerifiedLabel text={`@${creator.username}`} verified={false} textClassName="profile-title" />
+            <VerifiedLabel text={`@${creator.username}`} verified={creator.verified} textClassName="profile-title" />
           </div>
           {creator.bio ? <div className="profile-bio">{creator.bio}</div> : null}
         </div>

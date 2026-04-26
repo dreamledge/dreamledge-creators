@@ -11,7 +11,7 @@ export function LeaderboardRow({ row }: { row: LeaderboardSnapshotModel }) {
         <img src={creator?.photoUrl} alt={creator?.displayName} className="h-11 w-11 rounded-[28px] object-cover" />
         <div>
           <VerifiedLabel text={creator?.displayName ?? "Creator"} verified={creator?.verified} className="font-semibold text-text-primary" textClassName="font-semibold text-text-primary" iconClassName="verified-label__icon--tiny" />
-          <VerifiedLabel text={`@${creator?.username ?? "creator"}`} verified={false} className="text-sm text-text-secondary" textClassName="text-sm text-text-secondary" />
+          <VerifiedLabel text={`@${creator?.username ?? "creator"}`} verified={creator?.verified} className="text-sm text-text-secondary" textClassName="text-sm text-text-secondary" />
         </div>
       </div>
       <div className="text-right text-sm text-text-secondary">

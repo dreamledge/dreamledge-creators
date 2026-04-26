@@ -17,12 +17,12 @@ export function BattleCard({ battle }: { battle: BattleModel }) {
       <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
         <div>
           <VerifiedLabel text={creatorA?.displayName ?? "Creator"} verified={creatorA?.verified} className="font-semibold text-text-primary" textClassName="font-semibold text-text-primary" iconClassName="verified-label__icon--tiny" />
-          <VerifiedLabel text={`@${creatorA?.username ?? "creator"}`} verified={false} className="text-sm text-text-secondary" textClassName="text-sm text-text-secondary" />
+          <VerifiedLabel text={`@${creatorA?.username ?? "creator"}`} verified={creatorA?.verified} className="text-sm text-text-secondary" textClassName="text-sm text-text-secondary" />
         </div>
         <span className="rounded-[999px] bg-white/8 px-3 py-1 text-xs uppercase tracking-[0.24em] text-text-secondary">VS</span>
         <div className="text-right">
           <VerifiedLabel text={creatorB?.displayName ?? "Creator"} verified={creatorB?.verified} className="justify-end font-semibold text-text-primary" textClassName="font-semibold text-text-primary" iconClassName="verified-label__icon--tiny" />
-          <VerifiedLabel text={`@${creatorB?.username ?? "creator"}`} verified={false} className="justify-end text-sm text-text-secondary" textClassName="text-sm text-text-secondary" />
+          <VerifiedLabel text={`@${creatorB?.username ?? "creator"}`} verified={creatorB?.verified} className="justify-end text-sm text-text-secondary" textClassName="text-sm text-text-secondary" />
         </div>
       </div>
       <p className="mt-4 text-sm text-text-secondary">{battle.theme}</p>

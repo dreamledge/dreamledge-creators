@@ -2,12 +2,36 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { useMessages } from "@/app/providers/MessagesProvider";
-import { mockUsers } from "@/lib/constants/mockData";
 import { VerifiedBadge } from "@/components/ui/VerifiedLabel";
+import { mockUsers } from "@/lib/constants/mockData";
+import { DEFAULT_AVATAR_URL } from "@/lib/constants/defaults";
+import { subscribePublicUsers } from "@/lib/firebase/publicData";
+import {
+  VOICE_ROOM_MAX_PARTICIPANTS,
+  closeVoiceRoom,
+  createVoiceRoom,
+  joinVoiceRoom,
+  leaveVoiceRoom,
+  pruneInactiveVoiceRooms,
+  subscribeActiveVoiceRooms,
+  touchVoiceRoom,
+  type SocialVoiceRoom,
+} from "@/lib/firebase/socialRooms";
+import { useVoiceRoomAudio } from "@/features/social/useVoiceRoomAudio";
+import type { UserModel } from "@/types/models";
 
 const SOCIAL_ROOM_RETURN_KEY = "dreamledge-social-room-return";
 
 type SocialHubTab = "voice-chat" | "public-chat" | "watch-parties" | "game-night" | "creator-lounge";
+
+type SocialMember = {
+  id: string;
+  username: string;
+  displayName: string;
+  photoUrl: string;
+  verified: boolean;
+  bio: string;
+};
 
 const socialTabs: { key: SocialHubTab; label: string }[] = [
   { key: "voice-chat", label: "Voice Chat" },
@@ -17,12 +41,7 @@ const socialTabs: { key: SocialHubTab; label: string }[] = [
   { key: "creator-lounge", label: "Creator Lounge" },
 ];
 
-const socialRooms: Record<SocialHubTab, { name: string; status: string; members: string }[]> = {
-  "voice-chat": [
-    { name: "Late Night Debates", status: "Live voice room", members: "128 listening" },
-    { name: "Creator Feedback Lab", status: "Mic open", members: "42 joined" },
-    { name: "Music & Reactions", status: "Now talking", members: "84 listening" },
-  ],
+const socialRooms: Record<Exclude<SocialHubTab, "voice-chat">, { name: string; status: string; members: string }[]> = {
   "public-chat": [
     { name: "General Chat", status: "Open thread", members: "1.2k active" },
     { name: "Hot Takes", status: "Trending topic", members: "510 active" },
@@ -45,21 +64,6 @@ const socialRooms: Record<SocialHubTab, { name: string; status: string; members:
   ],
 };
 
-type VoiceRoom = {
-  id: string;
-  category: string;
-  openedAtMs: number;
-  participantIds: string[];
-  extraCount: number;
-};
-
-const voiceRooms: VoiceRoom[] = [
-  { id: "vr-1", category: "Fandom", openedAtMs: Date.now() - (57 * 60 * 1000 + 40 * 1000), participantIds: ["u1", "u2", "u5"], extraCount: 0 },
-  { id: "vr-2", category: "TV Shows", openedAtMs: Date.now() - (95 * 60 * 1000 + 12 * 1000), participantIds: ["u3", "u4", "u2"], extraCount: 2 },
-  { id: "vr-3", category: "Universities", openedAtMs: Date.now() - (8 * 60 * 1000 + 7 * 1000), participantIds: ["u5", "u1"], extraCount: 0 },
-  { id: "vr-4", category: "TV Shows", openedAtMs: Date.now() - (80 * 60 * 1000 + 52 * 1000), participantIds: ["u4", "u3", "u2"], extraCount: 3 },
-];
-
 function formatRoomOpenTime(elapsedMs: number) {
   const totalSeconds = Math.max(0, Math.floor(elapsedMs / 1000));
   const minutes = Math.floor(totalSeconds / 60);
@@ -72,6 +76,23 @@ function formatRoomOpenHoursMinutes(elapsedMs: number) {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
   return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+}
+
+function getElapsedMs(nowMs: number, iso: string) {
+  const parsed = new Date(iso).getTime();
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.max(0, nowMs - parsed);
+}
+
+function toSocialMember(entry: Pick<UserModel, "id" | "username" | "displayName" | "photoUrl" | "verified" | "bio">): SocialMember {
+  return {
+    id: entry.id,
+    username: entry.username,
+    displayName: entry.displayName,
+    photoUrl: entry.photoUrl,
+    verified: entry.verified,
+    bio: entry.bio,
+  };
 }
 
 function getSocialTabIcon(tab: SocialHubTab) {
@@ -116,66 +137,211 @@ export function SocialPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { startConversation } = useMessages();
+
   const [activeTab, setActiveTab] = useState<SocialHubTab>("voice-chat");
   const [joinedRoomId, setJoinedRoomId] = useState<string | null>(null);
   const [profilePreviewUserId, setProfilePreviewUserId] = useState<string | null>(null);
-  const activeRooms = useMemo(() => socialRooms[activeTab], [activeTab]);
+  const [voiceRooms, setVoiceRooms] = useState<SocialVoiceRoom[]>([]);
+  const [publicUsers, setPublicUsers] = useState<UserModel[]>([]);
+  const [roomNameDraft, setRoomNameDraft] = useState("");
+  const [isCreateRoomOpen, setIsCreateRoomOpen] = useState(false);
+  const [isSubmittingRoom, setIsSubmittingRoom] = useState(false);
+  const [isEndingRoom, setIsEndingRoom] = useState(false);
+  const [socialError, setSocialError] = useState<string | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
-  const userById = useMemo(() => new Map(mockUsers.map((entry) => [entry.id, entry])), []);
+
+  const activeRooms = useMemo(() => {
+    if (activeTab === "voice-chat") return [];
+    return socialRooms[activeTab];
+  }, [activeTab]);
+
+  const userById = useMemo(() => {
+    const map = new Map<string, SocialMember>();
+
+    mockUsers.forEach((entry) => {
+      map.set(entry.id, toSocialMember(entry));
+    });
+
+    publicUsers.forEach((entry) => {
+      map.set(entry.id, toSocialMember(entry));
+    });
+
+    if (user?.id && !map.has(user.id)) {
+      map.set(user.id, {
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName,
+        photoUrl: user.photoUrl || DEFAULT_AVATAR_URL,
+        verified: Boolean(user.verified),
+        bio: user.bio ?? "",
+      });
+    }
+
+    return map;
+  }, [publicUsers, user]);
 
   const liveVoiceRooms = useMemo(
     () =>
-      voiceRooms.map((room) => ({
-        ...room,
-        openTimeLabel: formatRoomOpenTime(nowMs - room.openedAtMs),
-        openDurationLabel: formatRoomOpenHoursMinutes(nowMs - room.openedAtMs),
-      })),
-    [nowMs],
+      voiceRooms.map((room) => {
+        const elapsedMs = getElapsedMs(nowMs, room.createdAt);
+        return {
+          ...room,
+          openTimeLabel: formatRoomOpenTime(elapsedMs),
+          openDurationLabel: formatRoomOpenHoursMinutes(elapsedMs),
+        };
+      }),
+    [nowMs, voiceRooms],
   );
 
-  const joinableVoiceRooms = useMemo(
-    () => liveVoiceRooms.filter((room) => room.participantIds.length + room.extraCount > 0 && room.participantIds.length + room.extraCount < 4),
-    [liveVoiceRooms],
+  const userActiveRoom = useMemo(
+    () => (user?.id ? liveVoiceRooms.find((room) => room.participantIds.includes(user.id)) ?? null : null),
+    [liveVoiceRooms, user?.id],
   );
 
-  const joinedRoom = useMemo(() => liveVoiceRooms.find((room) => room.id === joinedRoomId) ?? null, [joinedRoomId, liveVoiceRooms]);
+  const joinedRoom = useMemo(
+    () => liveVoiceRooms.find((room) => room.id === joinedRoomId) ?? null,
+    [joinedRoomId, liveVoiceRooms],
+  );
+
+  const {
+    isMicReady,
+    isMicMuted,
+    setMuted,
+    retryRemotePlayback,
+    audioError,
+    peerCount,
+    speakingUserIds,
+    audioContextState,
+  } = useVoiceRoomAudio(joinedRoom?.id ?? null, user?.id ?? null, Boolean(joinedRoom && user?.id));
+
+  const speakingUserSet = useMemo(() => new Set(speakingUserIds), [speakingUserIds]);
 
   const joinedRoomMembers = useMemo(() => {
-    if (!joinedRoom) return [];
+    if (!joinedRoom) return [] as SocialMember[];
+    return joinedRoom.participantIds.slice(0, VOICE_ROOM_MAX_PARTICIPANTS).map((id) => {
+      const member = userById.get(id);
+      if (member) return member;
+      return {
+        id,
+        username: `user-${id.slice(0, 4)}`,
+        displayName: "Creator",
+        photoUrl: DEFAULT_AVATAR_URL,
+        verified: false,
+        bio: "",
+      };
+    });
+  }, [joinedRoom, userById]);
 
-    const members = joinedRoom.participantIds
-      .map((id) => userById.get(id))
-      .filter((entry): entry is (typeof mockUsers)[number] => !!entry)
-      .slice(0, 4);
+  const joinableVoiceRooms = useMemo(
+    () =>
+      liveVoiceRooms.filter(
+        (room) => room.participantIds.includes(user?.id ?? "") || room.participantIds.length < VOICE_ROOM_MAX_PARTICIPANTS,
+      ),
+    [liveVoiceRooms, user?.id],
+  );
 
-    if (user && members.length < 4 && !members.some((entry) => entry.id === user.id)) {
-      const currentUser = userById.get(user.id);
-      if (currentUser) {
-        members.push(currentUser);
-      }
-    }
-
-    return members;
-  }, [joinedRoom, user, userById]);
-
-  const previewUser = useMemo(() => (profilePreviewUserId ? userById.get(profilePreviewUserId) ?? null : null), [profilePreviewUserId, userById]);
+  const previewUser = useMemo(
+    () => (profilePreviewUserId ? userById.get(profilePreviewUserId) ?? null : null),
+    [profilePreviewUserId, userById],
+  );
 
   const isPreviewUserFriend = useMemo(
     () => (previewUser ? (user?.followingIds ?? []).includes(previewUser.id) : false),
     [previewUser, user?.followingIds],
   );
 
-  const handleJoinRoom = (room: VoiceRoom) => {
-    const totalCount = room.participantIds.length + room.extraCount;
-    if (totalCount >= 4) return;
-    setJoinedRoomId(room.id);
+  const canCreateRoom = Boolean(user?.id) && !userActiveRoom;
+  const canEndJoinedRoom = Boolean(joinedRoom && user?.id && joinedRoom.createdBy === user.id);
+
+  const handleJoinRoom = async (room: SocialVoiceRoom) => {
+    if (!user?.id) {
+      setSocialError("You must be logged in to join a room.");
+      return;
+    }
+
+    if (userActiveRoom && userActiveRoom.id !== room.id) {
+      setSocialError("You are already in an active room. Leave it before joining another.");
+      return;
+    }
+
+    try {
+      setSocialError(null);
+      await joinVoiceRoom(room.id, user.id);
+      setJoinedRoomId(room.id);
+    } catch (error) {
+      setSocialError(error instanceof Error ? error.message : "Unable to join room.");
+    }
+  };
+
+  const handleCreateRoom = async () => {
+    if (!user?.id) {
+      setSocialError("You must be logged in to create a room.");
+      return;
+    }
+
+    if (!canCreateRoom) {
+      setSocialError("You are already in an active room.");
+      return;
+    }
+
+    const trimmedName = roomNameDraft.trim();
+    if (!trimmedName) {
+      setSocialError("Please enter a room name.");
+      return;
+    }
+
+    try {
+      setSocialError(null);
+      setIsSubmittingRoom(true);
+      const roomId = await createVoiceRoom(user.id, trimmedName);
+      setRoomNameDraft("");
+      setIsCreateRoomOpen(false);
+      setJoinedRoomId(roomId);
+    } catch (error) {
+      setSocialError(error instanceof Error ? error.message : "Unable to create room.");
+    } finally {
+      setIsSubmittingRoom(false);
+    }
+  };
+
+  const handleLeaveCurrentRoom = async () => {
+    if (!user?.id || !joinedRoomId) {
+      setJoinedRoomId(null);
+      return;
+    }
+
+    try {
+      setSocialError(null);
+      await leaveVoiceRoom(joinedRoomId, user.id);
+    } catch (error) {
+      setSocialError(error instanceof Error ? error.message : "Unable to leave room.");
+    } finally {
+      setJoinedRoomId(null);
+      setProfilePreviewUserId(null);
+    }
+  };
+
+  const handleEndCurrentRoom = async () => {
+    if (!joinedRoom || !user?.id) return;
+
+    try {
+      setSocialError(null);
+      setIsEndingRoom(true);
+      await closeVoiceRoom(joinedRoom.id, user.id);
+      setJoinedRoomId(null);
+      setProfilePreviewUserId(null);
+    } catch (error) {
+      setSocialError(error instanceof Error ? error.message : "Unable to end room.");
+    } finally {
+      setIsEndingRoom(false);
+    }
   };
 
   const handleGoToNextOpenRoom = () => {
     if (!joinableVoiceRooms.length) return;
     const currentIndex = joinableVoiceRooms.findIndex((room) => room.id === joinedRoomId);
     const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % joinableVoiceRooms.length;
-    setJoinedRoomId(joinableVoiceRooms[nextIndex].id);
+    void handleJoinRoom(joinableVoiceRooms[nextIndex]);
   };
 
   const handleSendMessageFromProfile = () => {
@@ -192,7 +358,7 @@ export function SocialPage() {
     try {
       window.sessionStorage.setItem(SOCIAL_ROOM_RETURN_KEY, JSON.stringify(returnContext));
     } catch {
-      // Ignore storage failures and rely on route state
+      // Ignore storage failures and rely on route state.
     }
 
     navigate(`/app/messages/${conversationId}`, {
@@ -204,6 +370,27 @@ export function SocialPage() {
     if (!previewUser || previewUser.id === user?.id || isPreviewUserFriend) return;
     toggleFollow(previewUser.id);
   };
+
+  useEffect(() => {
+    const unsubscribePublicUsers = subscribePublicUsers(setPublicUsers);
+    const unsubscribeVoiceRooms = subscribeActiveVoiceRooms(setVoiceRooms, (error) => {
+      setSocialError(error.message || "Unable to load social rooms right now.");
+    });
+
+    return () => {
+      unsubscribePublicUsers();
+      unsubscribeVoiceRooms();
+    };
+  }, []);
+
+  useEffect(() => {
+    void pruneInactiveVoiceRooms();
+    const cleanup = window.setInterval(() => {
+      void pruneInactiveVoiceRooms();
+    }, 60_000);
+
+    return () => window.clearInterval(cleanup);
+  }, []);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -219,16 +406,41 @@ export function SocialPage() {
     if (state.restoreVoiceRoomId) setJoinedRoomId(state.restoreVoiceRoomId);
   }, [location.state]);
 
+  useEffect(() => {
+    if (!joinedRoomId) return;
+    const exists = liveVoiceRooms.some((room) => room.id === joinedRoomId);
+    if (!exists) {
+      setJoinedRoomId(null);
+      setProfilePreviewUserId(null);
+    }
+  }, [joinedRoomId, liveVoiceRooms]);
+
+  useEffect(() => {
+    if (!joinedRoomId) return;
+
+    void touchVoiceRoom(joinedRoomId);
+    const heartbeat = window.setInterval(() => {
+      void touchVoiceRoom(joinedRoomId);
+    }, 60_000);
+
+    return () => window.clearInterval(heartbeat);
+  }, [joinedRoomId]);
+
+  useEffect(() => {
+    if (!audioError) return;
+    setSocialError(audioError);
+  }, [audioError]);
+
   if (joinedRoom) {
     return (
       <div className="messages-page">
         <div className="messages-header">
-          <button type="button" className="messages-header__back" onClick={() => setJoinedRoomId(null)} aria-label="Back to social rooms">
+          <button type="button" className="messages-header__back" onClick={() => void handleLeaveCurrentRoom()} aria-label="Leave room and return to social rooms">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
-          <h1 className="messages-header__title">Voice Room</h1>
+          <h1 className="messages-header__title">{joinedRoom.name}</h1>
         </div>
 
         <div className="social-voice-room">
@@ -245,13 +457,42 @@ export function SocialPage() {
             <button type="button" className="social-voice-room__ctrl" aria-label="Search">⌕</button>
           </div>
 
+          <div className="social-voice-room__controls">
+            <button
+              type="button"
+              className="social-voice-room__ctrl"
+              aria-label={isMicMuted ? "Unmute microphone" : "Mute microphone"}
+              onClick={() => {
+                void setMuted(!isMicMuted);
+              }}
+              disabled={!isMicReady}
+            >
+              {isMicMuted ? "Unmute" : "Mute"}
+            </button>
+            <button type="button" className="social-voice-room__ctrl" onClick={() => void retryRemotePlayback()}>
+              Refresh Audio
+            </button>
+            {canEndJoinedRoom ? (
+              <button type="button" className="social-voice-room__ctrl" onClick={() => void handleEndCurrentRoom()} disabled={isEndingRoom}>
+                {isEndingRoom ? "Ending..." : "End Room"}
+              </button>
+            ) : null}
+            <span className="social-hub-voice-user__name">Peers: {peerCount}</span>
+          </div>
+
+          <p className="social-create-room-note">Mic: {isMicMuted ? "Muted" : "Live"} · Audio Engine: {audioContextState}</p>
+
           <button type="button" className="social-voice-room__invite">+ Invite friends</button>
 
           <div className="social-voice-room__member-list">
             {joinedRoomMembers.map((member) => (
               <div key={member.id} className="social-voice-room__member">
                 <div className="social-voice-room__member-main">
-                  <img src={member.photoUrl} alt={member.displayName} className="social-voice-room__member-avatar" />
+                  <img
+                    src={member.photoUrl}
+                    alt={member.displayName}
+                    className={`social-voice-room__member-avatar ${speakingUserSet.has(member.id) ? "social-voice-room__member-avatar--speaking" : ""}`}
+                  />
                   <span className="social-voice-room__member-name">{member.username}</span>
                   {member.verified ? <VerifiedBadge className="social-voice-room__member-verified" /> : null}
                 </div>
@@ -320,7 +561,10 @@ export function SocialPage() {
             role="tab"
             aria-selected={activeTab === tab.key}
             className={`feed-tab ${activeTab === tab.key ? "feed-tab-active" : "feed-tab-inactive"}`}
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => {
+              setActiveTab(tab.key);
+              setSocialError(null);
+            }}
           >
             <span className="feed-tab-icon">{getSocialTabIcon(tab.key)}</span>
             <span className="feed-tab-label">{tab.label}</span>
@@ -329,46 +573,87 @@ export function SocialPage() {
       </div>
 
       {activeTab === "voice-chat" ? (
-        <div className="social-hub-voice-list">
-          {liveVoiceRooms.map((room) => (
-            <div key={room.id} className="social-hub-voice-card">
-              <div className="social-hub-voice-card__top">
-                <div className="social-hub-voice-card__category">
-                  <span className="social-hub-voice-card__mic" aria-hidden="true">🎙</span>
-                  <span>{room.category}</span>
-                </div>
-                <span className="social-hub-voice-card__timer" title="Room open duration (hours:minutes)">{room.openDurationLabel}</span>
-              </div>
+        <div className="social-create-room-wrap">
+          <button
+            type="button"
+            className="cta-button edit-profile w-full"
+            onClick={() => setIsCreateRoomOpen((value) => !value)}
+            disabled={!canCreateRoom && !isCreateRoomOpen}
+          >
+            {isCreateRoomOpen ? "Close" : "Create Room"}
+          </button>
+          <p className="social-create-room-note">Each user can only be in one active room at a time.</p>
 
-              <div className="social-hub-voice-card__bottom">
-                <div className="social-hub-voice-card__participants">
-                  {room.participantIds.map((id) => {
-                    const participant = userById.get(id);
-                    if (!participant) return null;
-                    return (
-                      <div key={id} className="social-hub-voice-user">
-                        <img src={participant.photoUrl} alt={participant.displayName} className="social-hub-voice-user__avatar" />
-                        <div className="social-hub-voice-user__name-row">
-                          <span className="social-hub-voice-user__name">{participant.username}</span>
-                          {participant.verified ? <VerifiedBadge className="social-hub-voice-user__verified" /> : null}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {room.extraCount > 0 ? <span className="social-hub-voice-user__more">+{room.extraCount}</span> : null}
-                </div>
-
-                <button
-                  type="button"
-                  className="social-hub-voice-card__join"
-                  onClick={() => handleJoinRoom(room)}
-                  disabled={room.participantIds.length + room.extraCount >= 4}
-                >
-                  {room.participantIds.length + room.extraCount >= 4 ? "Full" : "Join"}
+          {isCreateRoomOpen ? (
+            <div className="social-create-room-form">
+              <input
+                value={roomNameDraft}
+                onChange={(event) => setRoomNameDraft(event.target.value)}
+                className="social-create-room-input"
+                placeholder="Enter room name"
+                maxLength={48}
+              />
+              <div className="social-create-room-actions">
+                <button type="button" className="cta-button edit-profile" onClick={handleCreateRoom} disabled={isSubmittingRoom || !roomNameDraft.trim()}>
+                  {isSubmittingRoom ? "Creating..." : "Create"}
                 </button>
               </div>
             </div>
-          ))}
+          ) : null}
+        </div>
+      ) : null}
+
+      {socialError ? <p className="social-create-room-error">{socialError}</p> : null}
+
+      {activeTab === "voice-chat" ? (
+        <div className="social-hub-voice-list">
+          {!liveVoiceRooms.length ? (
+            <div className="social-hub-empty-state">No active voice rooms yet. Create one to get started.</div>
+          ) : null}
+
+          {liveVoiceRooms.map((room) => {
+            const isMember = room.participantIds.includes(user?.id ?? "");
+            const isFull = !isMember && room.participantIds.length >= VOICE_ROOM_MAX_PARTICIPANTS;
+
+            return (
+              <div key={room.id} className="social-hub-voice-card">
+                <div className="social-hub-voice-card__top">
+                  <div className="social-hub-voice-card__category">
+                    <span className="social-hub-voice-card__mic" aria-hidden="true">🎙</span>
+                    <span>{room.name}</span>
+                  </div>
+                  <span className="social-hub-voice-card__timer" title="Room open duration (hours:minutes)">{room.openDurationLabel}</span>
+                </div>
+
+                <div className="social-hub-voice-card__bottom">
+                  <div className="social-hub-voice-card__participants">
+                    {room.participantIds.slice(0, VOICE_ROOM_MAX_PARTICIPANTS).map((id) => {
+                      const participant = userById.get(id);
+                      if (!participant) return null;
+                      return (
+                        <div key={id} className="social-hub-voice-user">
+                          <img src={participant.photoUrl} alt={participant.displayName} className="social-hub-voice-user__avatar" />
+                          <div className="social-hub-voice-user__name-row">
+                            <span className="social-hub-voice-user__name">{participant.username}</span>
+                            {participant.verified ? <VerifiedBadge className="social-hub-voice-user__verified" /> : null}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="social-hub-voice-card__join"
+                    onClick={() => void handleJoinRoom(room)}
+                    disabled={isFull}
+                  >
+                    {isMember ? "Open" : isFull ? "Full" : "Join"}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       ) : (
         <div className="social-hub-list">

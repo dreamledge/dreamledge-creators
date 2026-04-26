@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { DEFAULT_AVATAR_URL } from "@/lib/constants/defaults";
+import { isRealAdminAccount } from "@/lib/utils/accountIdentity";
 import { EditProfileModal } from "@/components/ui/EditProfileModal";
 import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
 import type { UserModel } from "@/types/models";
@@ -16,6 +17,7 @@ export function ProfileCard({ creator, isOwnProfile = false }: ProfileCardProps)
   const navigate = useNavigate();
   const isOwn = isOwnProfile || user?.id === creator.id;
   const [showEditModal, setShowEditModal] = useState(false);
+  const canAccessRealAdmin = isOwn && isRealAdminAccount({ email: user?.email ?? "" });
 
   const handleSignOut = async () => {
     try {
@@ -136,7 +138,12 @@ export function ProfileCard({ creator, isOwnProfile = false }: ProfileCardProps)
               {isOwn ? 'Edit Profile' : isFollowing ? 'Following' : 'Follow'}
             </button>
             {isOwn ? (
-              <button className="cta-button edit-profile" onClick={() => navigate("/app/messages")}>Messages</button>
+              <>
+                <button className="cta-button edit-profile" onClick={() => navigate("/app/messages")}>Messages</button>
+                {canAccessRealAdmin ? (
+                  <button className="cta-button edit-profile" onClick={() => navigate("/realadmin")}>Back Office</button>
+                ) : null}
+              </>
             ) : null}
           </div>
           
