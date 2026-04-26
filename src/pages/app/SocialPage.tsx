@@ -203,13 +203,11 @@ export function SocialPage() {
     [joinedRoomId, liveVoiceRooms],
   );
 
-  const {
-    isMicReady,
+const {
     isMicMuted,
     setMuted,
     retryRemotePlayback,
     audioError,
-    peerCount,
     speakingUserIds,
     audioContextState,
   } = useVoiceRoomAudio(joinedRoom?.id ?? null, user?.id ?? null, Boolean(joinedRoom && user?.id));
