@@ -103,12 +103,40 @@ export function useVoiceRoomAudio(roomId: string | null, userId: string | null, 
   const setMuted = async (nextMuted: boolean) => {
     const stream = localStreamRef.current;
     if (!stream) {
-      setIsMicMuted(true);
-      return;
+      const audioContext = audioContextRef.current;
+      if (!audioContext) {
+        setIsMicMuted(true);
+        return;
+      }
+      try {
+        const newStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        const audioTracks = newStream.getAudioTracks();
+        audioTracks.forEach((track) => {
+          track.enabled = !nextMuted;
+        });
+        localStreamRef.current = newStream;
+        const localSource = audioContext.createMediaStreamSource(newStream);
+        const localAnalyser = audioContext.createAnalyser();
+        localAnalyser.fftSize = 512;
+        localSource.connect(localAnalyser);
+        localAnalyserRef.current = localAnalyser;
+        localAnalyserDataRef.current = new Uint8Array(localAnalyser.frequencyBinCount);
+        if (roomRef.current) {
+          roomRef.current.addStream(newStream, undefined, { userId });
+        }
+        setIsMicReady(true);
+      } catch {
+        setIsMicMuted(true);
+        return;
+      }
     }
 
     await resumeAudioContext();
-    stream.getAudioTracks().forEach((track) => {
+    const currentStream = localStreamRef.current;
+    if (!currentStream) {
+      return;
+    }
+    currentStream.getAudioTracks().forEach((track) => {
       track.enabled = !nextMuted;
     });
     setMicMutedStateFromTracks();
@@ -190,14 +218,24 @@ export function useVoiceRoomAudio(roomId: string | null, userId: string | null, 
 
           const audioElement = new Audio();
           audioElement.autoplay = true;
-          audioElement.setAttribute("playsinline", "true");
+          audioElement.setAttribute("playsinline", "");
+          audioElement.setAttribute("webkit-playsinline", "");
           audioElement.muted = false;
           audioElement.srcObject = remoteStream;
           remoteAudioElementsRef.current.set(peerId, audioElement);
 
-          void audioElement.play().catch(() => {
-            // Browsers may block until another user interaction.
-          });
+          const playRemoteAudio = () => {
+            audioElement
+              .play()
+              .then(() => {
+                remoteAudioElementsRef.current.set(peerId, audioElement);
+              })
+              .catch(() => {
+                // Browsers may block autoplay; will retry on user interaction.
+              });
+          };
+
+          playRemoteAudio();
 
           const remoteSource = audioContext.createMediaStreamSource(remoteStream);
           const remoteAnalyser = audioContext.createAnalyser();

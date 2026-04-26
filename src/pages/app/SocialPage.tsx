@@ -461,13 +461,12 @@ export function SocialPage() {
             <button
               type="button"
               className="social-voice-room__ctrl"
-              aria-label={isMicMuted ? "Unmute microphone" : "Mute microphone"}
+              aria-label={isMicReady ? (isMicMuted ? "Unmute microphone" : "Mute microphone") : "Enable microphone"}
               onClick={() => {
                 void setMuted(!isMicMuted);
               }}
-              disabled={!isMicReady}
             >
-              {isMicMuted ? "Unmute" : "Mute"}
+              {isMicReady ? (isMicMuted ? "Unmute" : "Mute") : "Enable"}
             </button>
             <button type="button" className="social-voice-room__ctrl" onClick={() => void retryRemotePlayback()}>
               Refresh Audio
