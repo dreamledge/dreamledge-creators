@@ -486,8 +486,13 @@ const {
             >
               {isMicMuted ? "Unmute" : "Mute"}
             </button>
+            {joinedRoom && user?.id && joinedRoom.createdBy !== user.id ? (
+              <button type="button" className="social-voice-room__ctrl social-voice-room__ctrl--leave" onClick={() => void handleLeaveCurrentRoom()}>
+                Leave
+              </button>
+            ) : null}
             {canEndJoinedRoom ? (
-              <button type="button" className="social-voice-room__ctrl" onClick={() => void handleEndCurrentRoom()} disabled={isEndingRoom}>
+              <button type="button" className="social-voice-room__ctrl social-voice-room__ctrl--leave" onClick={() => void handleEndCurrentRoom()} disabled={isEndingRoom}>
                 {isEndingRoom ? "Ending..." : "End Room"}
               </button>
             ) : null}

@@ -7488,6 +7488,17 @@ button {
   cursor: pointer;
 }
 
+.social-voice-room__ctrl--leave {
+  background: linear-gradient(135deg, #ff2d3d, #ff5b5b);
+  color: white;
+  box-shadow: 0 4px 16px rgba(255, 45, 61, 0.3);
+  border: none;
+}
+
+.social-voice-room__ctrl--leave:hover {
+  box-shadow: 0 6px 24px rgba(255, 45, 61, 0.4);
+}
+
 .social-voice-room__invite {
   border: 0;
   height: 52px;
