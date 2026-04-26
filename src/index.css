@@ -7375,6 +7375,9 @@ button {
   font-size: 22px;
   font-weight: 700;
   line-height: 1;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
 }
 
 .social-voice-room__invite {

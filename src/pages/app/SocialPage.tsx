@@ -431,6 +431,28 @@ export function SocialPage() {
     setSocialError(audioError);
   }, [audioError]);
 
+  useEffect(() => {
+    if (!joinedRoomId || !user?.id) return;
+
+    const retryAudio = () => {
+      retryRemotePlayback().catch(() => {});
+    };
+
+    const handleInteraction = () => {
+      retryAudio();
+      document.removeEventListener("touchstart", handleInteraction);
+      document.removeEventListener("click", handleInteraction);
+    };
+
+    document.addEventListener("touchstart", handleInteraction);
+    document.addEventListener("click", handleInteraction);
+
+    return () => {
+      document.removeEventListener("touchstart", handleInteraction);
+      document.removeEventListener("click", handleInteraction);
+    };
+  }, [joinedRoomId, user?.id]);
+
   if (joinedRoom) {
     return (
       <div className="messages-page">
@@ -461,22 +483,16 @@ export function SocialPage() {
             <button
               type="button"
               className="social-voice-room__ctrl"
-              aria-label={isMicReady ? (isMicMuted ? "Unmute microphone" : "Mute microphone") : "Enable microphone"}
-              onClick={() => {
-                void setMuted(!isMicMuted);
-              }}
+              aria-label={isMicMuted ? "Unmute microphone" : "Mute microphone"}
+              onClick={() => void setMuted(!isMicMuted)}
             >
-              {isMicReady ? (isMicMuted ? "Unmute" : "Mute") : "Enable"}
-            </button>
-            <button type="button" className="social-voice-room__ctrl" onClick={() => void retryRemotePlayback()}>
-              Refresh Audio
+              {isMicMuted ? "Unmute" : "Mute"}
             </button>
             {canEndJoinedRoom ? (
               <button type="button" className="social-voice-room__ctrl" onClick={() => void handleEndCurrentRoom()} disabled={isEndingRoom}>
                 {isEndingRoom ? "Ending..." : "End Room"}
               </button>
             ) : null}
-            <span className="social-hub-voice-user__name">Peers: {peerCount}</span>
           </div>
 
           <p className="social-create-room-note">Mic: {isMicMuted ? "Muted" : "Live"} · Audio Engine: {audioContextState}</p>

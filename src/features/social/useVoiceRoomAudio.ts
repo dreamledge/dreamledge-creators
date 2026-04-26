@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { joinRoom, type JsonValue, type Room } from "trystero";
 
 const TRYSTERO_APP_ID = "dreamledge-social-voice-v1";
-const SPEAKING_THRESHOLD = 10;
+const SPEAKING_THRESHOLD = 5;
 const SPEAKING_HOLD_MS = 420;
 
 type RemoteAudio = {
@@ -125,11 +125,14 @@ export function useVoiceRoomAudio(roomId: string | null, userId: string | null, 
           roomRef.current.addStream(newStream, undefined, { userId });
         }
         setIsMicReady(true);
+        setIsMicMuted(nextMuted);
       } catch {
         setIsMicMuted(true);
         return;
       }
     }
+
+    setIsMicMuted(nextMuted);
 
     await resumeAudioContext();
     const currentStream = localStreamRef.current;
@@ -156,40 +159,19 @@ export function useVoiceRoomAudio(roomId: string | null, userId: string | null, 
       return;
     }
 
-    let cancelled = false;
-
     const initialize = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        if (cancelled) {
-          stream.getTracks().forEach((track) => track.stop());
-          return;
-        }
-
-        const audioTracks = stream.getAudioTracks();
-        audioTracks.forEach((track) => {
-          track.enabled = false;
-        });
-
         const audioContext = new AudioContext();
         audioContextRef.current = audioContext;
         syncAudioContextState();
-
-        const localSource = audioContext.createMediaStreamSource(stream);
-        const localAnalyser = audioContext.createAnalyser();
-        localAnalyser.fftSize = 512;
-        localSource.connect(localAnalyser);
-        localAnalyserRef.current = localAnalyser;
-        localAnalyserDataRef.current = new Uint8Array(localAnalyser.frequencyBinCount);
-
-        localStreamRef.current = stream;
 
         const room = joinRoom({ appId: TRYSTERO_APP_ID }, roomId);
         roomRef.current = room;
 
         room.onPeerJoin((peerId) => {
-          if (!localStreamRef.current) return;
-          room.addStream(localStreamRef.current, peerId, { userId });
+          const stream = localStreamRef.current;
+          if (!stream) return;
+          room.addStream(stream, peerId, { userId });
         });
 
         room.onPeerLeave((peerId) => {
@@ -248,11 +230,6 @@ export function useVoiceRoomAudio(roomId: string | null, userId: string | null, 
           });
         });
 
-        room.addStream(stream, undefined, { userId });
-        setMicMutedStateFromTracks();
-        setIsMicReady(true);
-        setAudioError(null);
-
         speakingLoopRef.current = window.setInterval(() => {
           const now = Date.now();
           const nextSpeaking = new Set<string>();
@@ -290,7 +267,6 @@ export function useVoiceRoomAudio(roomId: string | null, userId: string | null, 
     void initialize();
 
     return () => {
-      cancelled = true;
       setRemoteAudios([]);
       setSpeakingUserIds([]);
       setIsMicReady(false);
