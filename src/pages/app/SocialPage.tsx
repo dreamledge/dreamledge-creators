@@ -6,6 +6,7 @@ import { VerifiedBadge } from "@/components/ui/VerifiedLabel";
 import { mockUsers } from "@/lib/constants/mockData";
 import { DEFAULT_AVATAR_URL } from "@/lib/constants/defaults";
 import { subscribePublicUsers } from "@/lib/firebase/publicData";
+import { saveLastVoiceRoom, getLastVoiceRoom, clearLastVoiceRoom } from "@/lib/utils/voiceRoomState";
 import {
   VOICE_ROOM_MAX_PARTICIPANTS,
   closeVoiceRoom,
@@ -264,6 +265,7 @@ const {
 
     try {
       setSocialError(null);
+      saveLastVoiceRoom(room.id);
       await joinVoiceRoom(room.id, user.id);
       setJoinedRoomId(room.id);
     } catch (error) {
@@ -310,6 +312,7 @@ const {
 
     try {
       setSocialError(null);
+      clearLastVoiceRoom();
       await leaveVoiceRoom(joinedRoomId, user.id);
     } catch (error) {
       setSocialError(error instanceof Error ? error.message : "Unable to leave room.");
@@ -325,6 +328,7 @@ const {
     try {
       setSocialError(null);
       setIsEndingRoom(true);
+      clearLastVoiceRoom();
       await closeVoiceRoom(joinedRoom.id, user.id);
       setJoinedRoomId(null);
       setProfilePreviewUserId(null);
@@ -403,6 +407,24 @@ const {
     if (state.restoreTab) setActiveTab(state.restoreTab);
     if (state.restoreVoiceRoomId) setJoinedRoomId(state.restoreVoiceRoomId);
   }, [location.state]);
+
+  useEffect(() => {
+    if (!user?.id || joinedRoomId) return;
+    const lastRoomId = getLastVoiceRoom();
+    if (!lastRoomId) return;
+    const room = liveVoiceRooms.find((r) => r.id === lastRoomId);
+    if (!room) return;
+    if (!room.participantIds.includes(user.id)) return;
+    const handleAutoRejoin = async () => {
+      try {
+        await joinVoiceRoom(room.id, user.id);
+        setJoinedRoomId(room.id);
+      } catch {
+        // Auto-rejoin failed, ignore
+      }
+    };
+    handleAutoRejoin();
+  }, [user?.id, joinedRoomId, liveVoiceRooms]);
 
   useEffect(() => {
     if (!joinedRoomId) return;
