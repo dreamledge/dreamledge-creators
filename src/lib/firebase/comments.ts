@@ -43,6 +43,8 @@ function mapCommentDoc(id: string, data: DocumentData): CommentModel {
     userVerified: Boolean(data.userVerified),
     content: typeof data.content === "string" ? data.content : "",
     likeCount: typeof data.likeCount === "number" ? data.likeCount : 0,
+    replyCount: typeof data.replyCount === "number" ? data.replyCount : 0,
+    replyToId: typeof data.replyToId === "string" ? data.replyToId : undefined,
     likedBy: Array.isArray(data.likedBy) ? data.likedBy.filter((id: unknown) => typeof id === "string") : [],
     createdAt: toIso(data.createdAt),
     updatedAt: toIso(data.updatedAt),
@@ -63,6 +65,7 @@ export interface AddCommentInput {
   userPhoto: string;
   userVerified: boolean;
   content: string;
+  replyToId?: string;
 }
 
 export async function addComment(input: AddCommentInput): Promise<{ id: string }> {
@@ -78,6 +81,8 @@ export async function addComment(input: AddCommentInput): Promise<{ id: string }
     userVerified: input.userVerified,
     content: input.content.trim(),
     likeCount: 0,
+    replyCount: 0,
+    ...(input.replyToId ? { replyToId: input.replyToId } : {}),
     likedBy: [],
     createdAt: now,
     updatedAt: now,
@@ -88,6 +93,12 @@ export async function addComment(input: AddCommentInput): Promise<{ id: string }
   // Increment comment count on parent content
   const contentRef = doc(firestore, CONTENT_COLLECTION, input.contentId);
   await updateDoc(contentRef, { commentCount: increment(1), updatedAt: now });
+
+  // If this is a reply, increment the parent comment's replyCount
+  if (input.replyToId) {
+    const parentCommentRef = doc(firestore, COMMENTS_COLLECTION, input.replyToId);
+    await updateDoc(parentCommentRef, { replyCount: increment(1), updatedAt: now });
+  }
 
   // Send notification if comment author is not content creator
   if (input.userId !== input.creatorId) {

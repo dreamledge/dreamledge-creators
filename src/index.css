@@ -6392,6 +6392,56 @@ button {
   }
 }
 
+/* Comment Replies */
+.comment-replies {
+  margin-left: 46px;
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.comment-toggle-replies {
+  margin-left: 46px;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #b0b0b0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.2s;
+}
+
+.comment-toggle-replies:hover {
+  color: #e63946;
+}
+
+.comment-toggle-replies-line {
+  width: 24px;
+  height: 1px;
+  background-color: #3a3a3a;
+}
+
+.comment-inline-input-area {
+  margin-left: 46px;
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.comment-inline-input-area .comment-textarea {
+  min-height: 40px;
+  height: auto;
+  font-size: 13px;
+  padding: 10px 14px;
+}
+
 /* Cyber Bottom Navigation */
 .cyber-signboard {
   --primary-glow: #e63946;

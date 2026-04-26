@@ -226,6 +226,8 @@ export interface CommentModel {
   userVerified: boolean;
   content: string;
   likeCount: number;
+  replyCount: number;
+  replyToId?: string;
   likedBy: string[];
   createdAt: string;
   updatedAt: string;
