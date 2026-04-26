@@ -126,7 +126,7 @@ export function ProfileCard({ creator, isOwnProfile = false }: ProfileCardProps)
           
           <div className="flex w-full flex-col gap-3">
             <button
-              className={`cta-button ${isOwn ? 'edit-profile' : 'follow-profile'}`}
+              className={`cta-button edit-profile explore-card-button`}
               onClick={() => {
                 if (isOwn) {
                   setShowEditModal(true);
@@ -137,11 +137,16 @@ export function ProfileCard({ creator, isOwnProfile = false }: ProfileCardProps)
             >
               {isOwn ? 'Edit Profile' : isFollowing ? 'Following' : 'Follow'}
             </button>
+            {!isOwn && (
+              <button className="cta-button edit-profile explore-card-button" onClick={() => navigate("/app/messages")}>
+                Message
+              </button>
+            )}
             {isOwn ? (
               <>
-                <button className="cta-button edit-profile" onClick={() => navigate("/app/messages")}>Messages</button>
+                <button className="cta-button edit-profile explore-card-button" onClick={() => navigate("/app/messages")}>Messages</button>
                 {canAccessRealAdmin ? (
-                  <button className="cta-button edit-profile" onClick={() => navigate("/realadmin")}>Back Office</button>
+                  <button className="cta-button edit-profile explore-card-button" onClick={() => navigate("/realadmin")}>Back Office</button>
                 ) : null}
               </>
             ) : null}

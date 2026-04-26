@@ -2471,6 +2471,24 @@ button {
   position: relative;
 }
 
+.profile-back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fafafa;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+.profile-back-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
 .profile-signout-btn {
   position: absolute;
   top: 12px;
@@ -2802,6 +2820,12 @@ button {
   white-space: nowrap;
 }
 
+.explore-suggestion-username-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .explore-suggestion-displayname {
   font-size: 13px;
   color: #a1a1aa;
@@ -2810,11 +2834,24 @@ button {
   white-space: nowrap;
 }
 
+.explore-suggestion-verified {
+  width: 14px;
+  height: 14px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
 .explore-header-text {
   position: static;
   transform: none;
   justify-content: center;
   width: 100%;
+  margin-bottom: 120px;
+  font-family: "Arial Black", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 900;
+  font-size: 5rem;
+  text-transform: lowercase;
+  line-height: 1.1;
 }
 
 .searchBox {
@@ -6890,8 +6927,9 @@ button {
 .messages-header {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
-  padding: 8px 12px;
+  padding: 12px;
   background: #000;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
@@ -7003,10 +7041,25 @@ button {
 }
 
 .messages-header__title {
-  font-size: 22px;
-  font-weight: 700;
-  color: #fff;
+  font-size: 2rem;
+  font-weight: 900;
+  font-family: "Arial Black", "Helvetica Neue", Arial, sans-serif;
   margin: 0;
+  text-align: center;
+  width: 100%;
+  line-height: 1.1;
+  text-transform: lowercase;
+  background: linear-gradient(90deg, #ff9a86 0%, #ff5769 35%, #ff3147 68%, #ff8b77 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: home-header-gradient 3s linear infinite;
+}
+
+@keyframes home-header-gradient {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
 }
 
 .messages-header__new {

@@ -1,9 +1,9 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/app/providers/AuthProvider";
-import { CreatorCard } from "@/components/cards/CreatorCard";
 import { BattleCard } from "@/components/cards/BattleCard";
 import { ContestCard } from "@/components/cards/ContestCard";
+import { VerifiedBadge } from "@/components/ui/VerifiedLabel";
 import { mockBattles, mockContests, mockUsers } from "@/lib/constants/mockData";
 import { subscribePublicUsers } from "@/lib/firebase/publicData";
 import type { UserModel } from "@/types/models";
@@ -44,7 +44,7 @@ export function ExplorePage() {
 
   const handleSelectSuggestion = (creator: UserModel) => {
     setSearchQuery("");
-    navigate(`/app/profile/${creator.id}`);
+    navigate(`/app/profile/${creator.id}`, { state: { from: "explore" } });
   };
 
   return (
@@ -100,21 +100,17 @@ export function ExplorePage() {
               >
                 <img src={creator.photoUrl} alt={creator.displayName} className="explore-suggestion-avatar" />
                 <div className="explore-suggestion-info">
-                  <span className="explore-suggestion-username">@{creator.username}</span>
+                  <div className="explore-suggestion-username-wrap">
+                    <span className="explore-suggestion-username">@{creator.username}</span>
+                    {creator.verified && <VerifiedBadge className="explore-suggestion-verified" />}
+                  </div>
                   <span className="explore-suggestion-displayname">{creator.displayName}</span>
                 </div>
               </button>
             ))}
           </div>
-        )}
+)}
       </div>
-      {filteredUsers.length ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{filteredUsers.map((user) => <CreatorCard key={user.id} creator={user} showSocialLinks />)}</div>
-      ) : (
-        <div className="rounded-[28px] border border-white/10 bg-white/5 px-5 py-6 text-center text-sm text-zinc-400">
-          No creators found for "{searchQuery.trim()}".
-        </div>
-      )}
       <div className="grid gap-4 xl:grid-cols-2">{mockBattles.map((battle) => <BattleCard key={battle.id} battle={battle} />)}</div>
       <div className="grid gap-4 xl:grid-cols-2">{mockContests.map((contest) => <ContestCard key={contest.id} contest={contest} />)}</div>
     </div>
