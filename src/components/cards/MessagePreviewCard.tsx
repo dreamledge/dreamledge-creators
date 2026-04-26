@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
-import { mockUsers } from "@/lib/constants/mockData";
 import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
-import type { ConversationModel } from "@/types/models";
+import type { ConversationModel, UserModel } from "@/types/models";
 
 function formatRelativeTime(iso: string) {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -18,10 +17,10 @@ function formatRelativeTime(iso: string) {
   return `${Math.floor(diffMs / year)}yr ago`;
 }
 
-export function MessagePreviewCard({ conversation, currentUserId }: { conversation: ConversationModel; currentUserId: string }) {
+export function MessagePreviewCard({ conversation, currentUserId, allUsers }: { conversation: ConversationModel; currentUserId: string; allUsers: UserModel[] }) {
   const targetId = conversation.participantIds.find((id) => id !== currentUserId) ?? currentUserId;
-  const target = mockUsers.find((user) => user.id === targetId);
-  const lastSender = mockUsers.find((user) => user.id === conversation.lastSenderId);
+  const target = allUsers.find((user) => user.id === targetId);
+  const lastSender = allUsers.find((user) => user.id === conversation.lastSenderId);
   const previewPrefix = !conversation.lastMessage
     ? ""
     : conversation.lastSenderId === currentUserId

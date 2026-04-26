@@ -1,11 +1,12 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { useMessages } from "@/app/providers/MessagesProvider";
-import { mockUsers } from "@/lib/constants/mockData";
+import { subscribePublicUsers } from "@/lib/firebase/publicData";
 import { VerifiedBadge } from "@/components/ui/VerifiedLabel";
 import { ChatInput } from "@/components/messages/ChatInput";
 import { ChatThread } from "@/components/messages/ChatThread";
+import type { UserModel } from "@/types/models";
 
 const SOCIAL_ROOM_RETURN_KEY = "dreamledge-social-room-return";
 
@@ -15,6 +16,12 @@ export function ConversationPage() {
   const location = useLocation();
   const { user } = useAuth();
   const { getConversation, getMessages, markSeen, isTypingUser } = useMessages();
+  const [allUsers, setAllUsers] = useState<UserModel[]>([]);
+
+  useEffect(() => {
+    const unsub = subscribePublicUsers(setAllUsers);
+    return () => unsub();
+  }, []);
 
   const conversation = getConversation(conversationId ?? "");
   const messages = getMessages(conversationId ?? "");
@@ -26,8 +33,8 @@ export function ConversationPage() {
 
   const otherUser = useMemo(() => {
     if (!otherParticipantId) return null;
-    return mockUsers.find((u) => u.id === otherParticipantId) ?? null;
-  }, [otherParticipantId]);
+    return allUsers.find((u) => u.id === otherParticipantId) ?? null;
+  }, [otherParticipantId, allUsers]);
 
   const typingUserId = isTypingUser(conversationId ?? "");
 
@@ -121,6 +128,7 @@ export function ConversationPage() {
           messages={messages}
           currentUserId={user?.id ?? ""}
           isTyping={!!typingUserId}
+          allUsers={allUsers}
         />
       </div>
 

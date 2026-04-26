@@ -1,6 +1,5 @@
 import { useRef, useEffect, useMemo, useCallback, useState } from "react";
-import { mockUsers } from "@/lib/constants/mockData";
-import type { MessageModel, MessageReaction } from "@/types/models";
+import type { MessageModel, MessageReaction, UserModel } from "@/types/models";
 import { useMessages } from "@/app/providers/MessagesProvider";
 
 const REACTIONS: MessageReaction[] = ["❤️", "😂", "😮", "😢", "🔥", "👏"];
@@ -63,10 +62,12 @@ export function ChatThread({
   messages,
   currentUserId,
   isTyping,
+  allUsers,
 }: {
   messages: MessageModel[];
   currentUserId: string;
   isTyping?: boolean;
+  allUsers: UserModel[];
 }) {
   const threadRef = useRef<HTMLDivElement>(null);
   const prevMessagesLengthRef = useRef(messages.length);
@@ -82,8 +83,8 @@ export function ChatThread({
 
   const typingUser = useMemo(() => {
     if (!otherParticipantId) return null;
-    return mockUsers.find((u) => u.id === otherParticipantId) ?? null;
-  }, [otherParticipantId]);
+    return allUsers.find((u) => u.id === otherParticipantId) ?? null;
+  }, [otherParticipantId, allUsers]);
 
   const scrollToBottom = useCallback(() => {
     if (!threadRef.current) return;
@@ -193,7 +194,7 @@ export function ChatThread({
     <div ref={threadRef} className="dm-thread-list" onScroll={handleScroll}>
       {groupedMessages.map((group) => {
         const isOutgoing = group.senderId === currentUserId;
-        const sender = mockUsers.find((u) => u.id === group.senderId);
+        const sender = allUsers.find((u) => u.id === group.senderId);
 
         return (
           <div

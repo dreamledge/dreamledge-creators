@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { useMessages } from "@/app/providers/MessagesProvider";
-import { mockUsers } from "@/lib/constants/mockData";
+import { subscribePublicUsers } from "@/lib/firebase/publicData";
 import { VerifiedBadge, VerifiedLabel } from "@/components/ui/VerifiedLabel";
+import type { UserModel } from "@/types/models";
 
 function formatRelativeTime(iso: string) {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -17,13 +18,13 @@ function formatRelativeTime(iso: string) {
   return `${Math.floor(diffMs / day)}d`;
 }
 
-function InboxRow({ conversation, currentUserId }: { conversation: ReturnType<typeof useMessages>["conversations"][number]; currentUserId: string }) {
+function InboxRow({ conversation, currentUserId, allUsers }: { conversation: ReturnType<typeof useMessages>["conversations"][number]; currentUserId: string; allUsers: UserModel[] }) {
   const navigate = useNavigate();
   const otherId = conversation.participantIds.find((id) => id !== currentUserId);
   const other = useMemo(() => {
     if (!otherId) return null;
-    return mockUsers.find((u) => u.id === otherId) ?? null;
-  }, [otherId]);
+    return allUsers.find((u) => u.id === otherId) ?? null;
+  }, [otherId, allUsers]);
 
   const isUnread = conversation.unreadCount > 0;
   const isLastMine = conversation.lastSenderId === currentUserId;
@@ -55,10 +56,16 @@ export function MessagesPage() {
   const navigate = useNavigate();
   const { conversations, startConversation } = useMessages();
   const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [allUsers, setAllUsers] = useState<UserModel[]>([]);
+
+  useEffect(() => {
+    const unsub = subscribePublicUsers(setAllUsers);
+    return () => unsub();
+  }, []);
 
   const visibleConversations = conversations.filter((conv) => conv.participantIds.includes(user?.id ?? ""));
 
-  const availableCreators = useMemo(() => mockUsers.filter((creator) => creator.id !== user?.id), [user?.id]);
+  const availableCreators = useMemo(() => allUsers.filter((creator) => creator.id !== user?.id), [allUsers, user?.id]);
 
   const handleStartConversation = (targetUserId: string) => {
     if (!user) return;
@@ -115,7 +122,7 @@ export function MessagesPage() {
             <span>Start a conversation with a creator</span>
           </div>
         ) : (
-          visibleConversations.map((conv) => <InboxRow key={conv.id} conversation={conv} currentUserId={user?.id ?? ""} />)
+          visibleConversations.map((conv) => <InboxRow key={conv.id} conversation={conv} currentUserId={user?.id ?? ""} allUsers={allUsers} />)
         )}
       </div>
     </div>
