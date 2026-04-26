@@ -1,28 +1,51 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { CreatorCard } from "@/components/cards/CreatorCard";
 import { BattleCard } from "@/components/cards/BattleCard";
 import { ContestCard } from "@/components/cards/ContestCard";
 import { mockBattles, mockContests, mockUsers } from "@/lib/constants/mockData";
+import { subscribePublicUsers } from "@/lib/firebase/publicData";
+import type { UserModel } from "@/types/models";
 
 export function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [publicUsers, setPublicUsers] = useState<UserModel[]>([]);
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const unsubscribe = subscribePublicUsers(setPublicUsers);
+    return () => unsubscribe();
+  }, []);
 
   const filteredUsers = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     const currentUserId = user?.id;
 
-    const users = mockUsers.filter((u) => u.id !== currentUserId);
+    const mockUserIds = new Set(mockUsers.map((u) => u.id));
+    const uniquePublicUsers = publicUsers.filter((u) => u.id !== currentUserId && !mockUserIds.has(u.id));
 
-    if (!query) return users;
+    const allUsers: UserModel[] = [...mockUsers.filter((u) => u.id !== currentUserId), ...uniquePublicUsers];
 
-    return users.filter((user) => {
+    if (!query) return allUsers;
+
+    return allUsers.filter((user) => {
       const username = user.username.toLowerCase();
       const displayName = user.displayName.toLowerCase();
       return username.includes(query) || displayName.includes(query);
     });
-  }, [searchQuery, user]);
+  }, [searchQuery, user, publicUsers]);
+
+  const searchSuggestions = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    return filteredUsers.slice(0, 6);
+  }, [filteredUsers, searchQuery]);
+
+  const handleSelectSuggestion = (creator: UserModel) => {
+    setSearchQuery("");
+    navigate(`/app/profile/${creator.id}`);
+  };
 
   return (
     <div className="space-y-8">
@@ -66,6 +89,24 @@ export function ExplorePage() {
             </svg>
           </button>
         </div>
+        {searchSuggestions.length > 0 && (
+          <div className="explore-suggestions">
+            {searchSuggestions.map((creator) => (
+              <button
+                key={creator.id}
+                type="button"
+                className="explore-suggestion"
+                onClick={() => handleSelectSuggestion(creator)}
+              >
+                <img src={creator.photoUrl} alt={creator.displayName} className="explore-suggestion-avatar" />
+                <div className="explore-suggestion-info">
+                  <span className="explore-suggestion-username">@{creator.username}</span>
+                  <span className="explore-suggestion-displayname">{creator.displayName}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       {filteredUsers.length ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{filteredUsers.map((user) => <CreatorCard key={user.id} creator={user} showSocialLinks />)}</div>

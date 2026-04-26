@@ -2755,6 +2755,61 @@ button {
   gap: 2rem;
 }
 
+.explore-suggestions {
+  width: 100%;
+  max-width: 340px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background: #0e0e0e;
+  overflow: hidden;
+}
+
+.explore-suggestion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.explore-suggestion:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.explore-suggestion-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  object-fit: cover;
+}
+
+.explore-suggestion-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.explore-suggestion-username {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fafafa;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.explore-suggestion-displayname {
+  font-size: 13px;
+  color: #a1a1aa;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .explore-header-text {
   position: static;
   transform: none;
