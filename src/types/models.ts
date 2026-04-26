@@ -216,6 +216,21 @@ export interface NotificationModel {
   createdAt: string;
 }
 
+export interface CommentModel {
+  id: string;
+  contentId: string;
+  creatorId: string;
+  userId: string;
+  userName: string;
+  userPhoto: string;
+  userVerified: boolean;
+  content: string;
+  likeCount: number;
+  likedBy: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface LeaderboardSnapshotModel {
   id: string;
   userId: string;

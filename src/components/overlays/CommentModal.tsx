@@ -1,24 +1,17 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { createContext, useContext } from "react";
 import { Heart, Image as ImageIcon, Smile } from "lucide-react";
-import { mockUsers } from "@/lib/constants/mockData";
 import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
-
-interface Comment {
-  id: string;
-  userId: string;
-  userName: string;
-  userPhoto: string;
-  content: string;
-  likeCount: number;
-  createdAt: string;
-}
+import { useAuth } from "@/app/providers/AuthProvider";
+import { subscribeComments, addComment, toggleCommentLike } from "@/lib/firebase/comments";
+import type { CommentModel } from "@/types/models";
 
 interface CommentModalContextType {
   isOpen: boolean;
-  openCommentModal: (cardId: string) => void;
+  openCommentModal: (cardId: string, creatorId: string) => void;
   closeCommentModal: () => void;
   activeCardId: string | null;
+  activeCreatorId: string | null;
 }
 
 const CommentModalContext = createContext<CommentModalContextType>({
@@ -26,6 +19,7 @@ const CommentModalContext = createContext<CommentModalContextType>({
   openCommentModal: () => {},
   closeCommentModal: () => {},
   activeCardId: null,
+  activeCreatorId: null,
 });
 
 export function useCommentModal() {
@@ -35,9 +29,11 @@ export function useCommentModal() {
 export function CommentModalProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const [activeCreatorId, setActiveCreatorId] = useState<string | null>(null);
 
-  const openCommentModal = (cardId: string) => {
+  const openCommentModal = (cardId: string, creatorId: string) => {
     setActiveCardId(cardId);
+    setActiveCreatorId(creatorId);
     setIsOpen(true);
   };
 
@@ -46,7 +42,7 @@ export function CommentModalProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <CommentModalContext.Provider value={{ isOpen, openCommentModal, closeCommentModal, activeCardId }}>
+    <CommentModalContext.Provider value={{ isOpen, openCommentModal, closeCommentModal, activeCardId, activeCreatorId }}>
       {children}
     </CommentModalContext.Provider>
   );
@@ -70,88 +66,63 @@ function SendIcon() {
   );
 }
 
-const mockComments: Comment[] = [
-  {
-    id: "c1",
-    userId: "u1",
-    userName: "Sarah Johnson",
-    userPhoto: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80",
-    content: "This is amazing! Love your content keep it up! 🔥",
-    likeCount: 24,
-    createdAt: "2h ago",
-  },
-  {
-    id: "c2",
-    userId: "u2",
-    userName: "Mike Chen",
-    userPhoto: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80",
-    content: "Totally agree with this! Needed to see this perspective.",
-    likeCount: 12,
-    createdAt: "4h ago",
-  },
-  {
-    id: "c3",
-    userId: "u3",
-    userName: "Emma Wilson",
-    userPhoto: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=100&q=80",
-    content: "This is exactly what I needed to see today. Thank you!",
-    likeCount: 8,
-    createdAt: "6h ago",
-  },
-  {
-    id: "c4",
-    userId: "u4",
-    userName: "David Brown",
-    userPhoto: "https://images.unsplash.com/photo-1500648767791-00dcc9945e4?auto=format&fit=crop&w=100&q=80",
-    content: "Great content as always! Can't wait for more.",
-    likeCount: 15,
-    createdAt: "1d ago",
-  },
-  {
-    id: "c5",
-    userId: "u1",
-    userName: "Sosa Noir",
-    userPhoto: "/sosadata.jpg",
-    content: "This is so inspiring! You've motivated me to create more content.",
-    likeCount: 31,
-    createdAt: "2d ago",
-  },
-  {
-    id: "c6",
-    userId: "u5",
-    userName: "Berto Brown",
-    userPhoto: "/bertdata.jpg",
-    content: "This post hits. Clean delivery, strong energy, and the message lands right away.",
-    likeCount: 19,
-    createdAt: "3h ago",
-  },
-  {
-    id: "c7",
-    userId: "u5",
-    userName: "Berto Brown",
-    userPhoto: "/bertdata.jpg",
-    content: "Real creator presence here. I would watch a whole series built around this format.",
-    likeCount: 27,
-    createdAt: "7h ago",
-  },
-  {
-    id: "c8",
-    userId: "u5",
-    userName: "Berto Brown",
-    userPhoto: "/bertdata.jpg",
-    content: "Strong pacing and strong voice. This kind of content is exactly what keeps people locked in.",
-    likeCount: 22,
-    createdAt: "1d ago",
-  },
-];
-
 export function CommentModal() {
-  const { isOpen, closeCommentModal } = useCommentModal();
+  const { isOpen, closeCommentModal, activeCardId, activeCreatorId } = useCommentModal();
+  const { user } = useAuth();
   const [newComment, setNewComment] = useState("");
+  const [comments, setComments] = useState<CommentModel[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [unsubscribe, setUnsubscribe] = useState<(() => void) | null>(null);
+
+  useEffect(() => {
+    if (!isOpen || !activeCardId) {
+      unsubscribe?.();
+      setComments([]);
+      return;
+    }
+
+    const unsub = subscribeComments(
+      activeCardId,
+      (newComments) => setComments(newComments),
+      (error) => console.error("Comment subscription error:", error)
+    );
+    setUnsubscribe(() => unsub);
+
+    return () => unsub();
+  }, [isOpen, activeCardId]);
+
+  const handleAddComment = async () => {
+    if (!user || !activeCardId || !newComment.trim() || submitting) return;
+    
+    setSubmitting(true);
+    try {
+      await addComment({
+        contentId: activeCardId,
+        creatorId: activeCreatorId || "", // Will be fetched from content if needed, notification logic handled in service
+        userId: user.id,
+        userName: user.displayName,
+        userPhoto: user.photoUrl,
+        userVerified: user.verified,
+        content: newComment,
+      });
+      setNewComment("");
+    } catch (error) {
+      console.error("Failed to add comment:", error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleToggleLike = async (commentId: string) => {
+    if (!user) return;
+    try {
+      await toggleCommentLike(commentId, user.id);
+    } catch (error) {
+      console.error("Failed to toggle like:", error);
+    }
+  };
 
   if (!isOpen) return null;
-
-  const comments = mockComments;
 
   return (
     <div className="comment-modal-overlay" onClick={closeCommentModal}>
@@ -167,29 +138,39 @@ export function CommentModal() {
           {comments.map((comment) => (
             <div key={comment.id} className="comment-item">
               <div className="comment-react">
-                <button className="comment-like-btn">
+                <button 
+                  className="comment-like-btn"
+                  onClick={() => handleToggleLike(comment.id)}
+                >
                   <Heart width={16} height={16} />
                 </button>
                 <span className="comment-like-count">{comment.likeCount}</span>
               </div>
                 <div className="comment-body">
                   <div className="comment-user">
-                    <img src={mockUsers.find((user) => user.id === comment.userId)?.photoUrl ?? comment.userPhoto} alt={mockUsers.find((user) => user.id === comment.userId)?.displayName ?? comment.userName} className="comment-user-photo" />
+                    <img 
+                      src={comment.userPhoto} 
+                      alt={comment.userName} 
+                      className="comment-user-photo" 
+                    />
                     <div className="comment-user-info">
                       <VerifiedLabel
-                        text={mockUsers.find((user) => user.id === comment.userId)?.displayName ?? comment.userName}
-                        verified={mockUsers.find((user) => user.id === comment.userId)?.verified}
+                        text={comment.userName}
+                        verified={comment.userVerified}
                         className="comment-user-name"
                         textClassName="comment-user-name"
                         iconClassName="verified-label__icon--tiny"
                       />
-                      <span className="comment-time">{comment.createdAt}</span>
+                      <span className="comment-time">{new Date(comment.createdAt).toLocaleDateString()}</span>
                     </div>
                   </div>
                 <p className="comment-text">{comment.content}</p>
                 <div className="comment-actions">
                   <button className="comment-reply-btn">Reply · {Math.floor(Math.random() * 8) + 1}</button>
-                  <button className="comment-like-btn-small">Like</button>
+                  <button 
+                    className="comment-like-btn-small"
+                    onClick={() => handleToggleLike(comment.id)}
+                  >Like</button>
                 </div>
               </div>
             </div>
@@ -202,6 +183,12 @@ export function CommentModal() {
             placeholder="Add a comment..."
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleAddComment();
+              }
+            }}
           />
           <div className="comment-formatting">
             <button type="button" title="Add emoji">
@@ -216,7 +203,13 @@ export function CommentModal() {
             <button type="button" title="Italic">
               <em>I</em>
             </button>
-            <button type="button" className="comment-send-btn" title="Send">
+            <button 
+              type="button" 
+              className="comment-send-btn" 
+              title="Send"
+              onClick={handleAddComment}
+              disabled={submitting}
+            >
               <SendIcon />
             </button>
           </div>

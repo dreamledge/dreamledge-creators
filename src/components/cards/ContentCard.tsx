@@ -558,7 +558,7 @@ export function ContentCard({ content, hideActions = false, creatorOverride = nu
           <Heart size={20} className="stat-icon" />
           <span className="stat-count">{formatCompactNumber(content.likeCount)}</span>
         </button>
-        <button className="stat-btn" onClick={() => openCommentModal(content.id)}>
+        <button className="stat-btn" onClick={() => openCommentModal(content.id, content.creatorId)}>
           <MessageCircle size={20} className="stat-icon" />
           <span className="stat-count">{formatCompactNumber(content.commentCount)}</span>
         </button>
