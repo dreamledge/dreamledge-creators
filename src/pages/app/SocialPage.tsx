@@ -210,7 +210,6 @@ const {
     retryRemotePlayback,
     audioError,
     speakingUserIds,
-    audioContextState,
   } = useVoiceRoomAudio(joinedRoom?.id ?? null, user?.id ?? null, Boolean(joinedRoom && user?.id));
 
   const speakingUserSet = useMemo(() => new Set(speakingUserIds), [speakingUserIds]);
@@ -474,115 +473,142 @@ const {
   }, [joinedRoomId, user?.id]);
 
   if (joinedRoom) {
+    const listenerCount = joinedRoomMembers.length;
+    
     return (
-      <div className="messages-page">
-        <div className="messages-header">
-          <button type="button" className="messages-header__back" onClick={() => void handleLeaveCurrentRoom()} aria-label="Leave room and return to social rooms">
+      <div className="messages-page voice-room-page">
+        <div className="messages-header voice-room-header">
+          <button type="button" className="messages-header__back" onClick={() => void handleLeaveCurrentRoom()}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M15 18l-6-6 6-6" />
             </svg>
           </button>
           <h1 className="messages-header__title">{joinedRoom.name}</h1>
+          <div className="voice-room-live-badge">
+            <span className="voice-room-live-dot"></span>
+            <span>LIVE</span>
+          </div>
         </div>
 
-        <div className="social-voice-room">
-          <div className="social-voice-room__hero">
-            <div className="social-voice-room__live">Live {joinedRoom.openTimeLabel}</div>
-            <div className="social-voice-room__clock">{joinedRoom.openTimeLabel}</div>
-            <div className="social-voice-room__lang">EN</div>
+        <div className="voice-room-content">
+          <div className="voice-room-timer-card">
+            <span className="voice-room-timer-label">DURATION</span>
+            <span className="voice-room-timer">{joinedRoom.openTimeLabel}</span>
+            <div className="voice-room-pills">
+              <span className="voice-room-pill">EN</span>
+              <span className="voice-room-pill">{listenerCount} listening</span>
+            </div>
           </div>
 
-          <div className="social-voice-room__controls">
-            <button type="button" className="social-voice-room__ctrl" aria-label="Grid view">▦</button>
-            <button type="button" className="social-voice-room__ctrl" aria-label="Next open room" onClick={handleGoToNextOpenRoom}>◀</button>
-            <button type="button" className="social-voice-room__ctrl" aria-label="Next open room" onClick={handleGoToNextOpenRoom}>▶</button>
-            <button type="button" className="social-voice-room__ctrl" aria-label="Search">⌕</button>
+          <div className="voice-room-controls">
+            <button type="button" className="voice-room-control-btn" aria-label="Grid view">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            </button>
+            <button type="button" className="voice-room-control-btn" aria-label="Previous room" onClick={handleGoToNextOpenRoom}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <button type="button" className="voice-room-control-btn" aria-label="Next room" onClick={handleGoToNextOpenRoom}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+            <button type="button" className="voice-room-control-btn" aria-label="Search">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            </button>
           </div>
 
-          <div className="social-voice-room__controls">
+          <div className="voice-room-actions">
             <button
               type="button"
-              className="social-voice-room__ctrl"
+              className="voice-room-action-btn voice-room-unmute-btn"
               aria-label={isMicMuted ? "Unmute microphone" : "Mute microphone"}
               onClick={() => void setMuted(!isMicMuted)}
             >
-              {isMicMuted ? "Unmute" : "Mute"}
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                {isMicMuted ? (
+                  <path d="M1 1l22 22M9 9v3a3 3 0 005.12 2.12M15 9.34V4a3 3 0 00-5.94-.6M17 16.95A7 7 0 015 12v-2m14 0v2a7 7 0 01-.11 1.23M12 19v4m-4 0h8"/>
+                ) : (
+                  <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3zM19 10v2a7 7 0 01-14 0v-2M12 19v4m-4 0h8"/>
+                )}
+              </svg>
+              <span>{isMicMuted ? "Unmute" : "Mute"}</span>
             </button>
-            {joinedRoom && user?.id && joinedRoom.createdBy !== user.id ? (
-              <button type="button" className="social-voice-room__ctrl social-voice-room__ctrl--leave" onClick={() => void handleLeaveCurrentRoom()}>
-                Leave
-              </button>
-            ) : null}
             {canEndJoinedRoom ? (
-              <button type="button" className="social-voice-room__ctrl social-voice-room__ctrl--leave" onClick={() => void handleEndCurrentRoom()} disabled={isEndingRoom}>
+              <button type="button" className="voice-room-action-btn voice-room-end-btn" onClick={() => void handleEndCurrentRoom()} disabled={isEndingRoom}>
                 {isEndingRoom ? "Ending..." : "End Room"}
               </button>
-            ) : null}
+            ) : (
+              <button type="button" className="voice-room-action-btn voice-room-leave-btn" onClick={() => void handleLeaveCurrentRoom()}>
+                Leave
+              </button>
+            )}
           </div>
 
-          <p className="social-create-room-note">Mic: {isMicMuted ? "Muted" : "Live"} · Audio Engine: {audioContextState}</p>
+          <button type="button" className="voice-room-invite">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+              <circle cx="8.5" cy="7" r="4"/>
+              <line x1="20" y1="8" x2="20" y2="14"/>
+              <line x1="23" y1="11" x2="17" y2="11"/>
+            </svg>
+            <span>Invite friends</span>
+          </button>
 
-          <button type="button" className="social-voice-room__invite">+ Invite friends</button>
-
-          <div className="social-voice-room__member-list">
-            {joinedRoomMembers.map((member) => (
-              <div key={member.id} className="social-voice-room__member">
-                <div className="social-voice-room__member-main">
-                  <img
-                    src={member.photoUrl}
-                    alt={member.displayName}
-                    className={`social-voice-room__member-avatar ${speakingUserSet.has(member.id) ? "social-voice-room__member-avatar--speaking" : ""}`}
-                  />
-                  <span className="social-voice-room__member-name">{member.username}</span>
-                  {member.verified ? <VerifiedBadge className="social-voice-room__member-verified" /> : null}
-                </div>
-                {member.id !== user?.id ? (
-                  <div className="social-voice-room__member-actions">
-                    <button
-                      type="button"
-                      className="social-voice-room__member-action"
-                      aria-label={`Open ${member.username} profile`}
-                      onClick={() => setProfilePreviewUserId(member.id)}
-                    >
-                      👥
-                    </button>
-                    <button type="button" className="social-voice-room__member-action" aria-label="Favorite user">❤</button>
+          <div className="voice-room-member-section">
+            <span className="voice-room-member-label">IN ROOM</span>
+            <div className="voice-room-member-list">
+              {joinedRoomMembers.map((member) => (
+                <div key={member.id} className="voice-room-member">
+                  <div className="voice-room-member-avatar-wrap">
+                    <img
+                      src={member.photoUrl}
+                      alt={member.displayName}
+                      className={`voice-room-member-avatar ${speakingUserSet.has(member.id) ? "voice-room-member-avatar--speaking" : ""}`}
+                    />
+                    <span className={`voice-room-member-status ${member.id === user?.id ? "voice-room-member-status--self" : ""}`}></span>
                   </div>
-                ) : null}
+                  <div className="voice-room-member-info">
+                    <span className="voice-room-member-name">
+                      {member.displayName || member.username}
+                      {member.verified && <VerifiedBadge className="voice-room-member-verified" />}
+                    </span>
+                    <span className="voice-room-member-role">
+                      {member.id === joinedRoom.createdBy ? "Host" : "Listener"}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {previewUser ? (
+          <div className="social-profile-sheet-overlay" onClick={() => setProfilePreviewUserId(null)}>
+            <div className="social-profile-sheet" onClick={(event) => event.stopPropagation()}>
+              <div className="social-profile-sheet__handle" />
+              <button type="button" className="social-profile-sheet__close" onClick={() => setProfilePreviewUserId(null)} aria-label="Close profile modal">
+                ×
+              </button>
+              <div className="social-profile-sheet__header">
+                <img src={previewUser.photoUrl} alt={previewUser.displayName} className="social-profile-sheet__avatar" />
+                <div className="social-profile-sheet__identity">
+                  <div className="social-profile-sheet__name-row">
+                    <span className="social-profile-sheet__name">{previewUser.displayName}</span>
+                    {previewUser.verified ? <VerifiedBadge className="social-profile-sheet__verified" /> : null}
+                  </div>
+                  <span className="social-profile-sheet__username">@{previewUser.username}</span>
+                </div>
               </div>
-            ))}
-          </div>
-
-          {previewUser ? (
-            <div className="social-profile-sheet-overlay" onClick={() => setProfilePreviewUserId(null)}>
-              <div className="social-profile-sheet" onClick={(event) => event.stopPropagation()}>
-                <div className="social-profile-sheet__handle" />
-                <button type="button" className="social-profile-sheet__close" onClick={() => setProfilePreviewUserId(null)} aria-label="Close profile modal">
-                  ×
+              <p className="social-profile-sheet__bio">{previewUser.bio}</p>
+              <div className="social-profile-sheet__actions">
+                <button type="button" className="social-profile-sheet__action" onClick={handleAddFriend} disabled={previewUser.id === user?.id || isPreviewUserFriend}>
+                  {isPreviewUserFriend ? "Friend Added" : "Add Friend"}
                 </button>
-                <div className="social-profile-sheet__header">
-                  <img src={previewUser.photoUrl} alt={previewUser.displayName} className="social-profile-sheet__avatar" />
-                  <div className="social-profile-sheet__identity">
-                    <div className="social-profile-sheet__name-row">
-                      <span className="social-profile-sheet__name">{previewUser.displayName}</span>
-                      {previewUser.verified ? <VerifiedBadge className="social-profile-sheet__verified" /> : null}
-                    </div>
-                    <span className="social-profile-sheet__username">@{previewUser.username}</span>
-                  </div>
-                </div>
-                <p className="social-profile-sheet__bio">{previewUser.bio}</p>
-                <div className="social-profile-sheet__actions">
-                  <button type="button" className="social-profile-sheet__action" onClick={handleAddFriend} disabled={previewUser.id === user?.id || isPreviewUserFriend}>
-                    {isPreviewUserFriend ? "Friend Added" : "Add Friend"}
-                  </button>
-                  <button type="button" className="social-profile-sheet__action social-profile-sheet__action-secondary" onClick={handleSendMessageFromProfile} disabled={previewUser.id === user?.id}>
-                    Send Message
-                  </button>
-                </div>
+                <button type="button" className="social-profile-sheet__action social-profile-sheet__action-secondary" onClick={handleSendMessageFromProfile} disabled={previewUser.id === user?.id}>
+                  Send Message
+                </button>
               </div>
             </div>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
       </div>
     );
   }

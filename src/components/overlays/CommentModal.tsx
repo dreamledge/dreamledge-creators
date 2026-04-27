@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { createContext, useContext } from "react";
-import { Heart, Image as ImageIcon, Smile } from "lucide-react";
+import { Image as ImageIcon, Smile } from "lucide-react";
 import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
+import { OrwellianEye } from "@/components/ui/OrwellianEye";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { subscribeComments, addComment, toggleCommentLike } from "@/lib/firebase/comments";
 import type { CommentModel } from "@/types/models";
@@ -161,12 +162,11 @@ export function CommentModal() {
   const renderComment = (comment: CommentModel, isReply = false) => (
     <div key={comment.id} className={`comment-item ${isReply ? 'comment-reply-item' : ''}`}>
       <div className="comment-react">
-        <button 
-          className="comment-like-btn"
+        <OrwellianEye 
+          filled={comment.likedBy?.includes(user?.id || "") ?? false}
+          size={16}
           onClick={() => handleToggleLike(comment.id)}
-        >
-          <Heart width={16} height={16} fill={comment.likedBy?.includes(user?.id || "") ? "#e63946" : "none"} color={comment.likedBy?.includes(user?.id || "") ? "#e63946" : "currentColor"} />
-        </button>
+        />
         <span className="comment-like-count">{comment.likeCount > 0 ? comment.likeCount : ""}</span>
       </div>
       <div className="comment-body">
