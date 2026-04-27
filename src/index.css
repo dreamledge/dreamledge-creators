@@ -2519,6 +2519,11 @@ button {
   border-radius: 24px;
   padding: 2rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 45, 61, 0.1);
+  border-top: 1px solid #2e2e2e;
+  border-left: 1px solid #2a2a2a;
+  border-right: 1px solid #111;
+  border-bottom: 3px solid #090909;
+  box-shadow: 0 4px 0 #080808, 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .profile-image {
@@ -2668,12 +2673,28 @@ button {
   transition: all 0.2s ease;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  border-top: 1px solid #2e2e2e;
+  border-left: 1px solid #2a2a2a;
+  border-right: 1px solid #111;
+  border-bottom: 3px solid #090909;
+  box-shadow: 0 4px 0 #080808, 0 6px 12px rgba(0,0,0,0.6);
+  transition: transform 0.1s, box-shadow 0.1s, border-bottom 0.1s;
+}
+
+.cta-button:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #080808, 0 2px 6px rgba(0,0,0,0.5);
+  border-bottom: 1px solid #090909;
 }
 
 .cta-button.edit-profile {
   background: linear-gradient(135deg, #ff2d3d, #ff5b5b);
   color: white;
-  box-shadow: 0 4px 16px rgba(255, 45, 61, 0.3);
+  border-top: 1px solid #ff6b6b;
+  border-left: 1px solid #ff5b5b;
+  border-right: 1px solid #8b1c1c;
+  border-bottom: 3px solid #6b0f14;
+  box-shadow: 0 4px 0 #5a0b10, 0 6px 12px rgba(255, 45, 61, 0.4);
 }
 
 .cta-button.edit-profile:hover {
@@ -4916,6 +4937,17 @@ button {
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  border-top: 1px solid #2e2e2e;
+  border-left: 1px solid #2a2a2a;
+  border-right: 1px solid #111;
+  border-bottom: 3px solid #090909;
+  box-shadow: 0 4px 0 #080808, 0 6px 12px rgba(0,0,0,0.4);
+}
+
+.feed-tab:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #080808, 0 2px 6px rgba(0,0,0,0.3);
+  border-bottom: 1px solid #090909;
 }
 
 .feed-tab-icon {
@@ -7232,6 +7264,18 @@ button {
   overflow: hidden;
   animation: social-voice-card-enter 360ms ease both, social-voice-card-breathe 3.2s ease-in-out infinite;
   transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease, filter 220ms ease;
+  border-top: 1px solid #2e2e2e;
+  border-left: 1px solid #2a2a2a;
+  border-right: 1px solid #111;
+  border-bottom: 3px solid #090909;
+  box-shadow: 0 4px 0 #080808, 0 14px 30px rgba(0, 0, 0, 0.44), 0 0 28px rgba(255, 77, 96, 0.14);
+  cursor: pointer;
+}
+
+.social-hub-voice-card:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #080808, 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 77, 96, 0.1);
+  border-bottom: 1px solid #090909;
 }
 
 .social-hub-voice-card > * {
@@ -7396,6 +7440,17 @@ button {
   overflow: hidden;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 10px 18px rgba(255, 45, 61, 0.26);
   transition: transform 180ms ease, box-shadow 220ms ease, filter 220ms ease;
+  border-top: 1px solid #ff6b6b;
+  border-left: 1px solid #ff5b5b;
+  border-right: 1px solid #8b1c1c;
+  border-bottom: 3px solid #6b0f14;
+  box-shadow: 0 4px 0 #5a0b10, 0 6px 12px rgba(255, 45, 61, 0.4);
+}
+
+.social-hub-voice-card__join:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #5a0b10, 0 2px 8px rgba(255, 45, 61, 0.3);
+  border-bottom: 1px solid #6b0f14;
 }
 
 .social-hub-voice-card__join::after {
@@ -8104,10 +8159,33 @@ button {
   color: #fff;
   font-size: 14px;
   font-weight: 700;
+  border-top: 1px solid #ff6b6b;
+  border-left: 1px solid #ff5b5b;
+  border-right: 1px solid #8b1c1c;
+  border-bottom: 3px solid #6b0f14;
+  box-shadow: 0 4px 0 #5a0b10, 0 6px 12px rgba(255, 45, 61, 0.4);
+  transition: transform 0.1s, box-shadow 0.1s, border-bottom 0.1s;
+}
+
+.social-profile-sheet__action:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #5a0b10, 0 2px 6px rgba(255, 45, 61, 0.3);
+  border-bottom: 1px solid #6b0f14;
 }
 
 .social-profile-sheet__action-secondary {
   background: rgba(255, 255, 255, 0.08);
+  border-top: 1px solid #3a3a3a;
+  border-left: 1px solid #333;
+  border-right: 1px solid #1a1a1a;
+  border-bottom: 3px solid #0f0f0f;
+  box-shadow: 0 4px 0 #0a0a0a, 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.social-profile-sheet__action-secondary:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #0a0a0a, 0 2px 6px rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid #0f0f0f;
 }
 
 .social-profile-sheet__action:disabled {
@@ -8141,6 +8219,17 @@ button {
     inset 0 -14px 24px rgba(0, 0, 0, 0.2);
   overflow: hidden;
   transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+  border-top: 1px solid #2e2e2e;
+  border-left: 1px solid #2a2a2a;
+  border-right: 1px solid #111;
+  border-bottom: 3px solid #090909;
+  box-shadow: 0 4px 0 #080808, 0 14px 28px rgba(0, 0, 0, 0.48);
+}
+
+.social-hub-room:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #080808, 0 8px 20px rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid #090909;
 }
 
 .social-hub-room > * {
@@ -8986,6 +9075,12 @@ button {
   text-align: left;
   width: 100%;
   transition: background 0.15s ease;
+  border-top: 1px solid #2e2e2e;
+  border-left: 1px solid #2a2a2a;
+  border-right: 1px solid #111;
+  border-bottom: 3px solid #090909;
+  box-shadow: 0 4px 0 #080808;
+  margin-bottom: -3px;
 }
 
 .dm-inbox-row:hover {
@@ -8993,6 +9088,9 @@ button {
 }
 
 .dm-inbox-row:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #080808;
+  border-bottom: 1px solid #090909;
   background: rgba(255, 255, 255, 0.08);
 }
 
