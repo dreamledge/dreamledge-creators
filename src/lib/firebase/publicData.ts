@@ -68,6 +68,8 @@ function mapUserDoc(id: string, data: DocumentData): UserModel {
     verified: alwaysVerified || Boolean(data.verified),
     rookie: Boolean(data.rookie),
     matchmakingContentId: typeof data.matchmakingContentId === "string" ? data.matchmakingContentId : null,
+    fcmToken: typeof data.fcmToken === "string" ? data.fcmToken : null,
+    notificationsEnabled: typeof data.notificationsEnabled === "boolean" ? data.notificationsEnabled : true,
     createdAt: toIso(data.createdAt),
     updatedAt: toIso(data.updatedAt),
   };

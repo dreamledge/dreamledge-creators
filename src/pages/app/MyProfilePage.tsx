@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { getToken, onMessage, type Messaging } from "firebase/messaging";
+import { doc, updateDoc } from "firebase/firestore";
 import { BadgeList } from "@/components/profile/BadgeList";
 import { ContentGrid } from "@/components/profile/ContentGrid";
 import { ProfileCard } from "@/components/profile/ProfileCard";
 import { ProfileTabs } from "@/components/profile/ProfileTabs";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { subscribeCreatorContent, subscribeProfile } from "@/lib/firebase/publicData";
+import { getFirebaseMessaging, firebaseVapidKey } from "@/lib/firebase";
 import type { ContentModel, UserModel } from "@/types/models";
 
 export function MyProfilePage() {
@@ -53,8 +56,6 @@ export function MyProfilePage() {
       }
       deferredPromptRef.current = null;
     } else {
-      // Try to trigger the install prompt again by reloading or waiting
-      // Some browsers need the user to interact more before showing the prompt
       alert("To install: Look for the browser's 'Add to Home Screen' or 'Install App' option in the menu (three dots), or the browser may not support PWA installation on this device.");
     }
   };
@@ -65,6 +66,18 @@ export function MyProfilePage() {
       if (permission !== "granted") {
         alert("Notifications blocked. Please enable in browser settings.");
         return;
+      }
+
+      const messaging = await getFirebaseMessaging();
+      if (messaging && user?.id) {
+        const token = await getToken(messaging, { vapidKey: firebaseVapidKey });
+        const { firestore } = await import("@/lib/firebase");
+        if (firestore) {
+          await updateDoc(doc(firestore, "users", user.id), {
+            fcmToken: token,
+            notificationsEnabled: true,
+          });
+        }
       }
 
       setNotifyBtnText("🔔 Enabled");
@@ -92,6 +105,27 @@ export function MyProfilePage() {
     };
   }, [user?.id]);
 
+  useEffect(() => {
+    let messaging: Messaging | null = null;
+
+    const setupFCM = async () => {
+      try {
+        messaging = await getFirebaseMessaging();
+        if (!messaging) return;
+
+        onMessage(messaging, (payload) => {
+          console.log("Foreground notification received:", payload);
+        });
+      } catch (err) {
+        console.error("FCM setup error:", err);
+      }
+    };
+
+    if (user?.id) {
+      setupFCM();
+    }
+  }, [user?.id]);
+
   const fallbackCreator: UserModel | null = user
     ? {
         id: user.id,
@@ -115,6 +149,8 @@ export function MyProfilePage() {
         verified: user.verified ?? false,
         rookie: false,
         matchmakingContentId: user.matchmakingContentId ?? null,
+        fcmToken: null,
+        notificationsEnabled: true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }

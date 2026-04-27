@@ -1,8 +1,9 @@
-import { collection, query, where, onSnapshot, doc, updateDoc } from "firebase/firestore";
+import { collection, query, where, onSnapshot, doc, updateDoc, addDoc, getDocs } from "firebase/firestore";
 import { firestore } from "@/lib/firebase";
-import type { NotificationModel } from "@/types/models";
+import type { NotificationModel, NotificationType } from "@/types/models";
 
 const NOTIFICATIONS_COLLECTION = "notifications";
+const USERS_COLLECTION = "users";
 
 function mapNotificationDoc(id: string, data: any): NotificationModel {
   return {
@@ -12,7 +13,10 @@ function mapNotificationDoc(id: string, data: any): NotificationModel {
     actorId: data.actorId || "",
     targetId: data.targetId || "",
     targetType: data.targetType || "",
+    title: data.title || undefined,
+    message: data.message || undefined,
     read: Boolean(data.read),
+    toastShown: Boolean(data.toastShown),
     createdAt: data.createdAt instanceof Date ? data.createdAt.toISOString() : (data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString()),
   };
 }
@@ -50,5 +54,52 @@ export async function markNotificationRead(notificationId: string) {
     await updateDoc(docRef, { read: true });
   } catch (err) {
     console.error("Failed to mark notification as read", err);
+  }
+}
+
+export async function markToastShown(notificationId: string) {
+  if (!firestore) return;
+  try {
+    const docRef = doc(firestore, NOTIFICATIONS_COLLECTION, notificationId);
+    await updateDoc(docRef, { toastShown: true });
+  } catch (err) {
+    console.error("Failed to mark toast as shown", err);
+  }
+}
+
+export async function sendAdminBroadcast(title: string, message: string) {
+  if (!firestore) {
+    console.error("Firestore not initialized");
+    return;
+  }
+
+  try {
+    const usersSnapshot = await getDocs(query(collection(firestore, USERS_COLLECTION)));
+    const batch: Promise<any>[] = [];
+
+    for (const userDoc of usersSnapshot.docs) {
+      const userData = userDoc.data();
+      if (userData.fcmToken || userData.notificationsEnabled !== false) {
+        const notificationData = {
+          userId: userDoc.id,
+          type: "admin broadcast" as NotificationType,
+          actorId: "system",
+          targetId: "",
+          targetType: "",
+          title,
+          message,
+          read: false,
+          toastShown: false,
+          createdAt: new Date(),
+        };
+        batch.push(addDoc(collection(firestore, NOTIFICATIONS_COLLECTION), notificationData));
+      }
+    }
+
+    await Promise.all(batch);
+    console.log(`Admin broadcast sent to ${batch.length} users`);
+  } catch (err) {
+    console.error("Failed to send admin broadcast", err);
+    throw err;
   }
 }

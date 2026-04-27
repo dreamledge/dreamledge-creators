@@ -37,7 +37,8 @@ export type NotificationType =
   | "contest reminder"
   | "contest result"
   | "message received"
-  | "crew invite";
+  | "crew invite"
+  | "admin broadcast";
 
 export type SocialPlatform = "instagram" | "tiktok" | "youtube" | "twitter" | "facebook" | "twitch" | "website";
 
@@ -63,6 +64,8 @@ export interface UserModel {
   verified: boolean;
   rookie: boolean;
   matchmakingContentId: string | null;
+  fcmToken: string | null;
+  notificationsEnabled: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -213,7 +216,10 @@ export interface NotificationModel {
   actorId: string;
   targetId: string;
   targetType: string;
+  title?: string;
+  message?: string;
   read: boolean;
+  toastShown?: boolean;
   createdAt: string;
 }
 

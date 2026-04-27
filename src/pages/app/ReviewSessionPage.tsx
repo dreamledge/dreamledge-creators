@@ -89,6 +89,8 @@ function createMinimalUserModel(user: UserModel | MatchProfile): UserModel {
     badges: [],
     rookie: false,
     matchmakingContentId: null,
+    fcmToken: null,
+    notificationsEnabled: true,
     createdAt: '',
     updatedAt: ''
   };
