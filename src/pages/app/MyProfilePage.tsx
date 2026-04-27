@@ -9,9 +9,6 @@ import { subscribeCreatorContent, subscribeProfile } from "@/lib/firebase/public
 import { getFirebaseMessaging, firebaseVapidKey } from "@/lib/firebase";
 import type { ContentModel, UserModel } from "@/types/models";
 
-const PWA_DOWNLOADED_KEY = "pwa_downloaded";
-const NOTIFICATIONS_ENABLED_KEY = "notifications_enabled";
-
 export function MyProfilePage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -32,21 +29,10 @@ export function MyProfilePage() {
   };
 
   useEffect(() => {
-    const downloaded = localStorage.getItem(PWA_DOWNLOADED_KEY);
-    const notifications = localStorage.getItem(NOTIFICATIONS_ENABLED_KEY);
-
-    if (downloaded) {
-      setInstallBtnText("✅ Installed");
-    }
-    if (notifications) {
-      setNotifyBtnText("🔔 Enabled");
-    }
-  }, []);
-
-  useEffect(() => {
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       deferredPromptRef.current = e;
+      setInstallBtnText("📲 Install App");
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
@@ -65,13 +51,14 @@ export function MyProfilePage() {
       deferredPromptRef.current.prompt();
       const { outcome } = await deferredPromptRef.current.userChoice;
       if (outcome === "accepted") {
-        localStorage.setItem(PWA_DOWNLOADED_KEY, "true");
         setInstallBtnText("✅ Installed");
       }
       deferredPromptRef.current = null;
     } else {
-      setInstallBtnText("✅ Installed");
-      localStorage.setItem(PWA_DOWNLOADED_KEY, "true");
+      // No prompt available - already installed or not supported
+      // Allow retry by resetting
+      setInstallBtnText("📲 Install App");
+      alert("Install not available. You may already have the app installed, or your browser doesn't support PWA installation.");
     }
   };
 
@@ -86,19 +73,20 @@ export function MyProfilePage() {
       const messaging = await getFirebaseMessaging();
       if (messaging) {
         const { getToken } = await import("firebase/messaging");
+        console.log("Attempting to get FCM token...");
         const token = await getToken(messaging, { vapidKey: firebaseVapidKey });
         console.log("FCM Token for user:", token);
         
-        localStorage.setItem(NOTIFICATIONS_ENABLED_KEY, "true");
         setNotifyBtnText("🔔 Enabled");
       } else {
-        console.warn("Firebase Messaging not supported");
-        localStorage.setItem(NOTIFICATIONS_ENABLED_KEY, "true");
+        console.warn("Firebase Messaging not supported in this browser");
         setNotifyBtnText("🔔 Enabled");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error enabling notifications:", error);
-      alert("Failed to enable notifications. Please try again.");
+      console.error("Error code:", error?.code);
+      console.error("Error message:", error?.message);
+      alert(`Failed to enable notifications: ${error?.message || "Unknown error"}. Check console for details.`);
     }
   };
 
