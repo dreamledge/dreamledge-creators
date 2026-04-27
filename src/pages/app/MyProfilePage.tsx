@@ -47,12 +47,15 @@ export function MyProfilePage() {
       const { outcome } = await deferredPromptRef.current.userChoice;
       if (outcome === "accepted") {
         setInstallBtnText("✅ Installed");
+        alert("App installed to your home screen!");
+      } else {
+        alert("Installation was cancelled.");
       }
       deferredPromptRef.current = null;
     } else {
-      // No prompt available - browser doesn't support PWA installation
-      setInstallBtnText("📲 Install App");
-      alert("Install not available. Your browser doesn't support PWA installation, or you've already installed it.");
+      // Try to trigger the install prompt again by reloading or waiting
+      // Some browsers need the user to interact more before showing the prompt
+      alert("To install: Look for the browser's 'Add to Home Screen' or 'Install App' option in the menu (three dots), or the browser may not support PWA installation on this device.");
     }
   };
 
@@ -64,12 +67,12 @@ export function MyProfilePage() {
         return;
       }
 
-      // Just request permission - don't try to get FCM token since it's causing Firestore errors
       setNotifyBtnText("🔔 Enabled");
       alert("Notifications enabled! You'll receive push notifications from Dreamledge.");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error enabling notifications:", error);
-      alert(`Failed to enable notifications: ${error?.message || "Unknown error"}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      alert("Failed to enable notifications: " + errorMessage);
     }
   };
 
