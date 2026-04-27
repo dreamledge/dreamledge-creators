@@ -50,7 +50,7 @@ export function OrwellianEye({ filled = false, size = 24, onClick, className = "
         minHeight: containerSize,
       }}
     >
-      <audio ref={audioRef} src="/alienlike.mp3" preload="auto" />
+      <audio ref={audioRef} src="/smooth.mp3" preload="auto" />
       
       <svg
         width={containerSize}
