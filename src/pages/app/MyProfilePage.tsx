@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { BadgeList } from "@/components/profile/BadgeList";
 import { ContentGrid } from "@/components/profile/ContentGrid";
@@ -6,7 +6,12 @@ import { ProfileCard } from "@/components/profile/ProfileCard";
 import { ProfileTabs } from "@/components/profile/ProfileTabs";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { subscribeCreatorContent, subscribeProfile } from "@/lib/firebase/publicData";
+import { getFirebaseMessaging, firebaseVapidKey } from "@/lib/firebase";
 import type { ContentModel, UserModel } from "@/types/models";
+
+const PWA_DOWNLOADED_KEY = "pwa_downloaded";
+const NOTIFICATIONS_ENABLED_KEY = "notifications_enabled";
+const ACTION_BAR_DISMISSED_KEY = "profile_action_bar_dismissed";
 
 export function MyProfilePage() {
   const { user, logout } = useAuth();
@@ -14,6 +19,10 @@ export function MyProfilePage() {
   const [activeTab, setActiveTab] = useState("posts");
   const [profile, setProfile] = useState<UserModel | null>(null);
   const [items, setItems] = useState<ContentModel[]>([]);
+  const [showActionBar, setShowActionBar] = useState(false);
+  const [installBtnText, setInstallBtnText] = useState("📲 Install App");
+  const [notifyBtnText, setNotifyBtnText] = useState("🔔 Notify");
+  const deferredPromptRef = useRef<any>(null);
 
   const handleSignOut = async () => {
     try {
@@ -22,6 +31,90 @@ export function MyProfilePage() {
     } catch (error) {
       console.error("Failed to sign out:", error);
     }
+  };
+
+  useEffect(() => {
+    const downloaded = localStorage.getItem(PWA_DOWNLOADED_KEY);
+    const notifications = localStorage.getItem(NOTIFICATIONS_ENABLED_KEY);
+    const dismissed = localStorage.getItem(ACTION_BAR_DISMISSED_KEY);
+
+    if (!downloaded && !notifications && !dismissed) {
+      setShowActionBar(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      deferredPromptRef.current = e;
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      localStorage.setItem(PWA_DOWNLOADED_KEY, "true");
+      setShowActionBar(false);
+    }
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstall = async () => {
+    if (deferredPromptRef.current) {
+      deferredPromptRef.current.prompt();
+      const { outcome } = await deferredPromptRef.current.userChoice;
+      if (outcome === "accepted") {
+        localStorage.setItem(PWA_DOWNLOADED_KEY, "true");
+        setInstallBtnText("✅ Installed");
+        setTimeout(() => setShowActionBar(false), 1500);
+      }
+      deferredPromptRef.current = null;
+    } else {
+      setInstallBtnText("✅ Installed");
+      localStorage.setItem(PWA_DOWNLOADED_KEY, "true");
+      setTimeout(() => setShowActionBar(false), 1500);
+    }
+  };
+
+  const handleNotify = async () => {
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        alert("Notifications blocked. Please enable in browser settings.");
+        return;
+      }
+
+      const messaging = await getFirebaseMessaging();
+      if (messaging) {
+        const { getToken } = await import("firebase/messaging");
+        const token = await getToken(messaging, { vapidKey: firebaseVapidKey });
+        console.log("FCM Token for user:", token);
+        
+        localStorage.setItem(NOTIFICATIONS_ENABLED_KEY, "true");
+        setNotifyBtnText("🔔 Enabled");
+        
+        if (!localStorage.getItem(PWA_DOWNLOADED_KEY)) {
+          setTimeout(() => setShowActionBar(false), 1500);
+        } else {
+          setShowActionBar(false);
+        }
+      } else {
+        console.warn("Firebase Messaging not supported");
+        localStorage.setItem(NOTIFICATIONS_ENABLED_KEY, "true");
+        setNotifyBtnText("🔔 Enabled");
+        setShowActionBar(false);
+      }
+    } catch (error) {
+      console.error("Error enabling notifications:", error);
+      alert("Failed to enable notifications. Please try again.");
+    }
+  };
+
+  const handleDismiss = () => {
+    localStorage.setItem(ACTION_BAR_DISMISSED_KEY, "true");
+    setShowActionBar(false);
   };
 
   useEffect(() => {
@@ -76,6 +169,22 @@ export function MyProfilePage() {
 
   return (
     <div className="space-y-6">
+      {showActionBar && (
+        <div className="profile-action-bar">
+          <button className="profile-action-bar-close" onClick={handleDismiss}>×</button>
+          <div className="profile-action-bar-content">
+            <span className="profile-action-bar-text">Get the full experience</span>
+            <div className="profile-action-bar-buttons">
+              <button className="profile-action-btn profile-action-install" onClick={handleInstall}>
+                {installBtnText}
+              </button>
+              <button className="profile-action-btn profile-action-notify" onClick={handleNotify}>
+                {notifyBtnText}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {creator ? <ProfileCard creator={creator} isOwnProfile /> : null}
       <button
         type="button"

@@ -9456,3 +9456,93 @@ button {
   display: block;
   margin-top: 2px;
 }
+
+/* Profile Action Bar */
+.profile-action-bar {
+  position: relative;
+  background: rgba(15, 15, 26, 0.98);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px 20px;
+  border-top: 1px solid #2e2e2e;
+  border-left: 1px solid #2a2a2a;
+  border-right: 1px solid #111;
+  border-bottom: 3px solid #090909;
+  box-shadow: 0 4px 0 #080808, 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+.profile-action-bar-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+
+.profile-action-bar-close:hover {
+  color: #fff;
+}
+
+.profile-action-bar-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile-action-bar-text {
+  color: #a1a1aa;
+  font-size: 14px;
+  text-align: center;
+}
+
+.profile-action-bar-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.profile-action-btn {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-top: 1px solid #2e2e2e;
+  border-left: 1px solid #2a2a2a;
+  border-right: 1px solid #111;
+  border-bottom: 3px solid #090909;
+  box-shadow: 0 4px 0 #080808;
+}
+
+.profile-action-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #080808;
+  border-bottom: 1px solid #090909;
+}
+
+.profile-action-install {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+}
+
+.profile-action-install:hover {
+  background: linear-gradient(135deg, #7c7ff2, #a78bfa);
+}
+
+.profile-action-notify {
+  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  color: #1a1a1a;
+}
+
+.profile-action-notify:hover {
+  background: linear-gradient(135deg, #fbbf24, #fcd34d);
+}
+
