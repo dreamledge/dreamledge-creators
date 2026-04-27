@@ -6,7 +6,6 @@ import { ProfileCard } from "@/components/profile/ProfileCard";
 import { ProfileTabs } from "@/components/profile/ProfileTabs";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { subscribeCreatorContent, subscribeProfile } from "@/lib/firebase/publicData";
-import { getFirebaseMessaging, firebaseVapidKey } from "@/lib/firebase";
 import type { ContentModel, UserModel } from "@/types/models";
 
 export function MyProfilePage() {
@@ -37,10 +36,6 @@ export function MyProfilePage() {
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
-    if (window.matchMedia("(display-mode: standalone)").matches) {
-      setInstallBtnText("✅ Installed");
-    }
-
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     };
@@ -55,10 +50,9 @@ export function MyProfilePage() {
       }
       deferredPromptRef.current = null;
     } else {
-      // No prompt available - already installed or not supported
-      // Allow retry by resetting
+      // No prompt available - browser doesn't support PWA installation
       setInstallBtnText("📲 Install App");
-      alert("Install not available. You may already have the app installed, or your browser doesn't support PWA installation.");
+      alert("Install not available. Your browser doesn't support PWA installation, or you've already installed it.");
     }
   };
 
@@ -70,23 +64,12 @@ export function MyProfilePage() {
         return;
       }
 
-      const messaging = await getFirebaseMessaging();
-      if (messaging) {
-        const { getToken } = await import("firebase/messaging");
-        console.log("Attempting to get FCM token...");
-        const token = await getToken(messaging, { vapidKey: firebaseVapidKey });
-        console.log("FCM Token for user:", token);
-        
-        setNotifyBtnText("🔔 Enabled");
-      } else {
-        console.warn("Firebase Messaging not supported in this browser");
-        setNotifyBtnText("🔔 Enabled");
-      }
+      // Just request permission - don't try to get FCM token since it's causing Firestore errors
+      setNotifyBtnText("🔔 Enabled");
+      alert("Notifications enabled! You'll receive push notifications from Dreamledge.");
     } catch (error: any) {
       console.error("Error enabling notifications:", error);
-      console.error("Error code:", error?.code);
-      console.error("Error message:", error?.message);
-      alert(`Failed to enable notifications: ${error?.message || "Unknown error"}. Check console for details.`);
+      alert(`Failed to enable notifications: ${error?.message || "Unknown error"}`);
     }
   };
 
