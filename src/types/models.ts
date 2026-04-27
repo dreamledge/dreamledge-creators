@@ -82,6 +82,7 @@ export interface ContentModel {
   featured: boolean;
   isDefaultForReview: boolean;
   likeCount: number;
+  likedBy: string[];
   commentCount: number;
   saveCount: number;
   shareCount: number;

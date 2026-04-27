@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDoc,
   onSnapshot,
   query,
   where,
@@ -88,6 +89,7 @@ function mapContentDoc(id: string, data: DocumentData): ContentModel {
     featured: Boolean(data.featured),
     isDefaultForReview: Boolean(data.isDefaultForReview),
     likeCount: typeof data.likeCount === "number" ? data.likeCount : 0,
+    likedBy: Array.isArray(data.likedBy) ? data.likedBy.filter((id: unknown) => typeof id === "string") : [],
     commentCount: typeof data.commentCount === "number" ? data.commentCount : 0,
     saveCount: typeof data.saveCount === "number" ? data.saveCount : 0,
     shareCount: typeof data.shareCount === "number" ? data.shareCount : 0,
@@ -179,4 +181,18 @@ export function subscribeCreatorContent(userId: string, onData: (content: Conten
       onError?.(error);
     },
   );
+}
+
+export async function getUserById(userId: string): Promise<UserModel | null> {
+  if (!firestore || !userId) return null;
+
+  try {
+    const userDoc = await getDoc(doc(firestore, USERS_COLLECTION, userId));
+    if (userDoc.exists()) {
+      return mapUserDoc(userDoc.id, userDoc.data());
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }

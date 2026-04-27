@@ -1,5 +1,6 @@
 import { useState, createContext, useContext, useRef, useEffect, type ReactNode } from "react";
 import { ContentCard } from "@/components/cards/ContentCard";
+import { useLikedByModal } from "@/components/overlays/LikedByModal";
 import type { ContentModel, UserModel } from "@/types/models";
 
 interface FeedContextType {
@@ -91,11 +92,16 @@ export function FeedProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function FeedList({ items, creatorsById }: { items: ContentModel[]; creatorsById?: Map<string, UserModel> }) {
+export function FeedList({ items, creatorsById, currentUserId }: { items: ContentModel[]; creatorsById?: Map<string, UserModel>; currentUserId?: string }) {
   const { setCurrentPlaying, mediaUnlockToken } = useFeedContext();
+  const { openLikedBy } = useLikedByModal();
   const containerRef = useRef<HTMLDivElement>(null);
   const lastPlayedRef = useRef<string | null>(null);
   const itemIdsKey = items.map((item) => item.id).join("|");
+
+  const handleOpenLikedBy = (contentId: string, likedBy: string[]) => {
+    openLikedBy(contentId, likedBy);
+  };
 
   useEffect(() => {
     let frameId = 0;
@@ -191,7 +197,13 @@ export function FeedList({ items, creatorsById }: { items: ContentModel[]; creat
   return (
     <div ref={containerRef} className="feed-list-container">
       {items.map((item) => (
-        <ContentCard key={item.id} content={item} creatorOverride={creatorsById?.get(item.creatorId) ?? null} />
+        <ContentCard 
+          key={item.id} 
+          content={item} 
+          creatorOverride={creatorsById?.get(item.creatorId) ?? null}
+          userLiked={currentUserId ? item.likedBy?.includes(currentUserId) ?? false : false}
+          onOpenLikedBy={handleOpenLikedBy}
+        />
       ))}
     </div>
   );

@@ -1,15 +1,16 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Heart, MessageCircle, Share2, Bookmark, Trash2, X } from "lucide-react";
+import { MessageCircle, Share2, Bookmark, Trash2, X } from "lucide-react";
 import { formatCompactNumber } from "@/lib/formatters";
 import { mockUsers, LIVE_CONTENT_MAX_AGE_MS } from "@/lib/constants/mockData";
 import type { ContentModel, SocialPlatform, UserModel } from "@/types/models";
 import { useFeedContext } from "../feed/FeedList";
 import { useAuth } from "@/app/providers/AuthProvider";
-import { deleteContent } from "@/lib/firebase/content";
+import { deleteContent, toggleContentLike } from "@/lib/firebase/content";
 import { useCommentModal } from "../overlays/CommentModal";
 import { VerifiedLabel } from "@/components/ui/VerifiedLabel";
 import { DEFAULT_AVATAR_URL, DEFAULT_CONTENT_THUMBNAIL } from "@/lib/constants/defaults";
+import { OrwellianEye } from "@/components/ui/OrwellianEye";
 
 declare global {
   interface Window {
@@ -50,6 +51,8 @@ interface ContentCardProps {
   content: ContentModel;
   hideActions?: boolean;
   creatorOverride?: UserModel | null;
+  userLiked?: boolean;
+  onOpenLikedBy?: (contentId: string, likedBy: string[]) => void;
 }
 
 const InstagramIcon = () => (
@@ -82,7 +85,7 @@ const TwitchIcon = () => (
   </svg>
 );
 
-export function ContentCard({ content, hideActions = false, creatorOverride = null }: ContentCardProps) {
+export function ContentCard({ content, hideActions = false, creatorOverride = null, userLiked = false, onOpenLikedBy }: ContentCardProps) {
   const { currentPlayingId, setCurrentPlaying, mediaUnlockToken } = useFeedContext();
   const { openCommentModal } = useCommentModal();
   const { user } = useAuth();
@@ -102,8 +105,39 @@ export function ContentCard({ content, hideActions = false, creatorOverride = nu
   
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isLiked, setIsLiked] = useState(userLiked ?? false);
+  const [likeCount, setLikeCount] = useState(content.likeCount);
   
   const isOwnContent = user?.id === content.creatorId;
+
+  useEffect(() => {
+    setIsLiked(userLiked ?? false);
+  }, [userLiked]);
+
+  useEffect(() => {
+    setLikeCount(content.likeCount);
+  }, [content.likeCount]);
+
+  const handleToggleLike = async () => {
+    if (!user) return;
+    
+    const wasLiked = isLiked;
+    setIsLiked(!wasLiked);
+    setLikeCount(prev => wasLiked ? prev - 1 : prev + 1);
+    
+    try {
+      await toggleContentLike(content.id, user.id, content.creatorId, user.displayName || user.username);
+    } catch {
+      setIsLiked(wasLiked);
+      setLikeCount(content.likeCount);
+    }
+  };
+
+  const handleOpenLikedBy = () => {
+    if (onOpenLikedBy && content.likedBy?.length > 0) {
+      onOpenLikedBy(content.id, content.likedBy);
+    }
+  };
 
   const handleDelete = async () => {
     if (!isOwnContent || isDeleting) return;
@@ -554,10 +588,21 @@ export function ContentCard({ content, hideActions = false, creatorOverride = nu
       {/* Likes and Comments - Above the caption */}
       {!hideActions && (
       <div className="card-stats">
-        <button className="stat-btn">
-          <Heart size={20} className="stat-icon" />
-          <span className="stat-count">{formatCompactNumber(content.likeCount)}</span>
-        </button>
+        <div className="like-section stat-btn">
+          <OrwellianEye 
+            filled={isLiked} 
+            size={28}
+            onClick={handleToggleLike}
+            className="stat-icon"
+          />
+          <button 
+            className="stat-count like-count-btn" 
+            onClick={handleOpenLikedBy}
+            disabled={!content.likedBy?.length}
+          >
+            {formatCompactNumber(likeCount)}
+          </button>
+        </div>
         <button className="stat-btn" onClick={() => openCommentModal(content.id, content.creatorId)}>
           <MessageCircle size={20} className="stat-icon" />
           <span className="stat-count">{formatCompactNumber(content.commentCount)}</span>

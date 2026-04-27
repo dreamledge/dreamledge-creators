@@ -8722,3 +8722,193 @@ button {
   color: #fff;
   font-weight: 500;
 }
+
+/* Orwellian Eye Like Button */
+.orwellian-eye-btn {
+  transition: transform 0.15s ease-out;
+  min-width: 36px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.orwellian-eye-btn.animate {
+  animation: eye-pulse 0.3s ease-out;
+}
+
+@media (max-width: 640px) {
+  .orwellian-eye-btn {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 4px;
+    margin-right: -4px;
+  }
+  
+  .like-section {
+    gap: 1px;
+  }
+  
+  .like-count-btn {
+    margin-left: 0;
+    font-size: 14px;
+  }
+}
+
+.like-count-btn {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  min-width: 20px;
+}
+
+.like-count-btn:hover {
+  opacity: 0.8;
+}
+
+.like-count-btn:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+/* Liked By Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.liked-by-modal {
+  background: var(--card);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 400px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.25s ease-out;
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.liked-by-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.liked-by-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.liked-by-header .close-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.liked-by-header .close-btn:hover {
+  background: var(--line);
+}
+
+.liked-by-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 8px 0;
+}
+
+.liked-by-loading,
+.liked-by-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.liked-by-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.liked-by-user:hover {
+  background: var(--line);
+}
+
+.liked-by-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.liked-by-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.liked-by-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.liked-by-name .username {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.liked-by-name .verified-label__icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.liked-by-username {
+  font-size: 13px;
+  color: var(--text-secondary);
+  display: block;
+  margin-top: 2px;
+}

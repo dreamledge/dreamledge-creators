@@ -1,9 +1,10 @@
-import { addDoc, collection, deleteDoc, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { addDoc, arrayRemove, arrayUnion, collection, deleteDoc, doc, getDocs, increment, query, updateDoc, where } from "firebase/firestore";
 import { firestore } from "@/lib/firebase";
 import { DEFAULT_CONTENT_THUMBNAIL } from "@/lib/constants/defaults";
-import type { ContentModel, ContentPlatform } from "@/types/models";
+import type { ContentModel, ContentPlatform, NotificationType } from "@/types/models";
 
 export const CONTENT_COLLECTION = "content";
+export const NOTIFICATIONS_COLLECTION = "notifications";
 
 export const CONTENT_REQUIRED_FIELDS = [
   "creatorId",
@@ -19,6 +20,7 @@ export const CONTENT_REQUIRED_FIELDS = [
   "featured",
   "isDefaultForReview",
   "likeCount",
+  "likedBy",
   "commentCount",
   "saveCount",
   "shareCount",
@@ -76,6 +78,7 @@ export function buildContentPayload(input: CreateContentInput): Omit<ContentMode
     featured: Boolean(input.featured),
     isDefaultForReview: Boolean(input.isDefaultForReview ?? false),
     likeCount: 0,
+    likedBy: [],
     commentCount: 0,
     saveCount: 0,
     shareCount: 0,
@@ -165,4 +168,41 @@ export async function setContentAsDefaultReview(userId: string, contentId: strin
   // Set the new content as default for review
   const contentRef = doc(firestore, CONTENT_COLLECTION, contentId);
   await updateDoc(contentRef, { isDefaultForReview: true });
+}
+
+export async function toggleContentLike(
+  contentId: string,
+  userId: string,
+  creatorId: string,
+  userName: string
+): Promise<void> {
+  if (!firestore) throw new Error("Firebase not configured");
+
+  const contentRef = doc(firestore, CONTENT_COLLECTION, contentId);
+  const contentSnap = await getDocs(query(collection(firestore, CONTENT_COLLECTION), where("__name__", "==", contentId)));
+  if (contentSnap.empty) return;
+
+  const contentData = contentSnap.docs[0].data();
+  const likedBy: string[] = Array.isArray(contentData.likedBy) ? contentData.likedBy : [];
+  const isLiked = likedBy.includes(userId);
+
+  await updateDoc(contentRef, {
+    likedBy: isLiked ? arrayRemove(userId) : arrayUnion(userId),
+    likeCount: isLiked ? increment(-1) : increment(1),
+    updatedAt: new Date().toISOString(),
+  });
+
+  // Send notification if liker is not the content creator
+  if (!isLiked && userId !== creatorId) {
+    await addDoc(collection(firestore, NOTIFICATIONS_COLLECTION), {
+      userId: creatorId,
+      type: "new like" as NotificationType,
+      actorId: userId,
+      actorName: userName,
+      targetId: contentId,
+      targetType: "content",
+      read: false,
+      createdAt: new Date().toISOString(),
+    });
+  }
 }
