@@ -1,6 +1,25 @@
 @import "tailwindcss";
 @import "./styles/notifications.css";
 
+/* Disable zoom on the entire app */
+* {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+
+body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: auto;
+}
+
 :root {
   --background: #0a0a0a;
   --surface: #121212;
@@ -2938,9 +2957,9 @@ button {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 20px 12px 56px;
+  padding: 20px 12px 24px;
   background: #0d0d0d;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .review-session-match-card {
@@ -2957,7 +2976,7 @@ button {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .review-session-match-card > * {
@@ -7714,8 +7733,59 @@ button {
 /* Voice Room Redesign */
 .voice-room-page {
   min-height: 100vh;
+  height: 100vh;
   background: #0d0d0d;
   padding-bottom: env(safe-area-inset-bottom, 0px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.voice-room-header-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  flex-shrink: 0;
+  background: #0d0d0d;
+  z-index: 100;
+}
+
+.voice-room-timer-section {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 16px;
+  padding-top: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #0d0d0d;
+  z-index: 99;
+}
+
+.voice-room-scroll-section {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 180px 16px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.voice-room-actions-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  background: #0d0d0d;
+  border-top: 1px solid #222;
+  z-index: 100;
 }
 
 .voice-room-header {
@@ -7764,10 +7834,7 @@ button {
 }
 
 .voice-room-content {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  display: none;
 }
 
 /* Timer Card */
@@ -9464,7 +9531,7 @@ button {
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
-  padding: 16px 20px;
+  padding: 12px 16px;
   border-top: 1px solid #2e2e2e;
   border-left: 1px solid #2a2a2a;
   border-right: 1px solid #111;
@@ -9508,10 +9575,10 @@ button {
 
 .profile-action-btn {
   flex: 1;
-  padding: 12px 16px;
+  padding: 8px 12px;
   border-radius: 10px;
   border: none;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;

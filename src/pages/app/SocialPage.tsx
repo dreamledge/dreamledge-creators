@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/app/providers/AuthProvider";
-import { useMessages } from "@/app/providers/MessagesProvider";
 import { VerifiedBadge } from "@/components/ui/VerifiedLabel";
 import { mockUsers } from "@/lib/constants/mockData";
 import { DEFAULT_AVATAR_URL } from "@/lib/constants/defaults";
 import { subscribePublicUsers } from "@/lib/firebase/publicData";
-import { saveLastVoiceRoom, getLastVoiceRoom, clearLastVoiceRoom } from "@/lib/utils/voiceRoomState";
+import { saveLastVoiceRoom, getLastVoiceRoom, clearLastVoiceRoom, saveLastWatchPartyRoom, getLastWatchPartyRoom, clearLastWatchPartyRoom } from "@/lib/utils/voiceRoomState";
 import {
   VOICE_ROOM_MAX_PARTICIPANTS,
   closeVoiceRoom,
@@ -16,12 +14,16 @@ import {
   pruneInactiveVoiceRooms,
   subscribeActiveVoiceRooms,
   touchVoiceRoom,
+  subscribeActiveWatchPartyRooms,
+  createWatchPartyRoom,
+  joinWatchPartyRoom,
+  leaveWatchPartyRoom,
+  touchWatchPartyRoom,
+  closeWatchPartyRoom,
   type SocialVoiceRoom,
 } from "@/lib/firebase/socialRooms";
 import { useVoiceRoomAudio } from "@/features/social/useVoiceRoomAudio";
 import type { UserModel } from "@/types/models";
-
-const SOCIAL_ROOM_RETURN_KEY = "dreamledge-social-room-return";
 
 type SocialHubTab = "voice-chat" | "public-chat" | "watch-parties" | "game-night" | "creator-lounge";
 
@@ -134,25 +136,27 @@ function getSocialTabIcon(tab: SocialHubTab) {
 }
 
 export function SocialPage() {
-  const { user, toggleFollow } = useAuth();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { startConversation } = useMessages();
+  const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState<SocialHubTab>("voice-chat");
   const [joinedRoomId, setJoinedRoomId] = useState<string | null>(null);
-  const [profilePreviewUserId, setProfilePreviewUserId] = useState<string | null>(null);
+  const [joinedWatchPartyId, setJoinedWatchPartyId] = useState<string | null>(null);
   const [voiceRooms, setVoiceRooms] = useState<SocialVoiceRoom[]>([]);
+  const [watchPartyRooms, setWatchPartyRooms] = useState<SocialVoiceRoom[]>([]);
   const [publicUsers, setPublicUsers] = useState<UserModel[]>([]);
   const [roomNameDraft, setRoomNameDraft] = useState("");
+  const [watchPartyNameDraft, setWatchPartyNameDraft] = useState("");
   const [isCreateRoomOpen, setIsCreateRoomOpen] = useState(false);
+  const [isWatchPartyCreateOpen, setIsWatchPartyCreateOpen] = useState(false);
   const [isSubmittingRoom, setIsSubmittingRoom] = useState(false);
+  const [isSubmittingWatchParty, setIsSubmittingWatchParty] = useState(false);
   const [isEndingRoom, setIsEndingRoom] = useState(false);
+  const [isEndingWatchParty, setIsEndingWatchParty] = useState(false);
   const [socialError, setSocialError] = useState<string | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   const activeRooms = useMemo(() => {
-    if (activeTab === "voice-chat") return [];
+    if (activeTab === "voice-chat" || activeTab === "watch-parties") return [];
     return socialRooms[activeTab];
   }, [activeTab]);
 
@@ -238,27 +242,62 @@ const {
     [liveVoiceRooms, user?.id],
   );
 
-  const previewUser = useMemo(
-    () => (profilePreviewUserId ? userById.get(profilePreviewUserId) ?? null : null),
-    [profilePreviewUserId, userById],
+  const liveWatchPartyRooms = useMemo(
+    () =>
+      watchPartyRooms.map((room) => {
+        const elapsedMs = getElapsedMs(nowMs, room.createdAt);
+        return {
+          ...room,
+          openTimeLabel: formatRoomOpenTime(elapsedMs),
+          openDurationLabel: formatRoomOpenHoursMinutes(elapsedMs),
+        };
+      }),
+    [nowMs, watchPartyRooms],
   );
 
-  const isPreviewUserFriend = useMemo(
-    () => (previewUser ? (user?.followingIds ?? []).includes(previewUser.id) : false),
-    [previewUser, user?.followingIds],
+  const userActiveWatchParty = useMemo(
+    () => (user?.id ? liveWatchPartyRooms.find((room) => room.participantIds.includes(user.id)) ?? null : null),
+    [liveWatchPartyRooms, user?.id],
   );
+
+  const joinedWatchParty = useMemo(
+    () => liveWatchPartyRooms.find((room) => room.id === joinedWatchPartyId) ?? null,
+    [joinedWatchPartyId, liveWatchPartyRooms],
+  );
+
+  const {
+    isMicMuted: isWatchPartyMicMuted,
+    setMuted: setWatchPartyMuted,
+    audioError: watchPartyAudioError,
+    speakingUserIds: watchPartySpeakingUserIds,
+  } = useVoiceRoomAudio(joinedWatchParty?.id ?? null, user?.id ?? null, Boolean(joinedWatchParty && user?.id), "dreamledge-watch-party-v1");
+
+  const watchPartySpeakingUserSet = useMemo(() => new Set(watchPartySpeakingUserIds), [watchPartySpeakingUserIds]);
+
+  const joinedWatchPartyMembers = useMemo(() => {
+    if (!joinedWatchParty) return [] as SocialMember[];
+    return joinedWatchParty.participantIds.slice(0, VOICE_ROOM_MAX_PARTICIPANTS).map((id) => {
+      const member = userById.get(id);
+      if (member) return member;
+      return {
+        id,
+        username: `user-${id.slice(0, 4)}`,
+        displayName: "Creator",
+        photoUrl: DEFAULT_AVATAR_URL,
+        verified: false,
+        bio: "",
+      };
+    });
+  }, [joinedWatchParty, userById]);
 
   const canCreateRoom = Boolean(user?.id) && !userActiveRoom;
   const canEndJoinedRoom = Boolean(joinedRoom && user?.id && joinedRoom.createdBy === user.id);
+  const canCreateWatchParty = Boolean(user?.id) && !userActiveWatchParty;
+  const canEndJoinedWatchParty = Boolean(joinedWatchParty && user?.id && joinedWatchParty.createdBy === user.id);
 
   const handleJoinRoom = async (room: SocialVoiceRoom) => {
     if (!user?.id) {
       setSocialError("You must be logged in to join a room.");
-      return;
-    }
-
-    if (userActiveRoom && userActiveRoom.id !== room.id) {
-      setSocialError("You are already in an active room. Leave it before joining another.");
       return;
     }
 
@@ -275,11 +314,6 @@ const {
   const handleCreateRoom = async () => {
     if (!user?.id) {
       setSocialError("You must be logged in to create a room.");
-      return;
-    }
-
-    if (!canCreateRoom) {
-      setSocialError("You are already in an active room.");
       return;
     }
 
@@ -317,7 +351,6 @@ const {
       setSocialError(error instanceof Error ? error.message : "Unable to leave room.");
     } finally {
       setJoinedRoomId(null);
-      setProfilePreviewUserId(null);
     }
   };
 
@@ -330,11 +363,85 @@ const {
       clearLastVoiceRoom();
       await closeVoiceRoom(joinedRoom.id, user.id);
       setJoinedRoomId(null);
-      setProfilePreviewUserId(null);
     } catch (error) {
       setSocialError(error instanceof Error ? error.message : "Unable to end room.");
     } finally {
       setIsEndingRoom(false);
+    }
+  };
+
+  const handleJoinWatchParty = async (room: SocialVoiceRoom) => {
+    if (!user?.id) {
+      setSocialError("You must be logged in to join a watch party.");
+      return;
+    }
+
+    try {
+      setSocialError(null);
+      saveLastWatchPartyRoom(room.id);
+      await joinWatchPartyRoom(room.id, user.id);
+      setJoinedWatchPartyId(room.id);
+    } catch (error) {
+      setSocialError(error instanceof Error ? error.message : "Unable to join watch party.");
+    }
+  };
+
+  const handleCreateWatchParty = async () => {
+    if (!user?.id) {
+      setSocialError("You must be logged in to create a watch party.");
+      return;
+    }
+
+    const trimmedName = watchPartyNameDraft.trim();
+    if (!trimmedName) {
+      setSocialError("Please enter a watch party name.");
+      return;
+    }
+
+    try {
+      setSocialError(null);
+      setIsSubmittingWatchParty(true);
+      const roomId = await createWatchPartyRoom(user.id, trimmedName);
+      setWatchPartyNameDraft("");
+      setIsWatchPartyCreateOpen(false);
+      setJoinedWatchPartyId(roomId);
+    } catch (error) {
+      setSocialError(error instanceof Error ? error.message : "Unable to create watch party.");
+    } finally {
+      setIsSubmittingWatchParty(false);
+    }
+  };
+
+  const handleLeaveWatchParty = async () => {
+    if (!user?.id || !joinedWatchPartyId) {
+      setJoinedWatchPartyId(null);
+      return;
+    }
+
+    try {
+      setSocialError(null);
+      clearLastWatchPartyRoom();
+      await leaveWatchPartyRoom(joinedWatchPartyId, user.id);
+    } catch (error) {
+      setSocialError(error instanceof Error ? error.message : "Unable to leave watch party.");
+    } finally {
+      setJoinedWatchPartyId(null);
+    }
+  };
+
+  const handleEndWatchParty = async () => {
+    if (!joinedWatchParty || !user?.id) return;
+
+    try {
+      setSocialError(null);
+      setIsEndingWatchParty(true);
+      clearLastWatchPartyRoom();
+      await closeWatchPartyRoom(joinedWatchParty.id, user.id);
+      setJoinedWatchPartyId(null);
+    } catch (error) {
+      setSocialError(error instanceof Error ? error.message : "Unable to end watch party.");
+    } finally {
+      setIsEndingWatchParty(false);
     }
   };
 
@@ -345,42 +452,19 @@ const {
     void handleJoinRoom(joinableVoiceRooms[nextIndex]);
   };
 
-  const handleSendMessageFromProfile = () => {
-    if (!user || !previewUser || previewUser.id === user.id) return;
-    const conversationId = startConversation([user.id, previewUser.id]);
-    setProfilePreviewUserId(null);
-
-    const returnContext = {
-      returnToPath: "/app/social",
-      returnToVoiceRoomId: joinedRoomId,
-      returnToTab: activeTab,
-    };
-
-    try {
-      window.sessionStorage.setItem(SOCIAL_ROOM_RETURN_KEY, JSON.stringify(returnContext));
-    } catch {
-      // Ignore storage failures and rely on route state.
-    }
-
-    navigate(`/app/messages/${conversationId}`, {
-      state: returnContext,
-    });
-  };
-
-  const handleAddFriend = () => {
-    if (!previewUser || previewUser.id === user?.id || isPreviewUserFriend) return;
-    toggleFollow(previewUser.id);
-  };
-
   useEffect(() => {
     const unsubscribePublicUsers = subscribePublicUsers(setPublicUsers);
     const unsubscribeVoiceRooms = subscribeActiveVoiceRooms(setVoiceRooms, (error) => {
       setSocialError(error.message || "Unable to load social rooms right now.");
     });
+    const unsubscribeWatchParties = subscribeActiveWatchPartyRooms(setWatchPartyRooms, (error) => {
+      setSocialError(error.message || "Unable to load watch parties right now.");
+    });
 
     return () => {
       unsubscribePublicUsers();
       unsubscribeVoiceRooms();
+      unsubscribeWatchParties();
     };
   }, []);
 
@@ -399,13 +483,6 @@ const {
     }, 1000);
     return () => window.clearInterval(timer);
   }, []);
-
-  useEffect(() => {
-    const state = location.state as { restoreVoiceRoomId?: string; restoreTab?: SocialHubTab } | null;
-    if (!state) return;
-    if (state.restoreTab) setActiveTab(state.restoreTab);
-    if (state.restoreVoiceRoomId) setJoinedRoomId(state.restoreVoiceRoomId);
-  }, [location.state]);
 
   useEffect(() => {
     if (!user?.id || joinedRoomId) return;
@@ -430,7 +507,6 @@ const {
     const exists = liveVoiceRooms.some((room) => room.id === joinedRoomId);
     if (!exists) {
       setJoinedRoomId(null);
-      setProfilePreviewUserId(null);
     }
   }, [joinedRoomId, liveVoiceRooms]);
 
@@ -446,10 +522,53 @@ const {
   }, [joinedRoomId]);
 
   useEffect(() => {
+    if (!user?.id || joinedWatchPartyId) return;
+    const lastPartyId = getLastWatchPartyRoom();
+    if (!lastPartyId) return;
+    const room = liveWatchPartyRooms.find((r) => r.id === lastPartyId);
+    if (!room) return;
+    if (!room.participantIds.includes(user.id)) return;
+    const handleAutoRejoin = async () => {
+      try {
+        await joinWatchPartyRoom(room.id, user.id);
+        setJoinedWatchPartyId(room.id);
+      } catch {
+        // Auto-rejoin failed, ignore
+      }
+    };
+    handleAutoRejoin();
+  }, [user?.id, joinedWatchPartyId, liveWatchPartyRooms]);
+
+  useEffect(() => {
+    if (!joinedWatchPartyId) return;
+    const exists = liveWatchPartyRooms.some((room) => room.id === joinedWatchPartyId);
+    if (!exists) {
+      setJoinedWatchPartyId(null);
+    }
+  }, [joinedWatchPartyId, liveWatchPartyRooms]);
+
+  useEffect(() => {
+    if (!joinedWatchPartyId) return;
+
+    void touchWatchPartyRoom(joinedWatchPartyId);
+    const heartbeat = window.setInterval(() => {
+      void touchWatchPartyRoom(joinedWatchPartyId);
+    }, 60_000);
+
+    return () => window.clearInterval(heartbeat);
+  }, [joinedWatchPartyId]);
+
+  useEffect(() => {
     if (!audioError) return;
     if (socialError === audioError) return;
     setSocialError(audioError);
   }, [audioError]);
+
+  useEffect(() => {
+    if (!watchPartyAudioError) return;
+    if (socialError === watchPartyAudioError) return;
+    setSocialError(watchPartyAudioError);
+  }, [watchPartyAudioError]);
 
   useEffect(() => {
     if (!joinedRoomId || !user?.id) return;
@@ -502,25 +621,27 @@ const {
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [joinedRoomId, user?.id, liveVoiceRooms]);
 
-  if (joinedRoom) {
+if (joinedRoom) {
     const listenerCount = joinedRoomMembers.length;
     
     return (
       <div className="messages-page voice-room-page">
-        <div className="messages-header voice-room-header">
-          <button type="button" className="messages-header__back" onClick={() => void handleLeaveCurrentRoom()}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </button>
-          <h1 className="messages-header__title">{joinedRoom.name}</h1>
-          <div className="voice-room-live-badge">
-            <span className="voice-room-live-dot"></span>
-            <span>LIVE</span>
+        <div className="voice-room-header-bar">
+          <div className="messages-header voice-room-header">
+            <button type="button" className="messages-header__back" onClick={() => void handleLeaveCurrentRoom()}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+            <h1 className="messages-header__title">{joinedRoom.name}</h1>
+            <div className="voice-room-live-badge">
+              <span className="voice-room-live-dot"></span>
+              <span>LIVE</span>
+            </div>
           </div>
         </div>
 
-        <div className="voice-room-content">
+        <div className="voice-room-timer-section">
           <div className="voice-room-timer-card">
             <span className="voice-room-timer-label">DURATION</span>
             <span className="voice-room-timer">{joinedRoom.openTimeLabel}</span>
@@ -544,34 +665,9 @@ const {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
             </button>
           </div>
+        </div>
 
-          <div className="voice-room-actions">
-            <button
-              type="button"
-              className="voice-room-action-btn voice-room-unmute-btn"
-              aria-label={isMicMuted ? "Unmute microphone" : "Mute microphone"}
-              onClick={() => void setMuted(!isMicMuted)}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                {isMicMuted ? (
-                  <path d="M1 1l22 22M9 9v3a3 3 0 005.12 2.12M15 9.34V4a3 3 0 00-5.94-.6M17 16.95A7 7 0 015 12v-2m14 0v2a7 7 0 01-.11 1.23M12 19v4m-4 0h8"/>
-                ) : (
-                  <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3zM19 10v2a7 7 0 01-14 0v-2M12 19v4m-4 0h8"/>
-                )}
-              </svg>
-              <span>{isMicMuted ? "Unmute" : "Mute"}</span>
-            </button>
-            {canEndJoinedRoom ? (
-              <button type="button" className="voice-room-action-btn voice-room-end-btn" onClick={() => void handleEndCurrentRoom()} disabled={isEndingRoom}>
-                {isEndingRoom ? "Ending..." : "End Room"}
-              </button>
-            ) : (
-              <button type="button" className="voice-room-action-btn voice-room-leave-btn" onClick={() => void handleLeaveCurrentRoom()}>
-                Leave
-              </button>
-            )}
-          </div>
-
+        <div className="voice-room-scroll-section">
           <button type="button" className="voice-room-invite">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
@@ -610,35 +706,145 @@ const {
           </div>
         </div>
 
-        {previewUser ? (
-          <div className="social-profile-sheet-overlay" onClick={() => setProfilePreviewUserId(null)}>
-            <div className="social-profile-sheet" onClick={(event) => event.stopPropagation()}>
-              <div className="social-profile-sheet__handle" />
-              <button type="button" className="social-profile-sheet__close" onClick={() => setProfilePreviewUserId(null)} aria-label="Close profile modal">
-                ×
+        <div className="voice-room-actions-bar">
+          <div className="voice-room-actions">
+            <button
+              type="button"
+              className="voice-room-action-btn voice-room-unmute-btn"
+              aria-label={isMicMuted ? "Unmute microphone" : "Mute microphone"}
+              onClick={() => void setMuted(!isMicMuted)}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                {isMicMuted ? (
+                  <path d="M1 1l22 22M9 9v3a3 3 0 005.12 2.12M15 9.34V4a3 3 0 00-5.94-.6M17 16.95A7 7 0 015 12v-2m14 0v2a7 7 0 01-.11 1.23M12 19v4m-4 0h8"/>
+                ) : (
+                  <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3zM19 10v2a7 7 0 01-14 0v-2M12 19v4m-4 0h8"/>
+                )}
+              </svg>
+              <span>{isMicMuted ? "Unmute" : "Mute"}</span>
+            </button>
+            {canEndJoinedRoom ? (
+              <button type="button" className="voice-room-action-btn voice-room-end-btn" onClick={() => void handleEndCurrentRoom()} disabled={isEndingRoom}>
+                {isEndingRoom ? "Ending..." : "End Room"}
               </button>
-              <div className="social-profile-sheet__header">
-                <img src={previewUser.photoUrl} alt={previewUser.displayName} className="social-profile-sheet__avatar" />
-                <div className="social-profile-sheet__identity">
-                  <div className="social-profile-sheet__name-row">
-                    <span className="social-profile-sheet__name">{previewUser.displayName}</span>
-                    {previewUser.verified ? <VerifiedBadge className="social-profile-sheet__verified" /> : null}
-                  </div>
-                  <span className="social-profile-sheet__username">@{previewUser.username}</span>
-                </div>
-              </div>
-              <p className="social-profile-sheet__bio">{previewUser.bio}</p>
-              <div className="social-profile-sheet__actions">
-                <button type="button" className="social-profile-sheet__action" onClick={handleAddFriend} disabled={previewUser.id === user?.id || isPreviewUserFriend}>
-                  {isPreviewUserFriend ? "Friend Added" : "Add Friend"}
-                </button>
-                <button type="button" className="social-profile-sheet__action social-profile-sheet__action-secondary" onClick={handleSendMessageFromProfile} disabled={previewUser.id === user?.id}>
-                  Send Message
-                </button>
-              </div>
+            ) : (
+              <button type="button" className="voice-room-action-btn voice-room-leave-btn" onClick={() => void handleLeaveCurrentRoom()}>
+                Leave
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (joinedWatchParty) {
+    const partyListenerCount = joinedWatchPartyMembers.length;
+    
+    return (
+      <div className="messages-page voice-room-page">
+        <div className="voice-room-header-bar">
+          <div className="messages-header voice-room-header">
+            <button type="button" className="messages-header__back" onClick={() => void handleLeaveWatchParty()}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+            <h1 className="messages-header__title">{joinedWatchParty.name}</h1>
+            <div className="voice-room-live-badge">
+              <span className="voice-room-live-dot"></span>
+              <span>LIVE</span>
             </div>
           </div>
-        ) : null}
+        </div>
+
+        <div className="voice-room-timer-section">
+          <div className="voice-room-timer-card">
+            <span className="voice-room-timer-label">DURATION</span>
+            <span className="voice-room-timer">{joinedWatchParty.openTimeLabel}</span>
+            <div className="voice-room-pills">
+              <span className="voice-room-pill">EN</span>
+              <span className="voice-room-pill">{partyListenerCount} watching</span>
+            </div>
+          </div>
+
+          <div className="voice-room-controls">
+            <button type="button" className="voice-room-control-btn" aria-label="Grid view">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            </button>
+            <button type="button" className="voice-room-control-btn" aria-label="Search">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div className="voice-room-scroll-section">
+          <button type="button" className="voice-room-invite">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+              <circle cx="8.5" cy="7" r="4"/>
+              <line x1="20" y1="8" x2="20" y2="14"/>
+              <line x1="23" y1="11" x2="17" y2="11"/>
+            </svg>
+            <span>Invite friends</span>
+          </button>
+
+          <div className="voice-room-member-section">
+            <span className="voice-room-member-label">IN PARTY</span>
+            <div className="voice-room-member-list">
+              {joinedWatchPartyMembers.map((member) => (
+                <div key={member.id} className="voice-room-member">
+                  <div className="voice-room-member-avatar-wrap">
+                    <img
+                      src={member.photoUrl}
+                      alt={member.displayName}
+                      className={`voice-room-member-avatar ${watchPartySpeakingUserSet.has(member.id) ? "voice-room-member-avatar--speaking" : ""}`}
+                    />
+                    <span className={`voice-room-member-status ${member.id === user?.id ? "voice-room-member-status--self" : ""}`}></span>
+                  </div>
+                  <div className="voice-room-member-info">
+                    <span className="voice-room-member-name">
+                      {member.displayName || member.username}
+                      {member.verified && <VerifiedBadge className="voice-room-member-verified" />}
+                    </span>
+                    <span className="voice-room-member-role">
+                      {member.id === joinedWatchParty.createdBy ? "Host" : "Viewer"}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="voice-room-actions-bar">
+          <div className="voice-room-actions">
+            <button
+              type="button"
+              className="voice-room-action-btn voice-room-unmute-btn"
+              aria-label={isWatchPartyMicMuted ? "Unmute microphone" : "Mute microphone"}
+              onClick={() => void setWatchPartyMuted(!isWatchPartyMicMuted)}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                {isWatchPartyMicMuted ? (
+                  <path d="M1 1l22 22M9 9v3a3 3 0 005.12 2.12M15 9.34V4a3 3 0 00-5.94-.6M17 16.95A7 7 0 015 12v-2m14 0v2a7 7 0 01-.11 1.23M12 19v4m-4 0h8"/>
+                ) : (
+                  <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3zM19 10v2a7 7 0 01-14 0v-2M12 19v4m-4 0h8"/>
+                )}
+              </svg>
+              <span>{isWatchPartyMicMuted ? "Unmute" : "Mute"}</span>
+            </button>
+            {canEndJoinedWatchParty ? (
+              <button type="button" className="voice-room-action-btn voice-room-end-btn" onClick={() => void handleEndWatchParty()} disabled={isEndingWatchParty}>
+                {isEndingWatchParty ? "Ending..." : "End Party"}
+              </button>
+            ) : (
+              <button type="button" className="voice-room-action-btn voice-room-leave-btn" onClick={() => void handleLeaveWatchParty()}>
+                Leave
+              </button>
+            )}
+</div>
+        </div>
       </div>
     );
   }
@@ -748,20 +954,103 @@ const {
                   </button>
                 </div>
               </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="social-hub-list">
-          {activeRooms.map((room) => (
-            <button key={room.name} type="button" className="social-hub-room">
-              <div className="social-hub-room__title">{room.name}</div>
-              <div className="social-hub-room__meta">{room.status}</div>
-              <div className="social-hub-room__count">{room.members}</div>
+);
+            })}
+          </div>
+        ) : activeTab === "watch-parties" ? (
+          <div className="social-create-room-wrap">
+            <button
+              type="button"
+              className="cta-button edit-profile w-full"
+              onClick={() => setIsWatchPartyCreateOpen((value) => !value)}
+              disabled={!canCreateWatchParty && !isWatchPartyCreateOpen}
+            >
+              {isWatchPartyCreateOpen ? "Close" : "Create Watch Party"}
             </button>
-          ))}
-        </div>
-      )}
+            <p className="social-create-room-note">Each user can only be in one active watch party at a time.</p>
+
+            {isWatchPartyCreateOpen ? (
+              <div className="social-create-room-form">
+                <input
+                  value={watchPartyNameDraft}
+                  onChange={(event) => setWatchPartyNameDraft(event.target.value)}
+                  className="social-create-room-input"
+                  placeholder="Enter watch party name"
+                  maxLength={48}
+                />
+                <div className="social-create-room-actions">
+                  <button type="button" className="cta-button edit-profile" onClick={handleCreateWatchParty} disabled={isSubmittingWatchParty || !watchPartyNameDraft.trim()}>
+                    {isSubmittingWatchParty ? "Creating..." : "Create"}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : socialError ? <p className="social-create-room-error">{socialError}</p> : null}
+
+        {activeTab === "watch-parties" ? (
+          <div className="social-hub-voice-list">
+            {!liveWatchPartyRooms.length ? (
+              <div className="social-hub-empty-state">No active watch parties yet. Create one to get started.</div>
+            ) : null}
+
+            {liveWatchPartyRooms.map((room) => {
+              const isMember = room.participantIds.includes(user?.id ?? "");
+              const isFull = !isMember && room.participantIds.length >= VOICE_ROOM_MAX_PARTICIPANTS;
+
+              return (
+                <div key={room.id} className="social-hub-voice-card">
+                  <div className="social-hub-voice-card__top">
+                    <div className="social-hub-voice-card__category">
+                      <span className="social-hub-voice-card__mic" aria-hidden="true">🎬</span>
+                      <span>{room.name}</span>
+                    </div>
+                    <span className="social-hub-voice-card__timer" title="Room open duration (hours:minutes)">{room.openDurationLabel}</span>
+                  </div>
+
+                  <div className="social-hub-voice-card__bottom">
+                    <div className="social-hub-voice-card__participants">
+                      {room.participantIds.slice(0, VOICE_ROOM_MAX_PARTICIPANTS).map((id) => {
+                        const participant = userById.get(id);
+                        if (!participant) return null;
+                        return (
+                          <div key={id} className="social-hub-voice-user">
+                            <img src={participant.photoUrl} alt={participant.displayName} className="social-hub-voice-user__avatar" />
+                            <div className="social-hub-voice-user__name-row">
+                              <span className="social-hub-voice-user__name">{participant.username}</span>
+                              {participant.verified ? <VerifiedBadge className="social-hub-voice-user__verified" /> : null}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <button
+                      type="button"
+                      className="social-hub-voice-card__join"
+                      onClick={() => void handleJoinWatchParty(room)}
+                      disabled={isFull}
+                    >
+                      {isMember ? "Open" : isFull ? "Full" : "Join"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {activeTab !== "voice-chat" && activeTab !== "watch-parties" && (
+          <div className="social-hub-list">
+            {activeRooms.map((room) => (
+              <button key={room.name} type="button" className="social-hub-room">
+                <div className="social-hub-room__title">{room.name}</div>
+                <div className="social-hub-room__meta">{room.status}</div>
+                <div className="social-hub-room__count">{room.members}</div>
+              </button>
+            ))}
+          </div>
+        )}
     </div>
   );
 }

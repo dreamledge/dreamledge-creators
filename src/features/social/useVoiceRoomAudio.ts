@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { joinRoom, type JsonValue, type Room } from "trystero";
 
-const TRYSTERO_APP_ID = "dreamledge-social-voice-v1";
+const DEFAULT_TRYSTERO_APP_ID = "dreamledge-social-voice-v1";
 const SPEAKING_THRESHOLD = 5;
 const SPEAKING_HOLD_MS = 420;
 
@@ -65,7 +65,8 @@ const applyAudioBitrateLimit = (pc: RTCPeerConnection) => {
   }
 };
 
-export function useVoiceRoomAudio(roomId: string | null, userId: string | null, enabled: boolean) {
+export function useVoiceRoomAudio(roomId: string | null, userId: string | null, enabled: boolean, appId?: string) {
+  const trysteroAppId = appId ?? DEFAULT_TRYSTERO_APP_ID;
   const [isMicReady, setIsMicReady] = useState(false);
   const [isMicMuted, setIsMicMuted] = useState(true);
   const [audioError, setAudioError] = useState<string | null>(null);
@@ -240,7 +241,7 @@ export function useVoiceRoomAudio(roomId: string | null, userId: string | null, 
 
         const room = joinRoom(
           {
-            appId: TRYSTERO_APP_ID,
+            appId: trysteroAppId,
             rtcConfig: RTC_CONFIG,
             trickleIce: TRICKLE_ICE,
             turnConfig: TURN_SERVERS,
