@@ -7772,11 +7772,18 @@ button {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 180px 16px 80px;
+  padding: 280px 16px 80px;
   display: flex;
   flex-direction: column;
   gap: 16px;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  justify-content: flex-start;
+}
+
+.voice-room-scroll-section.no-scroll {
+  overflow-y: hidden;
+  overscroll-behavior: none;
 }
 
 .voice-room-actions-bar {

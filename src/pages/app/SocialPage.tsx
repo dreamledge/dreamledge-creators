@@ -667,7 +667,7 @@ if (joinedRoom) {
           </div>
         </div>
 
-        <div className="voice-room-scroll-section">
+        <div className={`voice-room-scroll-section ${joinedWatchPartyMembers.length <= 4 ? "no-scroll" : ""}`}>
           <button type="button" className="voice-room-invite">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
@@ -778,7 +778,7 @@ if (joinedRoom) {
           </div>
         </div>
 
-        <div className="voice-room-scroll-section">
+        <div className={`voice-room-scroll-section ${joinedWatchPartyMembers.length <= 4 ? "no-scroll" : ""}`}>
           <button type="button" className="voice-room-invite">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
