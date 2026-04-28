@@ -447,6 +447,7 @@ const {
 
   useEffect(() => {
     if (!audioError) return;
+    if (socialError === audioError) return;
     setSocialError(audioError);
   }, [audioError]);
 
@@ -471,6 +472,35 @@ const {
       document.removeEventListener("click", handleInteraction);
     };
   }, [joinedRoomId, user?.id]);
+
+  useEffect(() => {
+    if (!joinedRoomId || !user?.id) return;
+
+    let wasHidden = false;
+
+    const handleVisibilityChange = async () => {
+      if (document.hidden) {
+        wasHidden = true;
+        return;
+      }
+
+      if (wasHidden && joinedRoomId) {
+        wasHidden = false;
+        
+        const room = liveVoiceRooms.find((r) => r.id === joinedRoomId);
+        if (room && room.participantIds.includes(user.id)) {
+          try {
+            await retryRemotePlayback();
+          } catch {
+            // Retry failed, will try again on next interaction
+          }
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [joinedRoomId, user?.id, liveVoiceRooms]);
 
   if (joinedRoom) {
     const listenerCount = joinedRoomMembers.length;

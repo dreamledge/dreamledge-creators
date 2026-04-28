@@ -1,9 +1,29 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { joinRoom, type JsonValue, type Room } from "trystero";
 
 const TRYSTERO_APP_ID = "dreamledge-social-voice-v1";
 const SPEAKING_THRESHOLD = 5;
 const SPEAKING_HOLD_MS = 420;
+
+const ICE_SERVERS: RTCIceServer[] = [
+  { urls: "stun:stun.l.google.com:19302" },
+  { urls: "stun:stun1.l.google.com:19302" },
+  { urls: "stun:stun2.l.google.com:19302" },
+  { urls: "stun:stun.cloudflare.com:3478" },
+  { urls: "stun:global.stun.twilio.com:3478" },
+];
+
+const TURN_SERVERS = [
+  { urls: "turn:openrelay.metered.ca:443" },
+  { urls: "turn:openrelay.metered.ca:443?transport=tcp" },
+];
+
+const RTC_CONFIG: RTCConfiguration = {
+  iceServers: [...ICE_SERVERS],
+  iceCandidatePoolSize: 10,
+};
+
+const TRICKLE_ICE = true;
 
 type RemoteAudio = {
   peerId: string;
@@ -29,6 +49,22 @@ function getAverageLevel(analyser: AnalyserNode, data: Uint8Array<ArrayBufferLik
   return total / data.length;
 }
 
+const applyAudioBitrateLimit = (pc: RTCPeerConnection) => {
+  try {
+    const sender = pc.getSenders().find(s => s.track && s.track.kind === "audio");
+    if (sender) {
+      const params = sender.getParameters();
+      if (!params.encodings) {
+        params.encodings = [{}];
+      }
+      params.encodings[0].maxBitrate = 20000;
+      sender.setParameters(params);
+    }
+  } catch (e) {
+    console.warn("Bitrate setting failed", e);
+  }
+};
+
 export function useVoiceRoomAudio(roomId: string | null, userId: string | null, enabled: boolean) {
   const [isMicReady, setIsMicReady] = useState(false);
   const [isMicMuted, setIsMicMuted] = useState(true);
@@ -36,6 +72,8 @@ export function useVoiceRoomAudio(roomId: string | null, userId: string | null, 
   const [remoteAudios, setRemoteAudios] = useState<RemoteAudio[]>([]);
   const [speakingUserIds, setSpeakingUserIds] = useState<string[]>([]);
   const [audioContextState, setAudioContextState] = useState<"running" | "suspended" | "closed" | "interrupted" | "none">("none");
+  const [connectionState, setConnectionState] = useState<RTCPeerConnectionState | "connecting" | "disconnected">("disconnected");
+  const [peerCount, setPeerCount] = useState(0);
 
   const roomRef = useRef<Room | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -47,35 +85,34 @@ export function useVoiceRoomAudio(roomId: string | null, userId: string | null, 
   const speakingUntilRef = useRef(new Map<string, number>());
   const speakingLoopRef = useRef<number | null>(null);
 
-  const peerCount = useMemo(() => remoteAudios.length, [remoteAudios.length]);
+  const cleanupRef = useRef<(() => void) | null>(null);
 
-  const setMicMutedStateFromTracks = () => {
-    const stream = localStreamRef.current;
-    if (!stream) {
-      setIsMicMuted(true);
-      return;
+  const cleanupAll = useCallback(() => {
+    if (speakingLoopRef.current) {
+      window.clearInterval(speakingLoopRef.current);
+      speakingLoopRef.current = null;
     }
 
-    const tracks = stream.getAudioTracks();
-    if (!tracks.length) {
-      setIsMicMuted(true);
-      return;
+    remoteAudioElementsRef.current.forEach((audioElement) => {
+      audioElement.pause();
+      audioElement.srcObject = null;
+    });
+    remoteAudioElementsRef.current.clear();
+    remoteAnalysersRef.current.clear();
+    speakingUntilRef.current.clear();
+
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => track.stop());
+      localStreamRef.current = null;
     }
 
-    const allDisabled = tracks.every((track) => !track.enabled);
-    setIsMicMuted(allDisabled);
-  };
-
-  const syncAudioContextState = () => {
-    const audioContext = audioContextRef.current;
-    if (!audioContext) {
-      setAudioContextState("none");
-      return;
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
     }
-    setAudioContextState(audioContext.state);
-  };
+  }, []);
 
-  const resumeAudioContext = async () => {
+  const resumeAudioContext = useCallback(async () => {
     const audioContext = audioContextRef.current;
     if (!audioContext) return;
     try {
@@ -83,70 +120,94 @@ export function useVoiceRoomAudio(roomId: string | null, userId: string | null, 
         await audioContext.resume();
       }
     } finally {
-      syncAudioContextState();
+      setAudioContextState(audioContext.state);
     }
-  };
+  }, []);
 
-  const retryRemotePlayback = async () => {
+  const retryRemotePlayback = useCallback(async () => {
     await resumeAudioContext();
     await Promise.all(
       Array.from(remoteAudioElementsRef.current.values()).map(async (audioElement) => {
         try {
           await audioElement.play();
         } catch {
-          // Playback can still be blocked depending on browser policies.
+          // Playback can still be blocked
         }
       }),
     );
-  };
+  }, [resumeAudioContext]);
 
-  const setMuted = async (nextMuted: boolean) => {
+  const initializeMedia = useCallback(async (): Promise<MediaStream | null> => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+        video: false,
+      });
+      return stream;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const setMuted = useCallback(async (nextMuted: boolean) => {
     const stream = localStreamRef.current;
+    let audioContext = audioContextRef.current;
+
     if (!stream) {
-      const audioContext = audioContextRef.current;
       if (!audioContext) {
+        audioContext = new AudioContext();
+        audioContextRef.current = audioContext;
+        setAudioContextState(audioContext.state);
+      }
+
+      const newStream = await initializeMedia();
+      if (!newStream) {
         setIsMicMuted(true);
+        setAudioError("Unable to access microphone");
         return;
       }
-      try {
-        const newStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        const audioTracks = newStream.getAudioTracks();
-        audioTracks.forEach((track) => {
-          track.enabled = !nextMuted;
+
+      const audioTracks = newStream.getAudioTracks();
+      audioTracks.forEach((track) => {
+        track.enabled = !nextMuted;
+      });
+
+      localStreamRef.current = newStream;
+      const localSource = audioContext.createMediaStreamSource(newStream);
+      const localAnalyser = audioContext.createAnalyser();
+      localAnalyser.fftSize = 512;
+      localSource.connect(localAnalyser);
+      localAnalyserRef.current = localAnalyser;
+      localAnalyserDataRef.current = new Uint8Array(localAnalyser.frequencyBinCount);
+
+      if (roomRef.current && userId) {
+        const peersMap = roomRef.current.getPeers();
+        Object.keys(peersMap).forEach((peerId) => {
+          roomRef.current?.addStream(newStream, peerId, { userId });
         });
-        localStreamRef.current = newStream;
-        const localSource = audioContext.createMediaStreamSource(newStream);
-        const localAnalyser = audioContext.createAnalyser();
-        localAnalyser.fftSize = 512;
-        localSource.connect(localAnalyser);
-        localAnalyserRef.current = localAnalyser;
-        localAnalyserDataRef.current = new Uint8Array(localAnalyser.frequencyBinCount);
-        if (roomRef.current) {
-          roomRef.current.addStream(newStream, undefined, { userId });
-        }
-        setIsMicReady(true);
-        setIsMicMuted(nextMuted);
-      } catch {
-        setIsMicMuted(true);
-        return;
+        Object.values(peersMap).forEach(pc => applyAudioBitrateLimit(pc));
       }
+
+      setIsMicReady(true);
+      setIsMicMuted(nextMuted);
+      return;
     }
 
     setIsMicMuted(nextMuted);
-
     await resumeAudioContext();
-    const currentStream = localStreamRef.current;
-    if (!currentStream) {
-      return;
-    }
-    currentStream.getAudioTracks().forEach((track) => {
+
+    stream.getAudioTracks().forEach((track) => {
       track.enabled = !nextMuted;
     });
-    setMicMutedStateFromTracks();
+
     if (!nextMuted) {
       await retryRemotePlayback();
     }
-  };
+  }, [initializeMedia, resumeAudioContext, retryRemotePlayback, userId]);
 
   useEffect(() => {
     if (!enabled || !roomId || !userId) {
@@ -156,25 +217,60 @@ export function useVoiceRoomAudio(roomId: string | null, userId: string | null, 
       setRemoteAudios([]);
       setSpeakingUserIds([]);
       setAudioContextState("none");
+      setConnectionState("disconnected");
+      setPeerCount(0);
+
+      if (cleanupRef.current) {
+        cleanupRef.current();
+        cleanupRef.current = null;
+      }
+      roomRef.current = null;
       return;
     }
 
-    const initialize = async () => {
+    setConnectionState("connecting");
+
+    let isCleanedUp = false;
+
+    const init = async () => {
       try {
         const audioContext = new AudioContext();
         audioContextRef.current = audioContext;
-        syncAudioContextState();
+        setAudioContextState(audioContext.state);
 
-        const room = joinRoom({ appId: TRYSTERO_APP_ID }, roomId);
+        const room = joinRoom(
+          {
+            appId: TRYSTERO_APP_ID,
+            rtcConfig: RTC_CONFIG,
+            trickleIce: TRICKLE_ICE,
+            turnConfig: TURN_SERVERS,
+          },
+          roomId
+        );
+
+        if (isCleanedUp) {
+          room.leave();
+          return;
+        }
+
         roomRef.current = room;
 
         room.onPeerJoin((peerId) => {
+          console.log("Peer joined:", peerId);
           const stream = localStreamRef.current;
-          if (!stream) return;
-          room.addStream(stream, peerId, { userId });
+          if (stream && userId) {
+            room.addStream(stream, peerId, { userId });
+            setTimeout(() => {
+              const peersMap = room.getPeers();
+              const pc = peersMap[peerId];
+              if (pc) applyAudioBitrateLimit(pc);
+            }, 500);
+          }
         });
 
         room.onPeerLeave((peerId) => {
+          console.log("Peer left:", peerId);
+
           setRemoteAudios((prev) => prev.filter((entry) => entry.peerId !== peerId));
 
           const audioElement = remoteAudioElementsRef.current.get(peerId);
@@ -186,9 +282,13 @@ export function useVoiceRoomAudio(roomId: string | null, userId: string | null, 
 
           remoteAnalysersRef.current.delete(peerId);
           speakingUntilRef.current.delete(peerId);
+          
+          setPeerCount(remoteAudioElementsRef.current.size);
         });
 
         room.onPeerStream((remoteStream, peerId, metadata) => {
+          console.log("Received stream from peer:", peerId);
+
           const streamMetadata = toMetadata(metadata);
           const remoteUserId = typeof streamMetadata.userId === "string" && streamMetadata.userId ? streamMetadata.userId : peerId;
 
@@ -198,6 +298,8 @@ export function useVoiceRoomAudio(roomId: string | null, userId: string | null, 
             return next;
           });
 
+          setPeerCount((prev) => prev + 1);
+
           const audioElement = new Audio();
           audioElement.autoplay = true;
           audioElement.setAttribute("playsinline", "");
@@ -206,18 +308,7 @@ export function useVoiceRoomAudio(roomId: string | null, userId: string | null, 
           audioElement.srcObject = remoteStream;
           remoteAudioElementsRef.current.set(peerId, audioElement);
 
-          const playRemoteAudio = () => {
-            audioElement
-              .play()
-              .then(() => {
-                remoteAudioElementsRef.current.set(peerId, audioElement);
-              })
-              .catch(() => {
-                // Browsers may block autoplay; will retry on user interaction.
-              });
-          };
-
-          playRemoteAudio();
+          audioElement.play().catch(() => {});
 
           const remoteSource = audioContext.createMediaStreamSource(remoteStream);
           const remoteAnalyser = audioContext.createAnalyser();
@@ -228,6 +319,8 @@ export function useVoiceRoomAudio(roomId: string | null, userId: string | null, 
             data: new Uint8Array(remoteAnalyser.frequencyBinCount),
             userId: remoteUserId,
           });
+
+          setConnectionState("connected");
         });
 
         speakingLoopRef.current = window.setInterval(() => {
@@ -236,7 +329,7 @@ export function useVoiceRoomAudio(roomId: string | null, userId: string | null, 
 
           const localAnalyser = localAnalyserRef.current;
           const localData = localAnalyserDataRef.current;
-          if (localAnalyser && localData) {
+          if (localAnalyser && localData && userId) {
             const localLevel = getAverageLevel(localAnalyser, localData);
             if (localLevel > SPEAKING_THRESHOLD) {
               speakingUntilRef.current.set(userId, now + SPEAKING_HOLD_MS);
@@ -259,52 +352,51 @@ export function useVoiceRoomAudio(roomId: string | null, userId: string | null, 
 
           setSpeakingUserIds(Array.from(nextSpeaking));
         }, 120);
+
+        const existingPeers = room.getPeers();
+        if (Object.keys(existingPeers).length > 0) {
+          console.log("Late joiner - existing peers:", Object.keys(existingPeers));
+          if (localStreamRef.current && userId) {
+            setTimeout(() => {
+              const peersMap = room.getPeers();
+              Object.keys(peersMap).forEach((peerId) => {
+                if (localStreamRef.current) {
+                  room.addStream(localStreamRef.current, peerId, { userId });
+                }
+              });
+              Object.values(peersMap).forEach(pc => applyAudioBitrateLimit(pc));
+            }, 1000);
+          }
+        }
+
+        cleanupRef.current = () => {
+          if (speakingLoopRef.current) {
+            window.clearInterval(speakingLoopRef.current);
+          }
+          room.leave();
+          cleanupAll();
+        };
+
+        setConnectionState("connected");
       } catch (error) {
+        console.error("Failed to initialize voice room:", error);
         setAudioError(error instanceof Error ? error.message : "Unable to access microphone.");
+        setConnectionState("disconnected");
       }
     };
 
-    void initialize();
+    init();
 
     return () => {
-      setRemoteAudios([]);
-      setSpeakingUserIds([]);
-      setIsMicReady(false);
-      setIsMicMuted(true);
-
-      if (speakingLoopRef.current) {
-        window.clearInterval(speakingLoopRef.current);
-        speakingLoopRef.current = null;
+      isCleanedUp = true;
+      if (cleanupRef.current) {
+        cleanupRef.current();
+        cleanupRef.current = null;
       }
-
-      const room = roomRef.current;
       roomRef.current = null;
-      if (room) {
-        void room.leave();
-      }
-
-      remoteAudioElementsRef.current.forEach((audioElement) => {
-        audioElement.pause();
-        audioElement.srcObject = null;
-      });
-      remoteAudioElementsRef.current.clear();
-      remoteAnalysersRef.current.clear();
-      speakingUntilRef.current.clear();
-
-      const stream = localStreamRef.current;
-      localStreamRef.current = null;
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
-      }
-
-      const audioContext = audioContextRef.current;
-      audioContextRef.current = null;
-      if (audioContext) {
-        void audioContext.close();
-      }
-      setAudioContextState("none");
+      setConnectionState("disconnected");
     };
-  }, [enabled, roomId, userId]);
+  }, [enabled, roomId, userId, cleanupAll]);
 
   return {
     isMicReady,
@@ -316,5 +408,6 @@ export function useVoiceRoomAudio(roomId: string | null, userId: string | null, 
     remoteAudios,
     speakingUserIds,
     audioContextState,
+    connectionState,
   };
 }
