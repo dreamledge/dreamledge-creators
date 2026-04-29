@@ -212,7 +212,8 @@ export function ContentCard({ content, hideActions = false, creatorOverride = nu
     } else if (embedUrl.includes("tiktok.com")) {
       const videoId = extractTikTokVideoId(embedUrl) ?? extractTikTokVideoId(content.sourceUrl || "");
       if (videoId) {
-        src = `https://www.tiktok.com/embed/v2/${videoId}?lang=en&autoplay=1&loop=1`;
+        const parent = typeof window !== "undefined" ? window.location.hostname : "localhost";
+        src = `https://www.tiktok.com/embed/v2/${videoId}?lang=en&parent=${parent}`;
       }
     } else if (embedUrl.includes("instagram.com")) {
       const shortcode = embedUrl.match(/\/p\/([A-Za-z0-9_-]+)/)?.[1] || embedUrl.match(/\/reel\/([A-Za-z0-9_-]+)/)?.[1];
