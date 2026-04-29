@@ -196,7 +196,7 @@ export function ContentCard({ content, hideActions = false, creatorOverride = nu
     }
   };
 
-  const getEmbedSrc = (embedUrl: string, muted: boolean, options?: { tiktokVariant?: "player" | "v2" }): string => {
+  const getEmbedSrc = (embedUrl: string, muted: boolean): string => {
     if (!embedUrl) return "";
     let src = embedUrl;
     const useMute = muted ? 1 : 0;
@@ -212,11 +212,7 @@ export function ContentCard({ content, hideActions = false, creatorOverride = nu
     } else if (embedUrl.includes("tiktok.com")) {
       const videoId = extractTikTokVideoId(embedUrl) ?? extractTikTokVideoId(content.sourceUrl || "");
       if (videoId) {
-        if (options?.tiktokVariant === "v2") {
-          src = `https://www.tiktok.com/embed/v2/${videoId}?autoplay=1&auto_play=1&mute=${useMute}&muted=${useMute}&controls=0&loop=1&playsinline=1`;
-        } else {
-          src = `https://www.tiktok.com/player/v1/${videoId}?autoplay=1&auto_play=1&mute=${useMute}&muted=${useMute}&controls=0&loop=1&playsinline=1`;
-        }
+        src = `https://www.tiktok.com/embed/v2/${videoId}?lang=en&autoplay=1&loop=1`;
       }
     } else if (embedUrl.includes("instagram.com")) {
       const shortcode = embedUrl.match(/\/p\/([A-Za-z0-9_-]+)/)?.[1] || embedUrl.match(/\/reel\/([A-Za-z0-9_-]+)/)?.[1];
@@ -245,11 +241,11 @@ export function ContentCard({ content, hideActions = false, creatorOverride = nu
       setIframeLoaded(false);
       setTiktokVariant("player");
       setTiktokMode("iframe");
-      const nextSrc = getEmbedSrc(content.embedUrl || content.sourceUrl || "", true, { tiktokVariant: "player" });
+      const nextSrc = getEmbedSrc(content.embedUrl || content.sourceUrl || "", true);
       setVideoSrc(nextSrc);
 
       const timer = setTimeout(() => {
-        setVideoSrc(getEmbedSrc(content.embedUrl || content.sourceUrl || "", true, { tiktokVariant: "player" }));
+        setVideoSrc(getEmbedSrc(content.embedUrl || content.sourceUrl || "", true));
       }, 80);
       return () => window.clearTimeout(timer);
     } else {
@@ -269,7 +265,7 @@ export function ContentCard({ content, hideActions = false, creatorOverride = nu
     if (tiktokVariant === "player") {
       tiktokFallbackTimeoutRef.current = setTimeout(() => {
         setTiktokVariant("v2");
-        setVideoSrc(getEmbedSrc(content.embedUrl || content.sourceUrl || "", true, { tiktokVariant: "v2" }));
+        setVideoSrc(getEmbedSrc(content.embedUrl || content.sourceUrl || "", true));
       }, 2200);
     } else {
       tiktokFallbackTimeoutRef.current = setTimeout(() => {
@@ -377,7 +373,7 @@ export function ContentCard({ content, hideActions = false, creatorOverride = nu
       return;
     }
 
-    setVideoSrc(getEmbedSrc(content.embedUrl || content.sourceUrl || "", true, { tiktokVariant }));
+    setVideoSrc(getEmbedSrc(content.embedUrl || content.sourceUrl || "", true));
   }, [content.embedUrl, content.platform, content.sourceUrl, iframeLoaded, isPlaying, isTikTok, tiktokVariant, videoSrc]);
 
   useEffect(() => {
@@ -560,7 +556,7 @@ export function ContentCard({ content, hideActions = false, creatorOverride = nu
                   if (isTikTok && tiktokMode === "iframe") {
                     if (tiktokVariant === "player") {
                       setTiktokVariant("v2");
-                      setVideoSrc(getEmbedSrc(content.embedUrl || content.sourceUrl || "", true, { tiktokVariant: "v2" }));
+                      setVideoSrc(getEmbedSrc(content.embedUrl || content.sourceUrl || "", true));
                     } else {
                       setTiktokMode("script");
                       setIframeLoaded(false);
