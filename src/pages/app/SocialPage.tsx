@@ -4,6 +4,7 @@ import { VerifiedBadge } from "@/components/ui/VerifiedLabel";
 import { mockUsers } from "@/lib/constants/mockData";
 import { DEFAULT_AVATAR_URL } from "@/lib/constants/defaults";
 import { subscribePublicUsers } from "@/lib/firebase/publicData";
+import { RoomAI } from "@/features/social/RoomAI";
 import { saveLastVoiceRoom, getLastVoiceRoom, clearLastVoiceRoom, saveLastWatchPartyRoom, getLastWatchPartyRoom, clearLastWatchPartyRoom } from "@/lib/utils/voiceRoomState";
 import {
   VOICE_ROOM_MAX_PARTICIPANTS,
@@ -223,6 +224,21 @@ export function SocialPage() {
     () => liveVoiceRooms.find((room) => room.id === joinedRoomId) ?? null,
     [joinedRoomId, liveVoiceRooms],
   );
+
+  const voiceRoomAI = useMemo(() => {
+    if (!joinedRoom?.id) return null;
+    return new RoomAI(joinedRoom.id, {
+      audioFilePath: '/robot-convo-going.mp3',
+    });
+  }, [joinedRoom?.id]);
+
+  useEffect(() => {
+    return () => {
+      if (voiceRoomAI) {
+        voiceRoomAI.destroy();
+      }
+    };
+  }, [voiceRoomAI]);
 
 const {
     isMicMuted,

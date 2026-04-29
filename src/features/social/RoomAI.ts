@@ -4,6 +4,7 @@ interface RoomAIOptions {
   silenceCooldown?: number;
   loudCooldown?: number;
   onAISpeak?: (text: string) => void;
+  audioFilePath?: string;
 }
 
 const silenceResponses = [
@@ -36,6 +37,9 @@ export class RoomAI {
   private checkInterval: ReturnType<typeof setInterval> | null;
   private onAISpeak: ((text: string) => void) | undefined;
   private speechSynth: SpeechSynthesisUtterance | null;
+  private audioFilePath: string | undefined;
+  private audioPlayed: boolean;
+  private audio: HTMLAudioElement | null;
 
   constructor(roomId: string, options: RoomAIOptions = {}) {
     this._roomId = roomId;
@@ -43,10 +47,13 @@ export class RoomAI {
     this.volumeHistory = [];
     this.silenceThreshold = options.silenceThreshold ?? 12000;
     this.volumeThreshold = options.volumeThreshold ?? 0.7;
-    this.silenceCooldown = options.silenceCooldown ?? 20000;
-    this.loudCooldown = options.loudCooldown ?? 15000;
+    this.silenceCooldown = 0; // Start at 0 so it can trigger after threshold
+    this.loudCooldown = 0;
     this.onAISpeak = options.onAISpeak;
     this.speechSynth = null;
+    this.audioFilePath = options.audioFilePath;
+    this.audioPlayed = false;
+    this.audio = null;
 
     this.checkInterval = setInterval(() => this.checkTriggers(), 1000);
   }
@@ -57,6 +64,32 @@ export class RoomAI {
 
   onUserSpeak(): void {
     this.lastSpeechTimestamp = Date.now();
+  }
+
+  resetAudioState(): void {
+    this.audioPlayed = false;
+  }
+
+  private playAudioFile(): void {
+    if (this.audioFilePath && !this.audioPlayed) {
+      try {
+        console.log('🎵 Playing robot convo sound:', this.audioFilePath);
+        this.audio = new Audio(this.audioFilePath);
+        this.audio.addEventListener('ended', () => {
+          console.log('🎵 Audio finished playing');
+          this.audioPlayed = true;
+          if (this.onAISpeak) {
+            this.onAISpeak('[robot convo sound]');
+          }
+        });
+        this.audio.play().catch((err) => {
+          console.error('🎵 Audio play error:', err);
+          this.audio = null;
+        });
+      } catch (err) {
+        console.error('🎵 Audio error:', err);
+      }
+    }
   }
 
   onVolumeUpdate(level: number): void {
@@ -71,16 +104,26 @@ export class RoomAI {
 
     if (this.silenceCooldown > 0) {
       this.silenceCooldown -= 1000;
+      if (this.silenceCooldown < 0) this.silenceCooldown = 0;
     }
     if (this.loudCooldown > 0) {
       this.loudCooldown -= 1000;
+      if (this.loudCooldown < 0) this.loudCooldown = 0;
     }
 
     const silenceMs = now - this.lastSpeechTimestamp;
     if (silenceMs > this.silenceThreshold && this.silenceCooldown <= 0) {
-      const response = silenceResponses[Math.floor(Math.random() * silenceResponses.length)];
-      this.speak(response);
-      this.silenceCooldown = 30 * 60 * 1000; // 30 minutes
+      console.log('🤖 12 seconds of silence detected! cooldown:', this.silenceCooldown, 'audioPlayed:', this.audioPlayed);
+      if (this.audioFilePath && !this.audioPlayed) {
+        console.log('🤖 Playing audio file...');
+        this.playAudioFile();
+        this.silenceCooldown = 30 * 60 * 1000;
+        console.log('🤖 Cooldown set to 30 minutes');
+      } else if (!this.audioFilePath) {
+        const response = silenceResponses[Math.floor(Math.random() * silenceResponses.length)];
+        this.speak(response);
+        this.silenceCooldown = 30 * 60 * 1000;
+      }
       return;
     }
 
