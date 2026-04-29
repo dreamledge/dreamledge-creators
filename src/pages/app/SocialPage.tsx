@@ -98,6 +98,21 @@ function toSocialMember(entry: Pick<UserModel, "id" | "username" | "displayName"
   };
 }
 
+function OrwellianEyeAvatar({ blinking }: { blinking: boolean }) {
+  return (
+    <div className={`review-session-orwellian-eye ${blinking ? "review-session-orwellian-eye-blinking" : ""}`} aria-label="Waiting match eye avatar">
+      <div className="review-session-orwellian-sclera">
+        <div className="review-session-orwellian-iris">
+          <div className="review-session-orwellian-pupil" />
+          <div className="review-session-orwellian-glint" />
+        </div>
+      </div>
+      <div className="review-session-orwellian-lid review-session-orwellian-lid-top" />
+      <div className="review-session-orwellian-lid review-session-orwellian-lid-bottom" />
+    </div>
+  );
+}
+
 function getSocialTabIcon(tab: SocialHubTab) {
   switch (tab) {
     case "voice-chat":
@@ -154,6 +169,7 @@ export function SocialPage() {
   const [isEndingWatchParty, setIsEndingWatchParty] = useState(false);
   const [socialError, setSocialError] = useState<string | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const [isEyeBlinking, setIsEyeBlinking] = useState(false);
 
   const activeRooms = useMemo(() => {
     if (activeTab === "voice-chat" || activeTab === "watch-parties") return [];
@@ -485,6 +501,14 @@ const {
   }, []);
 
   useEffect(() => {
+    const interval = window.setInterval(() => {
+      setIsEyeBlinking(true);
+      setTimeout(() => setIsEyeBlinking(false), 150);
+    }, 3000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
     if (!user?.id || joinedRoomId) return;
     const lastRoomId = getLastVoiceRoom();
     if (!lastRoomId) return;
@@ -622,8 +646,6 @@ const {
   }, [joinedRoomId, user?.id, liveVoiceRooms]);
 
 if (joinedRoom) {
-    const listenerCount = joinedRoomMembers.length;
-    
     return (
       <div className="messages-page voice-room-page">
         <div className="voice-room-header-bar">
@@ -643,12 +665,7 @@ if (joinedRoom) {
 
         <div className="voice-room-timer-section">
           <div className="voice-room-timer-card">
-            <span className="voice-room-timer-label">DURATION</span>
-            <span className="voice-room-timer">{joinedRoom.openTimeLabel}</span>
-            <div className="voice-room-pills">
-              <span className="voice-room-pill">EN</span>
-              <span className="voice-room-pill">{listenerCount} listening</span>
-            </div>
+            <OrwellianEyeAvatar blinking={isEyeBlinking} />
           </div>
 
           <div className="voice-room-controls">
@@ -739,8 +756,6 @@ if (joinedRoom) {
   }
 
   if (joinedWatchParty) {
-    const partyListenerCount = joinedWatchPartyMembers.length;
-    
     return (
       <div className="messages-page voice-room-page">
         <div className="voice-room-header-bar">
@@ -760,12 +775,7 @@ if (joinedRoom) {
 
         <div className="voice-room-timer-section">
           <div className="voice-room-timer-card">
-            <span className="voice-room-timer-label">DURATION</span>
-            <span className="voice-room-timer">{joinedWatchParty.openTimeLabel}</span>
-            <div className="voice-room-pills">
-              <span className="voice-room-pill">EN</span>
-              <span className="voice-room-pill">{partyListenerCount} watching</span>
-            </div>
+            <OrwellianEyeAvatar blinking={isEyeBlinking} />
           </div>
 
           <div className="voice-room-controls">
@@ -917,7 +927,7 @@ if (joinedRoom) {
             const isMember = room.participantIds.includes(user?.id ?? "");
             const isFull = !isMember && room.participantIds.length >= VOICE_ROOM_MAX_PARTICIPANTS;
 
-            return (
+return (
               <div key={room.id} className="social-hub-voice-card">
                 <div className="social-hub-voice-card__top">
                   <div className="social-hub-voice-card__category">
@@ -927,34 +937,43 @@ if (joinedRoom) {
                   <span className="social-hub-voice-card__timer" title="Room open duration (hours:minutes)">{room.openDurationLabel}</span>
                 </div>
 
-                <div className="social-hub-voice-card__bottom">
-                  <div className="social-hub-voice-card__participants">
-                    {room.participantIds.slice(0, VOICE_ROOM_MAX_PARTICIPANTS).map((id) => {
-                      const participant = userById.get(id);
-                      if (!participant) return null;
-                      return (
-                        <div key={id} className="social-hub-voice-user">
-                          <img src={participant.photoUrl} alt={participant.displayName} className="social-hub-voice-user__avatar" />
-                          <div className="social-hub-voice-user__name-row">
-                            <span className="social-hub-voice-user__name">{participant.username}</span>
-                            {participant.verified ? <VerifiedBadge className="social-hub-voice-user__verified" /> : null}
-                          </div>
+                <div className="voice-room-member-list">
+                  {room.participantIds.slice(0, VOICE_ROOM_MAX_PARTICIPANTS).map((id) => {
+                    const participant = userById.get(id);
+                    if (!participant) return null;
+                    return (
+                      <div key={id} className="voice-room-member">
+                        <div className="voice-room-member-avatar-wrap">
+                          <img
+                            src={participant.photoUrl}
+                            alt={participant.displayName}
+                            className="voice-room-member-avatar"
+                          />
                         </div>
-                      );
-                    })}
-                  </div>
-
-                  <button
-                    type="button"
-                    className="social-hub-voice-card__join"
-                    onClick={() => void handleJoinRoom(room)}
-                    disabled={isFull}
-                  >
-                    {isMember ? "Open" : isFull ? "Full" : "Join"}
-                  </button>
+                        <div className="voice-room-member-info">
+                          <span className="voice-room-member-name">
+                            {participant.displayName || participant.username}
+                            {participant.verified && <VerifiedBadge className="voice-room-member-verified" />}
+                          </span>
+                          <span className="voice-room-member-role">
+                            {id === room.createdBy ? "Host" : "Listener"}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
+
+                <button
+                  type="button"
+                  className="social-hub-voice-card__join"
+                  onClick={() => void handleJoinRoom(room)}
+                  disabled={isFull}
+                >
+                  {isMember ? "Open" : isFull ? "Full" : "Join"}
+                </button>
               </div>
-);
+            );
             })}
           </div>
         ) : activeTab === "watch-parties" ? (
@@ -1008,32 +1027,41 @@ if (joinedRoom) {
                     <span className="social-hub-voice-card__timer" title="Room open duration (hours:minutes)">{room.openDurationLabel}</span>
                   </div>
 
-                  <div className="social-hub-voice-card__bottom">
-                    <div className="social-hub-voice-card__participants">
-                      {room.participantIds.slice(0, VOICE_ROOM_MAX_PARTICIPANTS).map((id) => {
-                        const participant = userById.get(id);
-                        if (!participant) return null;
-                        return (
-                          <div key={id} className="social-hub-voice-user">
-                            <img src={participant.photoUrl} alt={participant.displayName} className="social-hub-voice-user__avatar" />
-                            <div className="social-hub-voice-user__name-row">
-                              <span className="social-hub-voice-user__name">{participant.username}</span>
-                              {participant.verified ? <VerifiedBadge className="social-hub-voice-user__verified" /> : null}
-                            </div>
+                  <div className="voice-room-member-list">
+                    {room.participantIds.slice(0, VOICE_ROOM_MAX_PARTICIPANTS).map((id) => {
+                      const participant = userById.get(id);
+                      if (!participant) return null;
+                      return (
+                        <div key={id} className="voice-room-member">
+                          <div className="voice-room-member-avatar-wrap">
+                            <img
+                              src={participant.photoUrl}
+                              alt={participant.displayName}
+                              className="voice-room-member-avatar"
+                            />
                           </div>
-                        );
-                      })}
-                    </div>
-
-                    <button
-                      type="button"
-                      className="social-hub-voice-card__join"
-                      onClick={() => void handleJoinWatchParty(room)}
-                      disabled={isFull}
-                    >
-                      {isMember ? "Open" : isFull ? "Full" : "Join"}
-                    </button>
+                          <div className="voice-room-member-info">
+                            <span className="voice-room-member-name">
+                              {participant.displayName || participant.username}
+                              {participant.verified && <VerifiedBadge className="voice-room-member-verified" />}
+                            </span>
+                            <span className="voice-room-member-role">
+                              {id === room.createdBy ? "Host" : "Viewer"}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
+
+                  <button
+                    type="button"
+                    className="social-hub-voice-card__join"
+                    onClick={() => void handleJoinWatchParty(room)}
+                    disabled={isFull}
+                  >
+                    {isMember ? "Open" : isFull ? "Full" : "Join"}
+                  </button>
                 </div>
               );
             })}
