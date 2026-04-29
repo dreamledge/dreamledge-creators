@@ -80,7 +80,7 @@ export class RoomAI {
     if (silenceMs > this.silenceThreshold && this.silenceCooldown <= 0) {
       const response = silenceResponses[Math.floor(Math.random() * silenceResponses.length)];
       this.speak(response);
-      this.silenceCooldown = 20000;
+      this.silenceCooldown = 30 * 60 * 1000; // 30 minutes
       return;
     }
 
@@ -89,7 +89,7 @@ export class RoomAI {
       if (avgVolume > this.volumeThreshold && this.loudCooldown <= 0) {
         const response = loudResponses[Math.floor(Math.random() * loudResponses.length)];
         this.speak(response);
-        this.loudCooldown = 15000;
+        this.loudCooldown = 5 * 60 * 1000; // 5 minutes for loud
         return;
       }
     }
@@ -101,14 +101,37 @@ export class RoomAI {
     }
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.1;
+    utterance.rate = 0.92;  // Slower = more conversational
     utterance.pitch = 1.0;
-    utterance.volume = 0.8;
+    utterance.volume = 0.85;
 
+    // Try to find natural-sounding voices
     const voices = window.speechSynthesis.getVoices();
-    const englishVoice = voices.find(v => v.lang.startsWith('en'));
-    if (englishVoice) {
-      utterance.voice = englishVoice;
+    
+    // Preferred voices (most natural-sounding)
+    const preferredVoices = [
+      'Google US English',
+      'Microsoft Zira',
+      'Microsoft David',
+      'Samantha',
+      'Alex',
+      'Daniel',
+      'English United Kingdom',
+    ];
+    
+    let selectedVoice = null;
+    for (const name of preferredVoices) {
+      selectedVoice = voices.find(v => v.name.includes(name));
+      if (selectedVoice) break;
+    }
+    
+    // Fallback to any English voice
+    if (!selectedVoice) {
+      selectedVoice = voices.find(v => v.lang.startsWith('en'));
+    }
+
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
     }
 
     this.speechSynth = utterance;
