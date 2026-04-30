@@ -20,17 +20,6 @@ declare global {
 
 const TIKTOK_EMBED_SCRIPT_SRC = "https://www.tiktok.com/embed.js";
 
-function extractTikTokVideoId(url: string) {
-  if (!url) return null;
-  const id = url.match(/embed\/v2\/(\d+)/i)?.[1] 
-    ?? url.match(/@[^/]+\/video\/(\d+)/i)?.[1] 
-    ?? url.match(/\/video\/(\d+)/i)?.[1] 
-    ?? url.match(/(\d{19,})/i)?.[1]
-    ?? null;
-  console.log('[TikTok] extractTikTokVideoId from:', url, '-> videoId:', id);
-  return id;
-}
-
 async function ensureTikTokEmbedScript() {
   if (typeof window === "undefined") return;
 
@@ -216,13 +205,8 @@ export function ContentCard({ content, hideActions = false, creatorOverride = nu
     } else if (embedUrl.includes("youtube.com") || embedUrl.includes("youtu.be")) {
       const videoId = embedUrl.split("v=")[1]?.split("&")[0] || embedUrl.split("/").pop();
       src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${useMute}&loop=1&playlist=${videoId}&iv_load_policy=3&modestbranding=1&playsinline=1&showinfo=0&rel=0&enablejsapi=1${origin ? `&origin=${origin}` : ""}`;
-    } else if (embedUrl.includes("tiktok.com")) {
-      const videoId = extractTikTokVideoId(embedUrl) ?? extractTikTokVideoId(content.sourceUrl || "");
-      if (videoId) {
-        const parent = typeof window !== "undefined" ? window.location.hostname : "localhost";
-        src = `https://www.tiktok.com/embed/v2/${videoId}?lang=en&parent=${parent}`;
-        console.log('[TikTok] Embed URL:', src, 'parent:', parent);
-      }
+    } else if (embedUrl.includes("tiktok.com") || embedUrl.includes("vm.tiktok.com") || embedUrl.includes("/t/")) {
+      console.log('[TikTok] URL detected, using script embed mode');
     } else if (embedUrl.includes("instagram.com")) {
       const shortcode = embedUrl.match(/\/p\/([A-Za-z0-9_-]+)/)?.[1] || embedUrl.match(/\/reel\/([A-Za-z0-9_-]+)/)?.[1];
       if (shortcode) {
@@ -247,8 +231,17 @@ export function ContentCard({ content, hideActions = false, creatorOverride = nu
 
   useEffect(() => {
     if (isPlaying) {
+      console.log('[TikTok] isPlaying:', isPlaying, 'embedUrl:', content.embedUrl, 'sourceUrl:', content.sourceUrl);
       setIframeLoaded(false);
-      setTiktokVariant("player");
+      
+      const isTikTokContent = content.platform.toLowerCase() === "tiktok" || /tiktok\.com|t\.iktok/i.test(content.sourceUrl || content.embedUrl || "");
+      console.log('[TikTok] isTikTokContent:', isTikTokContent);
+      
+      if (isTikTokContent) {
+        setTiktokMode("script");
+        console.log('[TikTok] Using script mode for TikTok');
+        return;
+      }
       setTiktokMode("iframe");
       const nextSrc = getEmbedSrc(content.embedUrl || content.sourceUrl || "", true);
       setVideoSrc(nextSrc);
@@ -301,19 +294,18 @@ export function ContentCard({ content, hideActions = false, creatorOverride = nu
 
     let cancelled = false;
     const host = tiktokScriptHostRef.current;
-    const source = content.sourceUrl || content.embedUrl;
-    const videoId = extractTikTokVideoId(source || "");
+    const sourceUrl = content.sourceUrl || content.embedUrl;
 
     const mountScriptEmbed = async () => {
       try {
         await ensureTikTokEmbedScript();
-        if (cancelled || !videoId) return;
+        if (cancelled || !sourceUrl) return;
 
         host.innerHTML = "";
+        
         const blockquote = document.createElement("blockquote");
         blockquote.className = "tiktok-embed";
-        blockquote.setAttribute("cite", source || "");
-        blockquote.setAttribute("data-video-id", videoId);
+        blockquote.setAttribute("cite", sourceUrl);
         const section = document.createElement("section");
         blockquote.appendChild(section);
         host.appendChild(blockquote);
@@ -327,9 +319,13 @@ export function ContentCard({ content, hideActions = false, creatorOverride = nu
           const ready = Boolean(host.querySelector("iframe"));
           if (ready) {
             setIframeLoaded(true);
+            console.log('[TikTok] Script embed loaded successfully');
+          } else {
+            console.log('[TikTok] Script embed iframe not found yet');
           }
-        }, 1000);
-      } catch {
+        }, 2000);
+      } catch (err) {
+        console.log('[TikTok] Script embed error:', err);
         if (!cancelled) {
           setIframeLoaded(true);
         }
@@ -340,7 +336,9 @@ export function ContentCard({ content, hideActions = false, creatorOverride = nu
 
     return () => {
       cancelled = true;
-      host.innerHTML = "";
+      if (tiktokScriptHostRef.current) {
+        tiktokScriptHostRef.current.innerHTML = "";
+      }
     };
   }, [content.embedUrl, content.sourceUrl, isPlaying, isTikTok, tiktokMode]);
 
