@@ -21,7 +21,14 @@ declare global {
 const TIKTOK_EMBED_SCRIPT_SRC = "https://www.tiktok.com/embed.js";
 
 function extractTikTokVideoId(url: string) {
-  return url.match(/embed\/v2\/(\d+)/i)?.[1] ?? url.match(/video\/(\d+)/i)?.[1] ?? null;
+  if (!url) return null;
+  const id = url.match(/embed\/v2\/(\d+)/i)?.[1] 
+    ?? url.match(/@[^/]+\/video\/(\d+)/i)?.[1] 
+    ?? url.match(/\/video\/(\d+)/i)?.[1] 
+    ?? url.match(/(\d{19,})/i)?.[1]
+    ?? null;
+  console.log('[TikTok] extractTikTokVideoId from:', url, '-> videoId:', id);
+  return id;
 }
 
 async function ensureTikTokEmbedScript() {
@@ -214,6 +221,7 @@ export function ContentCard({ content, hideActions = false, creatorOverride = nu
       if (videoId) {
         const parent = typeof window !== "undefined" ? window.location.hostname : "localhost";
         src = `https://www.tiktok.com/embed/v2/${videoId}?lang=en&parent=${parent}`;
+        console.log('[TikTok] Embed URL:', src, 'parent:', parent);
       }
     } else if (embedUrl.includes("instagram.com")) {
       const shortcode = embedUrl.match(/\/p\/([A-Za-z0-9_-]+)/)?.[1] || embedUrl.match(/\/reel\/([A-Za-z0-9_-]+)/)?.[1];
